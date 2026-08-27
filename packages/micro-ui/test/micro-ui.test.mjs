@@ -442,3 +442,153 @@ test("subscribe: path-based set notifies subscribers of full value", async () =>
   assertEquals(snap.x, 99);
   assertEquals(snap.y, 2);
 });
+
+// ── del ─────────────────────────────────────────────────────────────
+test("del: clears entire key to undefined", async () => {
+  const { store, del } = await fresh();
+  store("k", "hello");
+  assertEquals(store("k"), "hello");
+  del("k");
+  assertEquals(store("k"), undefined);
+});
+test("del: notifies subscribers on full delete", async () => {
+  const { store, subscribe, del } = await fresh();
+  store("k", 1);
+  let snap;
+  subscribe("k", (v) => { snap = v; });
+  del("k");
+  assertEquals(snap, undefined);
+});
+test("del: path removes key from nested object", async () => {
+  const { store, del } = await fresh();
+  store("cfg", { a: 1, b: 2, c: 3 });
+  del("cfg", { path: "b" });
+  assertEquals(store("cfg"), { a: 1, c: 3 });
+  assertEquals(store("cfg", undefined, { path: "b" }), undefined);
+});
+test("del: path notifies subscribers with updated object", async () => {
+  const { store, subscribe, del } = await fresh();
+  store("d", { x: 10, y: 20 });
+  let snap;
+  subscribe("d", (v) => { snap = v; });
+  del("d", { path: "x" });
+  assertEquals(snap, { y: 20 });
+  assertEquals(snap.x, undefined);
+});
+test("del: path on non-existent path is a no-op", async () => {
+  const { store, del } = await fresh();
+  store("obj", { a: 1 });
+  del("obj", { path: "z" });
+  assertEquals(store("obj"), { a: 1 });
+});
+test("del: deep nested path", async () => {
+  const { store, del } = await fresh();
+  store("deep", { a: { b: { c: 42 } } });
+  del("deep", { path: "a.b.c" });
+  assertEquals(store("deep", undefined, { path: "a.b" }), {});
+});
+test("del: path on non-object value is a no-op", async () => {
+  const { store, del } = await fresh();
+  store("str", "hello");
+  del("str", { path: "x" });
+  assertEquals(store("str"), "hello");
+});
+test("del: path on null value is a no-op", async () => {
+  const { store, del } = await fresh();
+  store("nil", null);
+  del("nil", { path: "x" });
+  assertEquals(store("nil"), null);
+});
+test("del: key that was never set returns undefined", async () => {
+  const { del } = await fresh();
+  del("ghost");
+  assert(true);
+});
+test("del: does not affect other keys", async () => {
+  const { store, del } = await fresh();
+  store("a", 1); store("b", 2);
+  del("a");
+  assertEquals(store("b"), 2);
+  assertEquals(store("a"), undefined);
+});
+
+// ── store edge cases ────────────────────────────────────────────────
+test("store: set null value", async () => {
+  const { store } = await fresh();
+  store("n", "prev");
+  store("n", null);
+  assertEquals(store("n"), null);
+});
+test("store: set false value", async () => {
+  const { store } = await fresh();
+  store("flag", true);
+  store("flag", false);
+  assertEquals(store("flag"), false);
+});
+test("store: set 0 value", async () => {
+  const { store } = await fresh();
+  store("count", 99);
+  store("count", 0);
+  assertEquals(store("count"), 0);
+});
+test("store: set empty string", async () => {
+  const { store } = await fresh();
+  store("txt", "hi");
+  store("txt", "");
+  assertEquals(store("txt"), "");
+});
+test("store: overwrite object with primitive", async () => {
+  const { store } = await fresh();
+  store("mix", { a: 1 });
+  store("mix", "string");
+  assertEquals(store("mix"), "string");
+});
+test("store: overwrite primitive with object", async () => {
+  const { store } = await fresh();
+  store("mix2", "string");
+  store("mix2", { a: 1 });
+  assertEquals(store("mix2").a, 1);
+});
+test("store: read-only on never-set key returns undefined", async () => {
+  const { store } = await fresh();
+  assertEquals(store("nope"), undefined);
+});
+test("store: set with empty string as path value", async () => {
+  const { store } = await fresh();
+  store("e", { "": "found" });
+  assertEquals(store("e", undefined, { path: "" }), "found");
+});
+test("store: path with double dots", async () => {
+  const { store } = await fresh();
+  store("f", { a: { b: 1 } });
+  assertEquals(store("f", undefined, { path: "a..b" }), undefined);
+});
+
+// ── subscribe edge cases ────────────────────────────────────────────
+test("subscribe: different functions both called", async () => {
+  const { store, subscribe } = await fresh();
+  let countA = 0, countB = 0;
+  subscribe("diff", () => countA++);
+  subscribe("diff", () => countB++);
+  store("diff", 1);
+  assertEquals(countA, 1);
+  assertEquals(countB, 1);
+  store("diff", 2);
+  assertEquals(countA, 2);
+  assertEquals(countB, 2);
+});
+test("subscribe: unsubscribing already-unsubscribed returns false", async () => {
+  const { subscribe } = await fresh();
+  const unsub = subscribe("once", () => {});
+  assertEquals(unsub(), true);
+  assertEquals(unsub(), false);
+});
+test("subscribe: many subscribers all notified", async () => {
+  const { store, subscribe } = await fresh();
+  const results = [];
+  for (let i = 0; i < 50; i++) {
+    subscribe("many", () => results.push(1));
+  }
+  store("many", "x");
+  assertEquals(results.length, 50);
+});
