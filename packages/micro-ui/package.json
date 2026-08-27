@@ -23,5 +23,7 @@
     "ai-agents"
   ],
   "author": "Open Tech Foundation",
-  "devDependencies": {}
+  "devDependencies": {
+    "jsdom": "^25.0.0"
+  }
 }

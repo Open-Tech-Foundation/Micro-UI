@@ -23,12 +23,20 @@ run = "tsc --noEmit"
 
 # Tests run from the workspace root (not the package dir) so esdev's module
 # sandbox — which pins resolution to the process working directory — can reach
-# pnpm's hoisted store under root node_modules/.pnpm.
+# pnpm's hoisted store under root node_modules/.pnpm. The trailing path
+# segment excludes test/jsdom/ which runs under a different runtime.
 [tasks.test]
-run = "esdev test packages/micro-ui"
+run = "esdev test packages/micro-ui/test/micro-ui"
 
 [tasks."test:e2e"]
-run = "esdev test"
+run = "esdev test packages/micro-ui/test/micro-ui.e2e"
+
+# Parallel real-DOM test layer using jsdom + Node's built-in test runner.
+# Runs only on Node — esdev's sandbox is bypassed intentionally so jsdom can
+# attach a real CustomElementRegistry. Lives next to (not replacing) the
+# in-house FakeDOM tests above.
+[tasks."test:jsdom"]
+run = "node --test test/jsdom/*.test.mjs"
 dir = "packages/micro-ui"
 
 # ------------------------------------------------------------------ lint / fmt (Biome)
@@ -43,7 +51,7 @@ run = "biome check"
 
 # ------------------------------------------------------------------ ci
 [tasks.check]
-deps = ["typecheck", "lint", "fmt:check", "test"]
+deps = ["typecheck", "lint", "fmt:check", "test", "test:jsdom"]
 
 [tasks.ci]
-deps = ["typecheck", "lint", "fmt:check", "test", "build"]
+deps = ["typecheck", "lint", "fmt:check", "test", "test:jsdom", "build"]
