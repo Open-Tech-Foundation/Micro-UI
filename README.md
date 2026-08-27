@@ -6,6 +6,8 @@
 
 A tiny runtime for AI-generated micro-apps
 
+![Micro-UI Screenshot](Screenshot.png)
+
 </div>
 
 > *A tiny functional JavaScript UI library for AI agents to generate lightweight, interactive micro-apps.*
