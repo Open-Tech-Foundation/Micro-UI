@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-27
+
 ### Added
 - `store` as a namespace export from `@opentf/micro-ui` with methods:
   - `store.get(key)` / `store.get(key, { path })` — read a value or nested value by dot-separated path
