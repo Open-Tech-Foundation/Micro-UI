@@ -1,5 +1,11 @@
-import { define, html, onReady, update } from "@opentf/micro-ui";
-import { store, subscribe } from "./store";
+import {
+  define,
+  html,
+  onReady,
+  store,
+  subscribe,
+  update,
+} from "@opentf/micro-ui";
 
 // ── init store ─────────────────────────────────────────────────────
 
@@ -76,7 +82,9 @@ define("x-data-page", (el) => {
                     ) => html`<li key=${post.id} class="data-item" onclick=${() => {
                       store(
                         "selectedPost",
-                        store("selectedPost")?.id === post.id ? null : post,
+                        (store("selectedPost") as any)?.id === post.id
+                          ? null
+                          : post,
                       );
                       update(el);
                     }}>

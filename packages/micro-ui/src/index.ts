@@ -5,6 +5,8 @@ export type { HtmlTag } from "./html.ts";
 export { html } from "./html.ts";
 export { onError, onReady } from "./lifecycle.ts";
 export { mount } from "./mount.ts";
+export type { Listener } from "./store.ts";
+export { store, subscribe } from "./store.ts";
 export type {
   AttrValue,
   BindingDesc,

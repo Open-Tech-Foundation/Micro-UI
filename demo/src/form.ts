@@ -1,5 +1,11 @@
-import { define, html, onReady, update } from "@opentf/micro-ui";
-import { store, subscribe } from "./store";
+import {
+  define,
+  html,
+  onReady,
+  store,
+  subscribe,
+  update,
+} from "@opentf/micro-ui";
 
 // ── init form store ────────────────────────────────────────────────
 
@@ -20,10 +26,10 @@ define("x-field", (el, props) => {
       <input
         type=${props.type || "text"}
         placeholder=${props.placeholder || ""}
-        value=${store("form", undefined, { path: props.path }) ?? ""}
+        value=${store<string>("form", undefined, { path: props.path! }) ?? ""}
         oninput=${(e: InputEvent) => {
           store("form", (e.target as HTMLInputElement).value, {
-            path: props.path,
+            path: props.path!,
           });
         }}
       />
@@ -40,10 +46,10 @@ define("x-checkbox", (el, props) => {
       <label>
         <input
           type="checkbox"
-          checked=${!!store("form", undefined, { path: props.path })}
+          checked=${!!store<string>("form", undefined, { path: props.path! })}
           onchange=${(e: Event) => {
             store("form", (e.target as HTMLInputElement).checked, {
-              path: props.path,
+              path: props.path!,
             });
           }}
         />

@@ -1,5 +1,11 @@
-import { define, html, onReady, update } from "@opentf/micro-ui";
-import { store, subscribe } from "./store";
+import {
+  define,
+  html,
+  onReady,
+  store,
+  subscribe,
+  update,
+} from "@opentf/micro-ui";
 
 const PRODUCTS = [
   { id: 1, name: "Mechanical Keyboard", price: 149.99, emoji: "⌨️" },

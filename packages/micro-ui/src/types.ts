@@ -71,7 +71,8 @@ export type ErrorHandler = (
   err: Error,
   phase: ErrorPhase,
 ) => void;
-export type ReadyCallback = () => (() => void) | undefined;
+// biome-ignore lint/suspicious/noConfusingVoidType: onReady callbacks commonly return void
+export type ReadyCallback = () => (() => void) | undefined | void;
 export type CleanupFn = () => void;
 export type SetupFn = (
   el: HTMLElement,
