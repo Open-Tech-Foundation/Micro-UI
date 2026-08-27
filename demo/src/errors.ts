@@ -1,8 +1,13 @@
-import { define, html, update, onReady, onError } from "@opentf/micro-ui";
+import { define, html, onError, onReady, update } from "@opentf/micro-ui";
 
 // ── shared log buffer so users can see what onError caught ─────────
 
-const errorLog: Array<{ tag: string; message: string; phase: string; at: number }> = [];
+const errorLog: Array<{
+  tag: string;
+  message: string;
+  phase: string;
+  at: number;
+}> = [];
 
 function logError(tag: string, err: Error, phase: string) {
   errorLog.unshift({ tag, message: err.message, phase, at: Date.now() });
@@ -42,7 +47,10 @@ define("x-throws-on-update", (el) => {
         <h3>Throws on next update</h3>
         <p class="count">${n}</p>
         <div class="btn-row">
-          <button onclick=${() => { n++; update(el); }}>+1 (safe)</button>
+          <button onclick=${() => {
+            n++;
+            update(el);
+          }}>+1 (safe)</button>
           <button class="danger" onclick=${() => el.dispatchEvent(new Event("arm"))}>
             Arm throw
           </button>
@@ -85,7 +93,10 @@ define("x-breaks-after-3", (el) => {
         <h3>Breaks after 3</h3>
         <p class="count">${n}</p>
         <div class="btn-row">
-          <button onclick=${() => { n++; update(el); }}>+1</button>
+          <button onclick=${() => {
+            n++;
+            update(el);
+          }}>+1</button>
           <button class="danger" onclick=${() => el.dispatchEvent(new Event("recover"))}>
             Recover
           </button>
@@ -101,7 +112,10 @@ define("x-breaks-after-3", (el) => {
 define("x-isolation-proof", (el) => {
   let n = 0;
   onReady(() => {
-    const id = setInterval(() => { n++; update(el); }, 1000);
+    const id = setInterval(() => {
+      n++;
+      update(el);
+    }, 1000);
     return () => clearInterval(id);
   });
   return () => html`
@@ -174,19 +188,23 @@ define("x-errors-page", (el) => {
         <button onclick=${clearLog} disabled=${errorLog.length === 0}>Clear log</button>
         <span class="hint">${errorLog.length} entr${errorLog.length === 1 ? "y" : "ies"}</span>
       </div>
-      ${errorLog.length === 0
-        ? html`<p class="hint">no errors yet — try the buttons above</p>`
-        : html`
+      ${
+        errorLog.length === 0
+          ? html`<p class="hint">no errors yet — try the buttons above</p>`
+          : html`
           <ul class="error-log">
-            ${errorLog.map((e) => html`
+            ${errorLog.map(
+              (e) => html`
               <li class="error-log-item" key=${String(e.at)}>
                 <span class="error-tag">&lt;${e.tag}&gt;</span>
                 <span class="error-phase">[${e.phase}]</span>
                 <span class="error-msg">${e.message}</span>
               </li>
-            `)}
+            `,
+            )}
           </ul>
-        `}
+        `
+      }
     </section>
   `;
 });

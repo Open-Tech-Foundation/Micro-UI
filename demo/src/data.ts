@@ -1,4 +1,4 @@
-import { define, html, update, onReady } from "@opentf/micro-ui";
+import { define, html, onReady, update } from "@opentf/micro-ui";
 import { store, subscribe } from "./store";
 
 // ── init store ─────────────────────────────────────────────────────
@@ -30,7 +30,10 @@ define("x-data-page", (el) => {
   onReady(() => {
     const u1 = subscribe("posts", () => update(el));
     const u2 = subscribe("postsFilter", () => update(el));
-    return () => { u1(); u2(); };
+    return () => {
+      u1();
+      u2();
+    };
   });
 
   return () => {
@@ -41,11 +44,12 @@ define("x-data-page", (el) => {
         <h3>Posts from JSONPlaceholder</h3>
         <p class="hint">GET https://jsonplaceholder.typicode.com/posts</p>
 
-        ${loading
-          ? html`<div class="loading">Loading...</div>`
-          : error
-            ? html`<div class="error">Error: ${error}</div>`
-            : html`
+        ${
+          loading
+            ? html`<div class="loading">Loading...</div>`
+            : error
+              ? html`<div class="error">Error: ${error}</div>`
+              : html`
               <div class="data-controls">
                 <input
                   type="text"
@@ -62,23 +66,35 @@ define("x-data-page", (el) => {
                 ${items
                   .filter((p: any) => {
                     const q = (store("postsFilter") as string) || "";
-                    return !q || p.title.toLowerCase().includes(q.toLowerCase());
+                    return (
+                      !q || p.title.toLowerCase().includes(q.toLowerCase())
+                    );
                   })
-                  .map((post: any) => html`<li key=${post.id} class="data-item" onclick=${() => {
-                      store("selectedPost", store("selectedPost")?.id === post.id ? null : post);
+                  .map(
+                    (
+                      post: any,
+                    ) => html`<li key=${post.id} class="data-item" onclick=${() => {
+                      store(
+                        "selectedPost",
+                        store("selectedPost")?.id === post.id ? null : post,
+                      );
                       update(el);
                     }}>
                       <div class="data-item-header">
                         <span class="data-item-id">#${post.id}</span>
                         <span class="data-item-title">${post.title}</span>
                       </div>
-                      ${(store("selectedPost") as any)?.id === post.id
-                        ? html`<p class="data-item-body">${post.body}</p>`
-                        : null}
+                      ${
+                        (store("selectedPost") as any)?.id === post.id
+                          ? html`<p class="data-item-body">${post.body}</p>`
+                          : null
+                      }
                     </li>
-                  `)}
+                  `,
+                  )}
               </ul>
-            `}
+            `
+        }
       </div>
     `;
   };

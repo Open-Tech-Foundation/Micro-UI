@@ -1,4 +1,4 @@
-import { define, html, update, onReady } from "@opentf/micro-ui";
+import { define, html, onReady, update } from "@opentf/micro-ui";
 
 /**
  * Counter — basic text update + event handling.
@@ -12,9 +12,18 @@ define("x-counter", (el, props) => {
       <h3>Counter</h3>
       <p class="count">${count}</p>
       <div class="btn-row">
-        <button onclick=${() => { count--; update(el); }}>-1</button>
-        <button onclick=${() => { count = 0; update(el); }}>Reset</button>
-        <button onclick=${() => { count++; update(el); }}>+1</button>
+        <button onclick=${() => {
+          count--;
+          update(el);
+        }}>-1</button>
+        <button onclick=${() => {
+          count = 0;
+          update(el);
+        }}>Reset</button>
+        <button onclick=${() => {
+          count++;
+          update(el);
+        }}>+1</button>
       </div>
     </div>
   `;
@@ -27,7 +36,10 @@ define("x-timer", (el, props) => {
   let seconds = Number(props.seconds || 0);
   onReady(() => {
     console.log("x-timer ready", el);
-    const interval = setInterval(() => { seconds++; update(el); }, 1000);
+    const interval = setInterval(() => {
+      seconds++;
+      update(el);
+    }, 1000);
     return () => {
       console.log("x-timer destroyed", el);
       clearInterval(interval);
@@ -59,18 +71,32 @@ define("x-color", (_el, _props) => {
     <div class="card">
       <h3>Color Picker</h3>
       <div class="btn-row">
-        <button onclick=${() => { color = "#ef4444"; update(_el); }}>Red</button>
-        <button onclick=${() => { color = "#22c55e"; update(_el); }}>Green</button>
-        <button onclick=${() => { color = "#3b82f6"; update(_el); }}>Blue</button>
+        <button onclick=${() => {
+          color = "#ef4444";
+          update(_el);
+        }}>Red</button>
+        <button onclick=${() => {
+          color = "#22c55e";
+          update(_el);
+        }}>Green</button>
+        <button onclick=${() => {
+          color = "#3b82f6";
+          update(_el);
+        }}>Blue</button>
       </div>
       <div class="btn-row" style="margin-top:.5rem">
-        <button onclick=${() => { showPreview = !showPreview; update(_el); }}>
+        <button onclick=${() => {
+          showPreview = !showPreview;
+          update(_el);
+        }}>
           ${showPreview ? "Hide" : "Show"} preview
         </button>
       </div>
-      ${showPreview
-        ? html`<div class="swatch" style="background:${color}"></div>`
-        : null}
+      ${
+        showPreview
+          ? html`<div class="swatch" style="background:${color}"></div>`
+          : null
+      }
       <p class="hint">conditional DOM — swatch node added/removed</p>
     </div>
   `;
@@ -95,7 +121,9 @@ define("x-todos", (el, _props) => {
   };
 
   const toggle = (i: number) => {
-    items = items.map((it, idx) => idx === i ? { ...it, done: !it.done } : it);
+    items = items.map((it, idx) =>
+      idx === i ? { ...it, done: !it.done } : it,
+    );
     update(el);
   };
 
@@ -111,18 +139,24 @@ define("x-todos", (el, _props) => {
         <input
           value=${input}
           placeholder="Add a task…"
-          oninput=${(e: InputEvent) => { input = (e.target as HTMLInputElement).value; }}
-          onkeydown=${(e: KeyboardEvent) => { if (e.key === "Enter") add(); }}
+          oninput=${(e: InputEvent) => {
+            input = (e.target as HTMLInputElement).value;
+          }}
+          onkeydown=${(e: KeyboardEvent) => {
+            if (e.key === "Enter") add();
+          }}
         />
         <button onclick=${add}>Add</button>
       </div>
       <ul class="todo-list">
-        ${items.map((item, i) => html`
+        ${items.map(
+          (item, i) => html`
           <li class="${item.done ? "done" : ""}">
             <span onclick=${() => toggle(i)}>${item.text}</span>
             <button class="rm" onclick=${() => remove(i)}>×</button>
           </li>
-        `)}
+        `,
+        )}
       </ul>
       <p class="hint">${items.length} item${items.length !== 1 ? "s" : ""} — positional reconciliation</p>
     </div>
@@ -156,7 +190,10 @@ define("x-nested-child", (el, props) => {
   return () => html`
     <div class="child">
       <span>${props.name}'s count: <strong>${count}</strong></span>
-      <button onclick=${() => { count++; update(el); }}>+1</button>
+      <button onclick=${() => {
+        count++;
+        update(el);
+      }}>+1</button>
     </div>
   `;
 });
@@ -173,17 +210,36 @@ define("x-app", (el) => {
       <h1>Micro-UI</h1>
       <p class="tagline">Native Custom Elements + closure state + explicit updates.</p>
       <nav class="nav">
-        <button class="${page === "demos" ? "active" : ""}" onclick=${() => { page = "demos"; update(el); }}>Demos</button>
-        <button class="${page === "shop" ? "active" : ""}" onclick=${() => { page = "shop"; update(el); }}>Shopping Cart</button>
-        <button class="${page === "form" ? "active" : ""}" onclick=${() => { page = "form"; update(el); }}>Form</button>
-        <button class="${page === "data" ? "active" : ""}" onclick=${() => { page = "data"; update(el); }}>Data</button>
-        <button class="${page === "gravity" ? "active" : ""}" onclick=${() => { page = "gravity"; update(el); }}>Gravity</button>
-        <button class="${page === "errors" ? "active" : ""}" onclick=${() => { page = "errors"; update(el); }}>Errors</button>
+        <button class="${page === "demos" ? "active" : ""}" onclick=${() => {
+          page = "demos";
+          update(el);
+        }}>Demos</button>
+        <button class="${page === "shop" ? "active" : ""}" onclick=${() => {
+          page = "shop";
+          update(el);
+        }}>Shopping Cart</button>
+        <button class="${page === "form" ? "active" : ""}" onclick=${() => {
+          page = "form";
+          update(el);
+        }}>Form</button>
+        <button class="${page === "data" ? "active" : ""}" onclick=${() => {
+          page = "data";
+          update(el);
+        }}>Data</button>
+        <button class="${page === "gravity" ? "active" : ""}" onclick=${() => {
+          page = "gravity";
+          update(el);
+        }}>Gravity</button>
+        <button class="${page === "errors" ? "active" : ""}" onclick=${() => {
+          page = "errors";
+          update(el);
+        }}>Errors</button>
       </nav>
     </header>
 
-    ${page === "demos"
-      ? html`
+    ${
+      page === "demos"
+        ? html`
         <section class="grid">
           <x-counter count="0"></x-counter>
           <x-timer seconds="0"></x-timer>
@@ -194,15 +250,16 @@ define("x-app", (el) => {
           <x-nested-parent></x-nested-parent>
         </section>
       `
-      : page === "shop"
-        ? html`<x-shop></x-shop>`
-        : page === "form"
-          ? html`<x-form-page></x-form-page>`
-          : page === "data"
-            ? html`<x-data-page></x-data-page>`
-            : page === "gravity"
-              ? html`<x-gravity-page></x-gravity-page>`
-              : html`<x-errors-page></x-errors-page>`}
+        : page === "shop"
+          ? html`<x-shop></x-shop>`
+          : page === "form"
+            ? html`<x-form-page></x-form-page>`
+            : page === "data"
+              ? html`<x-data-page></x-data-page>`
+              : page === "gravity"
+                ? html`<x-gravity-page></x-gravity-page>`
+                : html`<x-errors-page></x-errors-page>`
+    }
 
     <footer>
       <p>No VDOM. No signals. No compiler. Just <code>define</code>, <code>html</code>, <code>update</code>, <code>mount</code>.</p>
