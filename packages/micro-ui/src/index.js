@@ -315,11 +315,22 @@ function setProp(el, k, v) {
 // ── lifecycle hooks ────────────────────────────────────────────────
 
 let pendingReady = null;
+let pendingError = null;
 const destroyCallbacks = new WeakMap();
+const errorHandlers = new WeakMap();
 
 export function onReady(cb) {
   if (!pendingReady) throw new Error("onReady() must be called synchronously inside define(..., setup)");
   pendingReady.push(cb);
+}
+
+// `onError(handler)` registers a callback for render / reconcile
+// failures inside the current component. The handler signature is
+// `(el, error, phase)` where phase is "render" or "reconcile".
+// Multiple handlers may be registered; all are called.
+export function onError(handler) {
+  if (!pendingError) throw new Error("onError() must be called synchronously inside define(..., setup)");
+  pendingError.push(handler);
 }
 
 // ── define ─────────────────────────────────────────────────────────
@@ -334,16 +345,44 @@ export function define(tag, setup) {
         const props = {};
         for (const a of this.attributes) props[a.name] = a.value;
         const prevReady = pendingReady;
+        const prevError = pendingError;
         pendingReady = [];
+        pendingError = [];
         currentEl = this;
-        const render = setup(this, props);
+        let render;
+        let setupError = null;
+        try {
+          render = setup(this, props);
+        } catch (err) {
+          setupError = err;
+        }
         currentEl = null;
-        const tree = render();
-        this.textContent = "";
-        for (const c of tree.children) this.appendChild(c.dom);
-        instances.set(this, { render, tree, props });
         const cbs = pendingReady;
+        const errs = pendingError;
         pendingReady = prevReady;
+        pendingError = prevError;
+
+        if (setupError) {
+          mountErrorUI(this, setupError);
+          instances.set(this, { errored: true });
+          if (errs.length) errorHandlers.set(this, errs);
+          for (const h of errs) safeCall(h, this, setupError, "setup");
+          return;
+        }
+
+        try {
+          const tree = render();
+          this.textContent = "";
+          for (const c of tree.children) this.appendChild(c.dom);
+          instances.set(this, { render, tree, props, errored: false });
+        } catch (err) {
+          mountErrorUI(this, err);
+          instances.set(this, { errored: true });
+          if (errs.length) errorHandlers.set(this, errs);
+          for (const h of errs) safeCall(h, this, err, "render");
+          return;
+        }
+
         for (const cb of cbs) {
           const cleanup = cb();
           if (typeof cleanup === "function") {
@@ -352,6 +391,7 @@ export function define(tag, setup) {
             list.push(cleanup);
           }
         }
+        if (errs.length) errorHandlers.set(this, errs);
       }
       disconnectedCallback() {
         const cbs = destroyCallbacks.get(this);
@@ -383,8 +423,26 @@ export function flush() {
   for (const el of batch) {
     const inst = instances.get(el);
     if (!inst) continue;
-    const newTree = inst.render();
-    reconcile(inst.tree, newTree, el);
+    if (inst.errored) continue;
+    let newTree;
+    try {
+      newTree = inst.render();
+    } catch (err) {
+      mountErrorUI(el, err);
+      inst.errored = true;
+      const handlers = errorHandlers.get(el);
+      if (handlers) for (const h of handlers) safeCall(h, el, err, "render");
+      continue;
+    }
+    try {
+      reconcile(inst.tree, newTree, el);
+    } catch (err) {
+      mountErrorUI(el, err);
+      inst.errored = true;
+      const handlers = errorHandlers.get(el);
+      if (handlers) for (const h of handlers) safeCall(h, el, err, "reconcile");
+      continue;
+    }
     inst.tree = newTree;
   }
 }
@@ -396,6 +454,38 @@ export function mount(el, tag) {
   const child = document.createElement(tag);
   el.appendChild(child);
   return child;
+}
+
+// ── error fallback ─────────────────────────────────────────────────
+
+function mountErrorUI(el, err) {
+  // Best-effort inline error. If even this throws, the host page is
+  // already broken — there's nothing more we can do.
+  try {
+    el.textContent = "";
+    const box = document.createElement("div");
+    box.setAttribute("data-micro-ui-error", "");
+    const msg = err && err.message ? String(err.message) : String(err);
+    const pre = document.createElement("pre");
+    pre.style.whiteSpace = "pre-wrap";
+    pre.style.margin = "0";
+    pre.textContent = msg;
+    box.appendChild(pre);
+    el.appendChild(box);
+  } catch {
+    /* swallow */
+  }
+}
+
+function safeCall(fn, el, err, phase) {
+  try {
+    fn(el, err, phase);
+  } catch (e) {
+    console.error(
+      `[micro-ui] onError handler threw while processing ${phase} error on <${el.tagName?.toLowerCase?.() || "?"}>:`,
+      e && e.message ? e.message : e
+    );
+  }
 }
 
 // ── reconciliation ─────────────────────────────────────────────────

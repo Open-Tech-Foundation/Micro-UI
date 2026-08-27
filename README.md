@@ -88,6 +88,23 @@ Tagged template that produces an internal tree. Supports:
 
 Triggers a re-render (batched via `queueMicrotask`). The render function is called again, producing a new tree. The library reconciles old vs new, reusing DOM nodes wherever the structure matches. Controlled `value`/`checked` are synced as properties, not just attributes.
 
+### `onError(handler)`
+
+Register a callback invoked when a component's `setup`, `render`, or `reconcile` throws. Must be called synchronously from inside `define(..., setup)`, like `onReady`.
+
+```js
+import { define, html, onError, update } from "@opentf/micro-ui";
+
+define("x-widget", (el) => {
+  onError((target, err, phase) => {
+    Sentry.captureException(err, { tags: { phase, tag: target.tagName } });
+  });
+  // ...
+});
+```
+
+A throwing component is **isolated**: the host page keeps running, the failed element is replaced with a small inline error box (`<div data-micro-ui-error>`), and the instance is marked `errored` so further `update()` calls are no-ops until the element is removed from the DOM. Handler throws are caught and logged via `console.error` so a buggy handler cannot break the host.
+
 ## Design
 
 - **State**: ordinary JavaScript closures. No signals, stores, or reactive primitives.
