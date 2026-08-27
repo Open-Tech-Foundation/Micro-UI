@@ -28,6 +28,10 @@ A tiny runtime for AI-generated micro-apps
 pnpm add @opentf/micro-ui
 # or
 npm i @opentf/micro-ui
+# or
+yarn add @opentf/micro-ui
+# or
+bun add @opentf/micro-ui
 ```
 
 ```js
