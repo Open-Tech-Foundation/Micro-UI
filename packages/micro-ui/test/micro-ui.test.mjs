@@ -357,3 +357,88 @@ test("reconcile: queueMicrotask batch explicit flush idempotent", async () => {
   await delay(5);
   assertEquals(el.querySelector("span").textContent,"2");
 });
+
+// ── store / subscribe ───────────────────────────────────────────────
+test("store: set and get value", async () => {
+  const { store } = await fresh();
+  store("counter", 0);
+  assertEquals(store("counter"), 0);
+  store("counter", 1);
+  assertEquals(store("counter"), 1);
+});
+test("store: get returns undefined for unset key", async () => {
+  const { store } = await fresh();
+  assertEquals(store("nonexistent"), undefined);
+});
+test("store: set with path reads nested value", async () => {
+  const { store } = await fresh();
+  store("form", { name: "", age: 0 });
+  store("form", "Alice", { path: "name" });
+  assertEquals(store("form", undefined, { path: "name" }), "Alice");
+  assertEquals(store("form").age, 0);
+});
+test("store: set with deep path", async () => {
+  const { store } = await fresh();
+  store("data", {});
+  store("data", "v1", { path: "a.b.c" });
+  assertEquals(store("data", undefined, { path: "a.b.c" }), "v1");
+});
+test("store: overwrite full value clears path state", async () => {
+  const { store } = await fresh();
+  store("cfg", { theme: "dark", lang: "en" });
+  store("cfg", "light", { path: "theme" });
+  assertEquals(store("cfg", undefined, { path: "theme" }), "light");
+  store("cfg", { theme: "red", lang: "fr" });
+  assertEquals(store("cfg", undefined, { path: "theme" }), "red");
+  assertEquals(store("cfg", undefined, { path: "lang" }), "fr");
+});
+test("subscribe: receives current value on change", async () => {
+  const { store, subscribe } = await fresh();
+  store("x", 10);
+  let received = null;
+  subscribe("x", (v) => { received = v; });
+  store("x", 20);
+  assertEquals(received, 20);
+});
+test("subscribe: called for every set", async () => {
+  const { store, subscribe } = await fresh();
+  const calls = [];
+  subscribe("log", (v) => calls.push(v));
+  store("log", "a");
+  store("log", "b");
+  store("log", "c");
+  assertEquals(calls, ["a", "b", "c"]);
+});
+test("subscribe: unsubscribe stops notifications", async () => {
+  const { store, subscribe } = await fresh();
+  let count = 0;
+  const unsub = subscribe("s", () => count++);
+  store("s", 1); assertEquals(count, 1);
+  store("s", 2); assertEquals(count, 2);
+  unsub();
+  store("s", 3); assertEquals(count, 2);
+});
+test("subscribe: unsubscribe returns true on success", async () => {
+  const { subscribe } = await fresh();
+  const unsub = subscribe("z", () => {});
+  assertEquals(unsub(), true);
+});
+test("subscribe: multiple subscribers all notified", async () => {
+  const { store, subscribe } = await fresh();
+  let a = 0, b = 0;
+  subscribe("m", () => a++);
+  subscribe("m", () => b++);
+  store("m", "x");
+  assertEquals(a, 1); assertEquals(b, 1);
+  store("m", "y");
+  assertEquals(a, 2); assertEquals(b, 2);
+});
+test("subscribe: path-based set notifies subscribers of full value", async () => {
+  const { store, subscribe } = await fresh();
+  store("p", { x: 1, y: 2 });
+  let snap = null;
+  subscribe("p", (v) => { snap = v; });
+  store("p", 99, { path: "x" });
+  assertEquals(snap.x, 99);
+  assertEquals(snap.y, 2);
+});
