@@ -9,7 +9,7 @@
   "files": [
     "src"
   ],
-  "description": "A tiny functional Web Components library for AI agents to create lightweight micro-apps \u2014 ~400 lines, no VDOM, no signals, no compiler",
+  "description": "A tiny functional JavaScript UI library for AI agents to generate lightweight, interactive micro-apps. \u2014 ~400 lines, no VDOM, no signals, no compiler",
   "repository": {
     "type": "git",
     "url": "git@github.com:Open-Tech-Foundation/Micro-UI.git"
