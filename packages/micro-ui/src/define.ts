@@ -28,8 +28,8 @@ export function define(tag: string, setup: SetupFn): void {
         } catch (err) {
           setupError = err;
         }
-        const cbs = pendingReady;
-        const errs = pendingError;
+        const cbs = pendingReady!;
+        const errs = pendingError!;
         setPendingReady(prevReady);
         setPendingError(prevError);
 
@@ -49,7 +49,9 @@ export function define(tag: string, setup: SetupFn): void {
         try {
           const tree = render!();
           this.textContent = "";
-          for (const c of tree.children) this.appendChild(c.dom!);
+          if (tree.type !== "text") {
+            for (const c of tree.children) this.appendChild(c.dom!);
+          }
           instances.set(this, { render: render!, tree, props, errored: false });
         } catch (err) {
           mountErrorUI(this, err);

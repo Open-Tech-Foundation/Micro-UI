@@ -18,9 +18,9 @@ export function setProp(el: HTMLElement, k: string, v: unknown): void {
   }
   if (k === "selected" || k === "disabled" || k === "indeterminate") {
     const b = !!v && v !== "" && v !== false;
-    (el as HTMLSelectElement & HTMLInputElement)[
-      k as "selected" | "disabled" | "indeterminate"
-    ] = b as never;
+    if (k === "selected") (el as HTMLOptionElement).selected = b;
+    else if (k === "disabled") (el as HTMLInputElement).disabled = b;
+    else if (k === "indeterminate") (el as HTMLInputElement).indeterminate = b;
     if (b) el.setAttribute(k, "");
     else el.removeAttribute(k);
     return;
@@ -28,18 +28,18 @@ export function setProp(el: HTMLElement, k: string, v: unknown): void {
   if (v == null || v === false) {
     el.removeAttribute(k);
     try {
-      if (k in el) (el as Record<string, unknown>)[k] = undefined;
+      if (k in el) (el as unknown as Record<string, unknown>)[k] = undefined;
     } catch {}
   } else if (v === true) {
     el.setAttribute(k, "");
     try {
-      if (k in el) (el as Record<string, unknown>)[k] = true;
+      if (k in el) (el as unknown as Record<string, unknown>)[k] = true;
     } catch {}
   } else if (typeof v === "string") {
     el.setAttribute(k, v);
   } else {
     try {
-      (el as Record<string, unknown>)[k] = v;
+      (el as unknown as Record<string, unknown>)[k] = v;
     } catch {}
     if (typeof v === "number" || typeof v === "boolean") {
       el.setAttribute(k, String(v));

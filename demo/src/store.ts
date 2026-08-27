@@ -29,7 +29,9 @@ export function store(key: string, value?: any, opts?: any) {
     } else {
       s.value = value;
     }
-    s.listeners.forEach((fn: any) => fn(s.value));
+    s.listeners.forEach((fn: any) => {
+      fn(s.value);
+    });
   }
 
   if (opts?.path) {
@@ -38,7 +40,7 @@ export function store(key: string, value?: any, opts?: any) {
   return s.value;
 }
 
-export function subscribe(key: string, fn: (v:any)=>void) {
+export function subscribe(key: string, fn: (v: any) => void) {
   if (!stores.has(key)) {
     stores.set(key, { value: undefined, listeners: new Set() });
   }

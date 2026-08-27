@@ -40,7 +40,7 @@ export function buildDesc(
             nodes.push({ type: "binding", binding: true });
           }
           if (parts[j] !== "") {
-            nodes.push({ type: "text", value: parts[j] });
+            nodes.push({ type: "text", value: parts[j]! });
           }
         }
       } else if (t?.trim()) {
@@ -79,7 +79,7 @@ function buildElDesc(el: Element, bindings: BindingDesc[]): ElementDesc {
       const parts = value.split(MARKER);
       for (let i = 0; i < parts.length - 1; i++)
         bindings.push({ type: "binding", binding: true, name: ev });
-      events[ev] = { type: "binding", binding: true };
+      events[ev] = { binding: true };
       continue;
     }
     if (isOnEvent && !value.includes(MARKER)) {
@@ -91,7 +91,7 @@ function buildElDesc(el: Element, bindings: BindingDesc[]): ElementDesc {
       const parts = value.split(MARKER);
       for (let i = 0; i < parts.length - 1; i++)
         bindings.push({ type: "binding", binding: true, name });
-      attrs[name] = { type: "binding", binding: true, parts };
+      attrs[name] = { binding: true, parts };
     } else {
       attrs[name] = value;
     }

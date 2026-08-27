@@ -2,5 +2,10 @@
   "name": "micro-ui-monorepo",
   "private": true,
   "type": "module",
-  "description": "Micro-UI monorepo"
+  "description": "Micro-UI monorepo",
+  "packageManager": "pnpm@11.21.0",
+  "devDependencies": {
+    "@biomejs/biome": "2.5.10",
+    "typescript": "^5.9.3"
+  }
 }

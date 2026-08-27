@@ -2,18 +2,15 @@
   "name": "@opentf/micro-ui",
   "version": "0.1.0",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "description": "A tiny functional JavaScript UI library for AI agents to generate lightweight, interactive micro-apps. — no VDOM, no signals, no compiler",
   "repository": {
@@ -29,13 +26,8 @@
     "ai-agents"
   ],
   "author": "Open Tech Foundation",
-  "scripts": {
-    "build": "esdev build --lib src --dts-bundle=src/index.ts",
-    "test:jsdom": "bun test test/jsdom/*.test.mjs"
-  },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.10",
-    "jsdom": "^25.0.0",
-    "typescript": "^5.9.3"
+    "@opentf/esrun-types": "latest",
+    "jsdom": "^25.0.0"
   }
 }

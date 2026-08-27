@@ -1,6 +1,6 @@
 import { materializeNode, setProp } from "./dom.ts";
 import { instances } from "./state.ts";
-import type { VNode } from "./types.ts";
+import type { ElementVNode, FragmentVNode, TextVNode, VNode } from "./types.ts";
 import { update } from "./update.ts";
 
 export function reconcile(
@@ -14,42 +14,44 @@ export function reconcile(
     return;
   }
   if (old.type === "text") {
-    if (String(old.value) !== String(next.value))
-      old.dom!.nodeValue = String(next.value);
-    next.dom = old.dom;
+    const nxt = next as TextVNode;
+    if (String(old.value) !== String(nxt.value))
+      old.dom!.nodeValue = String(nxt.value);
+    nxt.dom = old.dom;
     return;
   }
   if (old.type === "fragment") {
-    patchLists(old.children, next.children, parent);
+    patchLists(old.children, (next as FragmentVNode).children, parent);
     return;
   }
   if (old.type === "element") {
-    if (old.tag !== next.tag) {
-      materializeNode(next);
-      parent.replaceChild(next.dom!, old.dom!);
+    const nxt = next as ElementVNode;
+    if (old.tag !== nxt.tag) {
+      materializeNode(nxt);
+      parent.replaceChild(nxt.dom!, old.dom!);
       return;
     }
     const dom = old.dom!;
-    next.dom = dom;
-    patchAttrs(dom as HTMLElement, old.attrs, next.attrs);
-    patchEvents(dom as HTMLElement, old.events, next.events);
+    nxt.dom = dom;
+    patchAttrs(dom as HTMLElement, old.attrs, nxt.attrs);
+    patchEvents(dom as HTMLElement, old.events, nxt.events);
     const inst = instances.get(dom as HTMLElement);
     if (inst?.props) {
       let changed = false;
-      for (const k in next.attrs) {
-        if (inst.props[k] !== String(next.attrs[k])) changed = true;
+      for (const k in nxt.attrs) {
+        if (inst.props[k] !== String(nxt.attrs[k])) changed = true;
         inst.props[k] =
-          next.attrs[k] == null ? undefined! : String(next.attrs[k]);
+          nxt.attrs[k] == null ? undefined! : String(nxt.attrs[k]);
       }
       for (const k in inst.props) {
-        if (!(k in next.attrs)) {
+        if (!(k in nxt.attrs)) {
           delete inst.props[k];
           changed = true;
         }
       }
       if (changed) update(dom as HTMLElement);
     }
-    patchLists(old.children, next.children, dom);
+    patchLists(old.children, nxt.children, dom);
   }
 }
 
@@ -59,8 +61,8 @@ function patchLists(
   parent: HTMLElement | Element | DocumentFragment,
 ): void {
   if (newCh.length === 1 && oldCh.length === 1) {
-    const o = oldCh[0];
-    const n = newCh[0];
+    const o = oldCh[0]!;
+    const n = newCh[0]!;
     if (o.type === n.type) {
       reconcile(o, n, parent);
       return;
@@ -71,7 +73,8 @@ function patchLists(
   }
 
   const hasKeys =
-    newCh.some((n) => n.key != null) || oldCh.some((o) => o.key != null);
+    newCh.some((n) => n.type === "element" && n.key != null) ||
+    oldCh.some((o) => o.type === "element" && o.key != null);
   if (hasKeys) {
     patchKeyed(oldCh, newCh, parent);
   } else {
@@ -89,8 +92,8 @@ function patchByIndex(
     const o = oldCh[i];
     const n = newCh[i];
     if (!o) {
-      materializeNode(n);
-      parent.appendChild(n.dom!);
+      materializeNode(n!);
+      parent.appendChild(n!.dom!);
     } else if (!n) {
       o.dom!.remove();
     } else {
@@ -100,39 +103,47 @@ function patchByIndex(
   }
 }
 
+function getKey(n: VNode): string | null | undefined {
+  return n.type === "element" ? n.key : undefined;
+}
+
 function patchKeyed(
   oldCh: VNode[],
   newCh: VNode[],
   parent: HTMLElement | Element | DocumentFragment,
 ): void {
   const oldMap = new Map<string, VNode>();
-  for (const o of oldCh) if (o.key != null) oldMap.set(String(o.key), o);
-  let next: Node | null = null;
+  for (const o of oldCh) {
+    const k = getKey(o);
+    if (k != null) oldMap.set(String(k), o);
+  }
+  let nextSib: Node | null = null;
   for (let i = newCh.length - 1; i >= 0; i--) {
-    const n = newCh[i];
-    const o = n.key != null ? oldMap.get(String(n.key)) : null;
+    const n = newCh[i]!;
+    const k = getKey(n);
+    const o = k != null ? oldMap.get(String(k)) : undefined;
     if (o && o.dom?.parentNode === parent) {
       materializeNode(n);
       reconcile(o, n, parent);
-      if (o.dom!.nextSibling !== next) parent.insertBefore(o.dom!, next);
-      next = o.dom;
-      oldMap.delete(String(n.key));
+      if (o.dom!.nextSibling !== nextSib) parent.insertBefore(o.dom!, nextSib);
+      nextSib = o.dom;
+      oldMap.delete(String(k));
     } else {
-      const fallback = n.key == null ? oldCh[i] : null;
+      const fallback = k == null ? oldCh[i] : undefined;
       if (
         fallback &&
         fallback.dom?.parentNode === parent &&
-        fallback.key == null
+        getKey(fallback) == null
       ) {
         materializeNode(n);
         reconcile(fallback, n, parent);
-        if (fallback.dom!.nextSibling !== next)
-          parent.insertBefore(fallback.dom!, next);
-        next = fallback.dom;
+        if (fallback.dom!.nextSibling !== nextSib)
+          parent.insertBefore(fallback.dom!, nextSib);
+        nextSib = fallback.dom;
       } else {
         materializeNode(n);
-        parent.insertBefore(n.dom!, next);
-        next = n.dom;
+        parent.insertBefore(n.dom!, nextSib);
+        nextSib = n.dom!;
       }
     }
   }

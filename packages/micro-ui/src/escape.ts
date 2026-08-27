@@ -8,5 +8,5 @@ const MAP: Record<string, string> = {
 const RE = /[&<>"']/g;
 
 export function escapeText(s: string): string {
-  return s.replace(RE, (c) => MAP[c]);
+  return s.replace(RE, (c) => MAP[c]!);
 }

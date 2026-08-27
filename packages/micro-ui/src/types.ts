@@ -1,4 +1,4 @@
-export type AttrValue = string | { binding: true; parts: string[] };
+export type AttrValue = string | { binding: true; parts?: string[] };
 export type EventValue = string | ((e: Event) => void) | { binding: true };
 
 export interface BindingDesc {

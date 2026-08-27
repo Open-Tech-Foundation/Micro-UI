@@ -1,4 +1,4 @@
-import { define, html, update, onReady } from "@opentf/micro-ui";
+import { define, html, onReady, update } from "@opentf/micro-ui";
 
 // ── simulation primitives ──────────────────────────────────────────
 
@@ -30,11 +30,25 @@ type Sim = {
 const W = 640;
 const H = 400;
 
-const PALETTE = ["#38bdf8", "#f472b6", "#fbbf24", "#4ade80", "#a78bfa", "#fb7185"];
+const PALETTE = [
+  "#38bdf8",
+  "#f472b6",
+  "#fbbf24",
+  "#4ade80",
+  "#a78bfa",
+  "#fb7185",
+];
 
 let nextId = 1;
 
-function makeBody(x: number, y: number, vx: number, vy: number, mass: number, fixed = false): Body {
+function makeBody(
+  x: number,
+  y: number,
+  vx: number,
+  vy: number,
+  mass: number,
+  fixed = false,
+): Body {
   return {
     id: nextId++,
     x,
@@ -314,14 +328,23 @@ define("x-gravity", (el) => {
         </div>
 
         <div class="btn-row">
-          <button onclick=${() => { sim.paused = !sim.paused; update(el); }}>
+          <button onclick=${() => {
+            sim.paused = !sim.paused;
+            update(el);
+          }}>
             ${sim.paused ? "▶ Resume" : "⏸ Pause"}
           </button>
-          <button onclick=${() => { showTrails = !showTrails; update(el); }}>
+          <button onclick=${() => {
+            showTrails = !showTrails;
+            update(el);
+          }}>
             ${showTrails ? "Hide trails" : "Show trails"}
           </button>
           <button onclick=${() => applyPreset(preset)}>↻ Reset</button>
-          <button onclick=${() => { sim.bodies = []; update(el); }}>Clear</button>
+          <button onclick=${() => {
+            sim.bodies = [];
+            update(el);
+          }}>Clear</button>
         </div>
 
         <p class="hint">

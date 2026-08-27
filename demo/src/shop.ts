@@ -1,4 +1,4 @@
-import { define, html, update, onReady } from "@opentf/micro-ui";
+import { define, html, onReady, update } from "@opentf/micro-ui";
 import { store, subscribe } from "./store";
 
 const PRODUCTS = [
@@ -12,30 +12,46 @@ const PRODUCTS = [
 
 // ── cart actions ───────────────────────────────────────────────────
 
-function addToCart(product: typeof PRODUCTS[number]) {
+function addToCart(product: (typeof PRODUCTS)[number]) {
   const cart = store("cart") as any[];
   const existing = cart.find((i: any) => i.id === product.id);
-  store("cart", existing
-    ? cart.map((i: any) => i.id === product.id ? { ...i, qty: i.qty + 1 } : i)
-    : [...cart, { ...product, qty: 1 }]
+  store(
+    "cart",
+    existing
+      ? cart.map((i: any) =>
+          i.id === product.id ? { ...i, qty: i.qty + 1 } : i,
+        )
+      : [...cart, { ...product, qty: 1 }],
   );
 }
 
 function removeFromCart(id: number) {
-  store("cart", (store("cart") as any[]).filter((i: any) => i.id !== id));
+  store(
+    "cart",
+    (store("cart") as any[]).filter((i: any) => i.id !== id),
+  );
 }
 
 function updateQty(id: number, qty: number) {
   if (qty <= 0) return removeFromCart(id);
-  store("cart", (store("cart") as any[]).map((i: any) => i.id === id ? { ...i, qty } : i));
+  store(
+    "cart",
+    (store("cart") as any[]).map((i: any) => (i.id === id ? { ...i, qty } : i)),
+  );
 }
 
 function cartTotal() {
-  return (store("cart") as any[]).reduce((sum: number, i: any) => sum + i.price * i.qty, 0);
+  return (store("cart") as any[]).reduce(
+    (sum: number, i: any) => sum + i.price * i.qty,
+    0,
+  );
 }
 
 function cartCount() {
-  return (store("cart") as any[]).reduce((sum: number, i: any) => sum + i.qty, 0);
+  return (store("cart") as any[]).reduce(
+    (sum: number, i: any) => sum + i.qty,
+    0,
+  );
 }
 
 // ── init store ─────────────────────────────────────────────────────
@@ -49,7 +65,8 @@ define("x-product-list", (el) => {
     <div class="card">
       <h3>Products</h3>
       <div class="product-grid">
-        ${PRODUCTS.map((p) => html`<div key=${p.id} class="product-card">
+        ${PRODUCTS.map(
+          (p) => html`<div key=${p.id} class="product-card">
             <span class="product-emoji">${p.emoji}</span>
             <div class="product-info">
               <div class="product-name">${p.name}</div>
@@ -57,7 +74,8 @@ define("x-product-list", (el) => {
             </div>
             <button class="btn-add" onclick=${() => addToCart(p)}>Add to Cart</button>
           </div>
-        `)}
+        `,
+        )}
       </div>
     </div>
   `;
@@ -76,11 +94,13 @@ define("x-cart", (el) => {
     return html`
       <div class="card">
         <h3>Cart ${cartCount() > 0 ? `(${cartCount()})` : ""}</h3>
-        ${cart.length === 0
-          ? html`<p class="empty-cart">Your cart is empty</p>`
-          : html`
+        ${
+          cart.length === 0
+            ? html`<p class="empty-cart">Your cart is empty</p>`
+            : html`
             <ul class="cart-list">
-              ${cart.map((item: any) => html`<li key=${item.id} class="cart-item">
+              ${cart.map(
+                (item: any) => html`<li key=${item.id} class="cart-item">
                   <span class="cart-item-emoji">${item.emoji}</span>
                   <div class="cart-item-info">
                     <span class="cart-item-name">${item.name}</span>
@@ -93,7 +113,8 @@ define("x-cart", (el) => {
                   </div>
                   <button class="cart-item-remove" onclick=${() => removeFromCart(item.id)}>×</button>
                 </li>
-              `)}
+              `,
+              )}
             </ul>
             <div class="cart-footer">
               <div class="cart-total">
@@ -102,7 +123,8 @@ define("x-cart", (el) => {
               </div>
               <button class="btn-checkout" onclick=${() => alert("Checkout — $" + cartTotal().toFixed(2))}>Checkout</button>
             </div>
-          `}
+          `
+        }
       </div>
     `;
   };

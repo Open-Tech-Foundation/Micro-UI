@@ -1,7 +1,7 @@
 import { setProp } from "./dom.ts";
 import { escapeText } from "./escape.ts";
 import { materializeRaw } from "./raw.ts";
-import type { DescNode, TemplateCache, VNode } from "./types.ts";
+import type { DescNode, RawVNode, TemplateCache, VNode } from "./types.ts";
 
 export function createTree(
   tpl: TemplateCache,
@@ -130,6 +130,7 @@ function cloneNode(
       dom: el,
     };
   }
+  throw new Error("unreachable");
 }
 
 function resolveBinding(val: unknown, deferDOM: boolean): VNode {
@@ -145,7 +146,7 @@ function resolveBinding(val: unknown, deferDOM: boolean): VNode {
   if (val && typeof val === "object" && "type" in val) {
     const vnode = val as VNode;
     if (vnode.type === "fragment") return vnode;
-    if (vnode.type === "raw") return materializeRaw(val as never);
+    if ("html" in val) return materializeRaw(val as RawVNode);
     return vnode;
   }
   const s = escapeText(String(val));
