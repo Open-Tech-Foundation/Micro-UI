@@ -1,0 +1,483 @@
+const MARKER = "\ue000";
+const instances = new WeakMap();
+const templates = new WeakMap();
+const pending = new Set();
+let flushing = false;
+
+// ── html template tag (cached) ─────────────────────────────────────
+
+export function html(strings, ...values) {
+  let tpl = templates.get(strings);
+  if (!tpl) {
+    tpl = buildTemplate(strings);
+    templates.set(strings, tpl);
+  }
+  return createTree(tpl, values);
+}
+
+function buildTemplate(strings) {
+  let s = "";
+  for (let i = 0; i < strings.length; i++) {
+    s += strings[i];
+    if (i < strings.length - 1) s += MARKER;
+  }
+  const el = document.createElement("template");
+  el.innerHTML = s;
+  const bindings = [];
+  const tree = buildDesc(el.content, bindings);
+  return { tree, bindings };
+}
+
+function buildDesc(container, bindings) {
+  const nodes = [];
+  for (const n of Array.from(container.childNodes)) {
+    if (n.nodeType === 1) {
+      nodes.push(buildElDesc(n, bindings));
+    } else if (n.nodeType === 3) {
+      const t = n.textContent;
+      if (t.includes(MARKER)) {
+        const parts = t.split(MARKER);
+        for (let j = 0; j < parts.length; j++) {
+          if (j > 0) {
+            bindings.push({ type: "text" });
+            nodes.push({ type: "binding" });
+          }
+          if (parts[j] !== "") {
+            nodes.push({ type: "text", value: parts[j] });
+          }
+        }
+      } else if (t && t.trim()) {
+        nodes.push({ type: "text", value: t });
+      }
+    }
+  }
+  return nodes;
+}
+
+function buildElDesc(el, bindings) {
+  const tag = el.tagName.toLowerCase();
+  const attrs = {};
+  const events = {};
+  let key = null;
+
+  for (const a of Array.from(el.attributes)) {
+    const name = a.name;
+    const value = a.value;
+
+    // key is special — never set as DOM attribute
+    if (name === "key") {
+      if (value.includes(MARKER)) {
+        const parts = value.split(MARKER);
+        for (let i = 0; i < parts.length - 1; i++) bindings.push({ type: "key" });
+        key = { binding: true, parts };
+      } else {
+        key = value;
+      }
+      continue;
+    }
+
+    // event bindings: on* with marker inside
+    const isOnEvent = name.startsWith("on");
+    if (value.includes(MARKER) && isOnEvent) {
+      const ev = name.slice(2);
+      const parts = value.split(MARKER);
+      // expect exactly one marker for event handler
+      for (let i = 0; i < parts.length - 1; i++) bindings.push({ type: "event", name: ev });
+      events[ev] = { binding: true };
+      continue;
+    }
+    // static on* attribute (unlikely) treat as event string
+    if (isOnEvent && !value.includes(MARKER)) {
+      events[name.slice(2)] = value;
+      continue;
+    }
+
+    // dynamic attribute interpolations (including prefix/suffix and multiple markers)
+    if (value.includes(MARKER)) {
+      const parts = value.split(MARKER);
+      for (let i = 0; i < parts.length - 1; i++) bindings.push({ type: "attr", name });
+      attrs[name] = { binding: true, parts };
+    } else {
+      attrs[name] = value;
+    }
+  }
+
+  return {
+    type: "element",
+    tag,
+    attrs,
+    events,
+    key,
+    children: buildDesc(el, bindings),
+  };
+}
+
+// ── tree creation (clone cached desc + inject values) ──────────────
+
+function createTree(tpl, values) {
+  return { type: "fragment", children: createNodes(tpl.tree, values, { vi: 0 }) };
+}
+
+function createNodes(descs, values, state) {
+  const out = [];
+  for (const d of descs) pushNodes(cloneNode(d, values, state), out);
+  return out;
+}
+
+function pushNodes(node, out) {
+  if (node.type === "fragment") {
+    for (const c of node.children) pushNodes(c, out);
+  } else {
+    out.push(node);
+  }
+}
+
+function cloneNode(d, values, state) {
+  if (d.type === "text") {
+    return { type: "text", value: d.value, dom: document.createTextNode(d.value) };
+  }
+  if (d.type === "binding") {
+    const v = values[state.vi++];
+    return resolveBinding(v);
+  }
+  if (d.type === "element") {
+    const el = document.createElement(d.tag);
+    const attrs = {};
+    const events = {};
+    let resolvedKey = d.key;
+
+    // resolve dynamic key
+    if (d.key && d.key.binding) {
+      const parts = d.key.parts;
+      if (parts.length === 2 && parts[0] === "" && parts[1] === "") {
+        resolvedKey = values[state.vi++];
+        // normalize to string for map lookup but keep original
+        if (resolvedKey != null) resolvedKey = String(resolvedKey);
+      } else {
+        let out = "";
+        for (let i = 0; i < parts.length; i++) {
+          out += parts[i];
+          if (i < parts.length - 1) out += String(values[state.vi++] ?? "");
+        }
+        resolvedKey = out;
+      }
+    }
+
+    for (const [k, v] of Object.entries(d.attrs)) {
+      if (v && v.binding) {
+        const parts = v.parts;
+        let val;
+        if (parts.length === 2 && parts[0] === "" && parts[1] === "") {
+          val = values[state.vi++];
+        } else {
+          let out = "";
+          for (let i = 0; i < parts.length; i++) {
+            out += parts[i];
+            if (i < parts.length - 1) out += String(values[state.vi++] ?? "");
+          }
+          val = out;
+        }
+        attrs[k] = val;
+        setProp(el, k, val);
+      } else {
+        attrs[k] = v;
+        el.setAttribute(k, v);
+      }
+    }
+    for (const [e, h] of Object.entries(d.events)) {
+      if (h && h.binding) {
+        const val = values[state.vi++];
+        events[e] = val;
+        if (val != null) el.addEventListener(e, val);
+      } else {
+        events[e] = h;
+        if (h != null) el.addEventListener(e, h);
+      }
+    }
+
+    const children = createNodes(d.children, values, state);
+    for (const c of children) el.appendChild(c.dom);
+
+    return { type: "element", tag: d.tag, attrs, events, key: resolvedKey, children, dom: el };
+  }
+}
+
+function resolveBinding(val) {
+  if (val == null || val === false) return { type: "text", value: "", dom: document.createTextNode("") };
+  if (Array.isArray(val)) {
+    const nodes = [];
+    for (const item of val) nodes.push(resolveBinding(item));
+    return { type: "fragment", children: nodes };
+  }
+  if (val.type) {
+    if (val.type === "fragment") return val;
+    return val;
+  }
+  return { type: "text", value: val, dom: document.createTextNode(String(val)) };
+}
+
+// ── DOM property helper ────────────────────────────────────────────
+
+function setProp(el, k, v) {
+  // handle form control properties specially
+  if (k === "value") {
+    if (v == null) {
+      el.removeAttribute(k);
+      el.value = "";
+    } else {
+      el.value = String(v);
+      el.setAttribute(k, String(v));
+    }
+    return;
+  }
+  if (k === "checked") {
+    const b = !!v && v !== "" && v !== "false" && v !== false;
+    el.checked = b;
+    if (b) el.setAttribute(k, "");
+    else el.removeAttribute(k);
+    return;
+  }
+  if (k === "selected" || k === "disabled" || k === "indeterminate") {
+    const b = !!v && v !== "" && v !== false;
+    el[k] = b;
+    if (b) el.setAttribute(k, "");
+    else el.removeAttribute(k);
+    return;
+  }
+  if (v == null || v === false) {
+    el.removeAttribute(k);
+    // also clear property if exists
+    try { if (k in el) el[k] = undefined; } catch {}
+  } else if (v === true) {
+    el.setAttribute(k, "");
+    try { if (k in el) el[k] = true; } catch {}
+  } else if (typeof v === "string") {
+    el.setAttribute(k, v);
+  } else {
+    try { el[k] = v; } catch {}
+    // also reflect as attribute if reasonable
+    if (typeof v === "number" || typeof v === "boolean") {
+      el.setAttribute(k, String(v));
+    }
+  }
+}
+
+// ── lifecycle hooks ────────────────────────────────────────────────
+
+let pendingReady = null;
+const destroyCallbacks = new WeakMap();
+
+export function onReady(cb) {
+  if (!pendingReady) throw new Error("onReady() must be called synchronously inside define(..., setup)");
+  pendingReady.push(cb);
+}
+
+// ── define ─────────────────────────────────────────────────────────
+
+let currentEl = null;
+
+export function define(tag, setup) {
+  customElements.define(
+    tag,
+    class extends HTMLElement {
+      connectedCallback() {
+        const props = {};
+        for (const a of this.attributes) props[a.name] = a.value;
+        const prevReady = pendingReady;
+        pendingReady = [];
+        currentEl = this;
+        const render = setup(this, props);
+        currentEl = null;
+        const tree = render();
+        this.textContent = "";
+        for (const c of tree.children) this.appendChild(c.dom);
+        instances.set(this, { render, tree, props });
+        const cbs = pendingReady;
+        pendingReady = prevReady;
+        for (const cb of cbs) {
+          const cleanup = cb();
+          if (typeof cleanup === "function") {
+            let list = destroyCallbacks.get(this);
+            if (!list) { list = []; destroyCallbacks.set(this, list); }
+            list.push(cleanup);
+          }
+        }
+      }
+      disconnectedCallback() {
+        const cbs = destroyCallbacks.get(this);
+        if (cbs) for (const cb of cbs) cb();
+        destroyCallbacks.delete(this);
+        instances.delete(this);
+        pending.delete(this);
+      }
+    }
+  );
+}
+
+// ── update (batched) ──────────────────────────────────────────────
+
+export function update(el) {
+  const inst = instances.get(el);
+  if (!inst) return;
+  pending.add(el);
+  if (!flushing) {
+    flushing = true;
+    queueMicrotask(flush);
+  }
+}
+
+export function flush() {
+  flushing = false;
+  const batch = [...pending];
+  pending.clear();
+  for (const el of batch) {
+    const inst = instances.get(el);
+    if (!inst) continue;
+    const newTree = inst.render();
+    reconcile(inst.tree, newTree, el);
+    inst.tree = newTree;
+  }
+}
+
+// ── mount ──────────────────────────────────────────────────────────
+
+export function mount(el, tag) {
+  el.textContent = "";
+  const child = document.createElement(tag);
+  el.appendChild(child);
+  return child;
+}
+
+// ── reconciliation ─────────────────────────────────────────────────
+
+function reconcile(old, next, parent) {
+  if (old.type !== next.type) {
+    parent.replaceChild(next.dom, old.dom);
+    return;
+  }
+  if (old.type === "text") {
+    if (String(old.value) !== String(next.value)) old.dom.nodeValue = String(next.value);
+    next.dom = old.dom;
+    return;
+  }
+  if (old.type === "fragment") {
+    patchLists(old.children, next.children, parent);
+    return;
+  }
+  if (old.type === "element") {
+    if (old.tag !== next.tag) {
+      parent.replaceChild(next.dom, old.dom);
+      return;
+    }
+    const dom = old.dom;
+    next.dom = dom;
+    patchAttrs(dom, old.attrs, next.attrs);
+    patchEvents(dom, old.events, next.events);
+    // sync props for child micro-ui components
+    const inst = instances.get(dom);
+    if (inst && inst.props) {
+      let changed = false;
+      for (const k in next.attrs) {
+        if (inst.props[k] !== String(next.attrs[k])) changed = true;
+        inst.props[k] = next.attrs[k] == null ? undefined : String(next.attrs[k]);
+      }
+      for (const k in inst.props) {
+        if (!(k in next.attrs)) { delete inst.props[k]; changed = true; }
+      }
+      // also handle removed attrs via patchAttrs already
+      if (changed) update(dom);
+    }
+    patchLists(old.children, next.children, dom);
+  }
+}
+
+// ── keyed list reconciliation ──────────────────────────────────────
+
+function patchLists(oldCh, newCh, parent) {
+  if (newCh.length === 1 && oldCh.length === 1) {
+    const o = oldCh[0];
+    const n = newCh[0];
+    if (o.type === n.type) {
+      reconcile(o, n, parent);
+      return;
+    }
+  }
+
+  const hasKeys = newCh.some((n) => n.key != null) || oldCh.some((o) => o.key != null);
+  if (hasKeys) {
+    patchKeyed(oldCh, newCh, parent);
+  } else {
+    patchByIndex(oldCh, newCh, parent);
+  }
+}
+
+function patchByIndex(oldCh, newCh, parent) {
+  const len = Math.max(oldCh.length, newCh.length);
+  for (let i = 0; i < len; i++) {
+    const o = oldCh[i];
+    const n = newCh[i];
+    if (!o) {
+      parent.appendChild(n.dom);
+    } else if (!n) {
+      o.dom.remove();
+    } else {
+      reconcile(o, n, parent);
+    }
+  }
+}
+
+function patchKeyed(oldCh, newCh, parent) {
+  const oldMap = new Map();
+  for (const o of oldCh) if (o.key != null) oldMap.set(String(o.key), o);
+  let next = null;
+  for (let i = newCh.length - 1; i >= 0; i--) {
+    const n = newCh[i];
+    const o = n.key != null ? oldMap.get(String(n.key)) : null;
+    if (o && o.dom.parentNode === parent) {
+      reconcile(o, n, parent);
+      if (o.dom.nextSibling !== next) parent.insertBefore(o.dom, next);
+      next = o.dom;
+      oldMap.delete(String(n.key));
+    } else {
+      // fallback: non-keyed position or new key
+      const fallback = n.key == null ? oldCh[i] : null;
+      if (fallback && fallback.dom.parentNode === parent && fallback.key == null) {
+        reconcile(fallback, n, parent);
+        if (fallback.dom.nextSibling !== next) parent.insertBefore(fallback.dom, next);
+        next = fallback.dom;
+      } else {
+        parent.insertBefore(n.dom, next);
+        next = n.dom;
+      }
+    }
+  }
+  for (const o of oldMap.values()) if (o.dom.parentNode === parent) o.dom.remove();
+}
+
+function findDom(node, parent) {
+  if (node.type === "fragment") {
+    for (let i = node.children.length - 1; i >= 0; i--) {
+      const d = findDom(node.children[i], parent);
+      if (d && d.parentNode === parent) return d;
+    }
+    return null;
+  }
+  if (node.dom && node.dom.parentNode === parent) return node.dom;
+  return null;
+}
+
+// ── attribute patching ─────────────────────────────────────────────
+
+function patchAttrs(el, old, next) {
+  for (const k in old) if (!(k in next)) setProp(el, k, null);
+  for (const k in next)
+    if (old[k] !== next[k]) setProp(el, k, next[k]);
+}
+
+function patchEvents(el, old, next) {
+  for (const e in old)
+    if (old[e] != null && (!(e in next) || next[e] !== old[e]))
+      el.removeEventListener(e, old[e]);
+  for (const e in next)
+    if (next[e] != null && old[e] !== next[e]) el.addEventListener(e, next[e]);
+}

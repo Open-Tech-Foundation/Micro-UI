@@ -1,0 +1,40 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .: {}
+
+  demo:
+    dependencies:
+      '@micro-ui/core':
+        specifier: workspace:*
+        version: link:../packages/micro-ui
+    devDependencies:
+      '@opentf/esrun-types':
+        specifier: latest
+        version: 0.3.0
+      typescript:
+        specifier: ^5.9.0
+        version: 5.9.3
+
+  packages/micro-ui: {}
+
+packages:
+
+  '@opentf/esrun-types@0.3.0':
+    resolution: {integrity: sha512-uz4vkaTq2p6Eej8cVMCxHl3BjOqeXtohy53cyk3Zxmy562U3JPQJxVT0mMMlW7HPDY30GVyiwDH0mpBYmfXuTg==}
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+snapshots:
+
+  '@opentf/esrun-types@0.3.0': {}
+
+  typescript@5.9.3: {}

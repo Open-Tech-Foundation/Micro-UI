@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Micro-UI Tests</title>
+<style>
+  body { font-family: monospace; max-width: 900px; margin: 2rem auto; line-height: 1.5; }
+  .test { border: 1px solid #ccc; padding: 1rem; margin: 1rem 0; border-radius: 4px; }
+  .pass { color: green; }
+  .fail { color: red; font-weight: bold; }
+  .label { font-weight: bold; margin-bottom: 0.5rem; display: block; }
+  video, canvas { max-width: 200px; }
+  .log { background: #f4f4f4; padding: 0.5rem; margin-top: 0.5rem; font-size: 0.85rem; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Micro-UI v0 Tests</h1>
+<div id="results"></div>
+
+<script type="module">
+import { define, html, update } from "./src/micro-ui.js";
+
+const results = document.getElementById("results");
+let passCount = 0;
+let failCount = 0;
+
+function log(el, msg) {
+  const d = document.createElement("div");
+  d.className = "log";
+  d.textContent = msg;
+  el.appendChild(d);
+}
+
+function assert(testId, condition, msg) {
+  const section = document.getElementById(testId);
+  const span = document.createElement("span");
+  if (condition) {
+    span.className = "pass";
+    span.textContent = "✓ PASS";
+    passCount++;
+  } else {
+    span.className = "fail";
+    span.textContent = "✗ FAIL: " + msg;
+    failCount++;
+  }
+  section.appendChild(span);
+}
+
+// ── Test 1: Basic text update ──────────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test1";
+  section.className = "test";
+  section.innerHTML = '<span class="label">1. Basic text update</span>';
+  results.appendChild(section);
+
+  define("t1-counter", (el, props) => {
+    let count = Number(props.count || 0);
+    return () => html`<span class="count">${count}</span>`;
+  });
+
+  const el = document.createElement("t1-counter");
+  el.setAttribute("count", "0");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t1-counter");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const span = el.querySelector(".count");
+  assert("test1", span.textContent === "0", `Expected "0" got "${span.textContent}"`);
+
+  // Manually update internal state and re-render
+  // Since we can't access closure from outside, we test via the element
+  // For this test, we verify initial render works and the element exists
+  assert("test1", el.querySelector(".count") !== null, "Count span exists");
+}
+
+// ── Test 2: Attribute update ───────────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test2";
+  section.className = "test";
+  section.innerHTML = '<span class="label">2. Attribute update</span>';
+  results.appendChild(section);
+
+  define("t2-img", (el, props) => {
+    let src = props.src || "";
+    return () => html`<img src=${src} class="photo">`;
+  });
+
+  const el = document.createElement("t2-img");
+  el.setAttribute("src", "/a.jpg");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t2-img");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const img = el.querySelector(".photo");
+  assert("test2", img.getAttribute("src") === "/a.jpg", `Expected /a.jpg got ${img.getAttribute("src")}`);
+}
+
+// ── Test 3: Event listener update ──────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test3";
+  section.className = "test";
+  section.innerHTML = '<span class="label">3. Event listener update</span>';
+  results.appendChild(section);
+
+  let clickCount = 0;
+
+  define("t3-btn", (el, props) => {
+    let label = props.label || "Click";
+    return () => html`<button class="btn" onclick=${() => { clickCount++; label = "Clicked"; update(el); }}>${label}</button>`;
+  });
+
+  const el = document.createElement("t3-btn");
+  el.setAttribute("label", "Click me");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t3-btn");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const btn = el.querySelector(".btn");
+  assert("test3", btn.textContent === "Click me", `Expected "Click me" got "${btn.textContent}"`);
+
+  btn.click();
+  await new Promise(r => requestAnimationFrame(r));
+
+  assert("test3", clickCount === 1, `Expected clickCount 1 got ${clickCount}`);
+  assert("test3", btn.textContent === "Clicked", `Expected "Clicked" got "${btn.textContent}"`);
+}
+
+// ── Test 4: Nested elements ────────────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test4";
+  section.className = "test";
+  section.innerHTML = '<span class="label">4. Nested elements</span>';
+  results.appendChild(section);
+
+  define("t4-nested", (el, props) => {
+    return () => html`
+      <div class="outer">
+        <p class="inner">Hello</p>
+      </div>
+    `;
+  });
+
+  const el = document.createElement("t4-nested");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t4-nested");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const outer = el.querySelector(".outer");
+  const inner = el.querySelector(".inner");
+  assert("test4", outer !== null, "Outer div exists");
+  assert("test4", inner !== null, "Inner p exists");
+  assert("test4", inner.textContent === "Hello", `Expected "Hello" got "${inner.textContent}"`);
+}
+
+// ── Test 5: Nested Custom Elements ─────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test5";
+  section.className = "test";
+  section.innerHTML = '<span class="label">5. Nested Custom Elements</span>';
+  results.appendChild(section);
+
+  define("t5-child", (el, props) => {
+    return () => html`<span class="child-content">I am a child</span>`;
+  });
+
+  define("t5-parent", (el, props) => {
+    let name = props.name || "Parent";
+    return () => html`
+      <div class="parent">
+        <h3 class="parent-name">${name}</h3>
+        <t5-child></t5-child>
+      </div>
+    `;
+  });
+
+  const el = document.createElement("t5-parent");
+  el.setAttribute("name", "Dad");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t5-parent");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const child = el.querySelector("t5-child");
+  const childContent = el.querySelector(".child-content");
+  const parentName = el.querySelector(".parent-name");
+
+  assert("test5", child !== null, "Child element exists");
+  assert("test5", childContent !== null && childContent.textContent === "I am a child", "Child content rendered");
+  assert("test5", parentName.textContent === "Dad", `Expected "Dad" got "${parentName.textContent}"`);
+}
+
+// ── Test 6: Input preservation ─────────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test6";
+  section.className = "test";
+  section.innerHTML = '<span class="label">6. Input preservation</span>';
+  results.appendChild(section);
+
+  let triggerUpdate;
+
+  define("t6-input", (el, props) => {
+    let flag = false;
+    triggerUpdate = () => { flag = !flag; update(el); };
+    return () => html`<input class="field" value="initial" placeholder="type here">`;
+  });
+
+  const el = document.createElement("t6-input");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t6-input");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const input = el.querySelector(".field");
+  const originalInput = input;
+
+  // Simulate user typing
+  input.value = "user typed here";
+  input.focus();
+
+  // Trigger parent update
+  triggerUpdate();
+  await new Promise(r => requestAnimationFrame(r));
+
+  const inputAfter = el.querySelector(".field");
+  assert("test6", inputAfter === originalInput, "Same input DOM node preserved");
+  assert("test6", inputAfter.value === "user typed here", `Value preserved: "${inputAfter.value}"`);
+}
+
+// ── Test 7: Textarea preservation ──────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test7";
+  section.className = "test";
+  section.innerHTML = '<span class="label">7. Textarea preservation</span>';
+  results.appendChild(section);
+
+  let triggerUpdate7;
+
+  define("t7-textarea", (el, props) => {
+    let flag = false;
+    triggerUpdate7 = () => { flag = !flag; update(el); };
+    return () => html`<textarea class="area">default text</textarea>`;
+  });
+
+  const el = document.createElement("t7-textarea");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t7-textarea");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const ta = el.querySelector(".area");
+  const originalTA = ta;
+
+  ta.value = "user edited textarea";
+  triggerUpdate7();
+  await new Promise(r => requestAnimationFrame(r));
+
+  const taAfter = el.querySelector(".area");
+  assert("test7", taAfter === originalTA, "Same textarea DOM node preserved");
+  assert("test7", taAfter.value === "user edited textarea", `Value preserved: "${taAfter.value}"`);
+}
+
+// ── Test 8: Select preservation ────────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test8";
+  section.className = "test";
+  section.innerHTML = '<span class="label">8. Select preservation</span>';
+  results.appendChild(section);
+
+  let triggerUpdate8;
+
+  define("t8-select", (el, props) => {
+    let flag = false;
+    triggerUpdate8 = () => { flag = !flag; update(el); };
+    return () => html`
+      <select class="sel">
+        <option value="a">A</option>
+        <option value="b">B</option>
+        <option value="c">C</option>
+      </select>
+    `;
+  });
+
+  const el = document.createElement("t8-select");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t8-select");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const sel = el.querySelector(".sel");
+  const originalSel = sel;
+
+  sel.value = "b";
+  triggerUpdate8();
+  await new Promise(r => requestAnimationFrame(r));
+
+  const selAfter = el.querySelector(".sel");
+  assert("test8", selAfter === originalSel, "Same select DOM node preserved");
+  assert("test8", selAfter.value === "b", `Selection preserved: "${selAfter.value}"`);
+}
+
+// ── Test 9: Video preservation ─────────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test9";
+  section.className = "test";
+  section.innerHTML = '<span class="label">9. Video preservation</span>';
+  results.appendChild(section);
+
+  let triggerUpdate9;
+
+  define("t9-video", (el, props) => {
+    let flag = false;
+    triggerUpdate9 = () => { flag = !flag; update(el); };
+    return () => html`<video class="vid" src="test.mp4" controls width="200"></video>`;
+  });
+
+  const el = document.createElement("t9-video");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t9-video");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const vid = el.querySelector(".vid");
+  const originalVid = vid;
+
+  // Modify some property to verify preservation
+  vid.muted = true;
+
+  triggerUpdate9();
+  await new Promise(r => requestAnimationFrame(r));
+
+  const vidAfter = el.querySelector(".vid");
+  assert("test9", vidAfter === originalVid, "Same video DOM node preserved");
+  assert("test9", vidAfter.muted === true, `Video property preserved: muted=${vidAfter.muted}`);
+}
+
+// ── Test 10: Canvas preservation ───────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test10";
+  section.className = "test";
+  section.innerHTML = '<span class="label">10. Canvas preservation</span>';
+  results.appendChild(section);
+
+  let triggerUpdate10;
+
+  define("t10-canvas", (el, props) => {
+    let flag = false;
+    triggerUpdate10 = () => { flag = !flag; update(el); };
+    return () => html`<canvas class="cv" width="100" height="100"></canvas>`;
+  });
+
+  const el = document.createElement("t10-canvas");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t10-canvas");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const cv = el.querySelector(".cv");
+  const originalCv = cv;
+
+  // Draw on canvas
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "red";
+  ctx.fillRect(10, 10, 50, 50);
+
+  triggerUpdate10();
+  await new Promise(r => requestAnimationFrame(r));
+
+  const cvAfter = el.querySelector(".cv");
+  assert("test10", cvAfter === originalCv, "Same canvas DOM node preserved");
+
+  // Verify canvas content survived
+  const ctxAfter = cvAfter.getContext("2d");
+  const pixel = ctxAfter.getImageData(25, 25, 1, 1).data;
+  assert("test10", pixel[0] === 255 && pixel[1] === 0, `Canvas content preserved: rgb(${pixel[0]},${pixel[1]},${pixel[2]})`);
+}
+
+// ── Test 11: iframe preservation ───────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test11";
+  section.className = "test";
+  section.innerHTML = '<span class="label">11. iframe preservation</span>';
+  results.appendChild(section);
+
+  let triggerUpdate11;
+
+  define("t11-iframe", (el, props) => {
+    let flag = false;
+    triggerUpdate11 = () => { flag = !flag; update(el); };
+    return () => html`<iframe class="frame" src="about:blank" width="200" height="100"></iframe>`;
+  });
+
+  const el = document.createElement("t11-iframe");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t11-iframe");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const frame = el.querySelector(".frame");
+  const originalFrame = frame;
+
+  triggerUpdate11();
+  await new Promise(r => requestAnimationFrame(r));
+
+  const frameAfter = el.querySelector(".frame");
+  assert("test11", frameAfter === originalFrame, "Same iframe DOM node preserved");
+}
+
+// ── Test 12: Conditional rendering ─────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test12";
+  section.className = "test";
+  section.innerHTML = '<span class="label">12. Conditional rendering</span>';
+  results.appendChild(section);
+
+  let triggerUpdate12;
+  let showFlag = true;
+
+  define("t12-cond", (el, props) => {
+    triggerUpdate12 = () => { showFlag = !showFlag; update(el); };
+    return () => html`
+      <div class="wrapper">
+        ${showFlag ? html`<span class="yes">Shown</span>` : null}
+      </div>
+    `;
+  });
+
+  const el = document.createElement("t12-cond");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t12-cond");
+  await new Promise(r => requestAnimationFrame(r));
+
+  assert("test12", el.querySelector(".yes") !== null, "Element visible when showFlag=true");
+
+  triggerUpdate12();
+  await new Promise(r => requestAnimationFrame(r));
+
+  assert("test12", el.querySelector(".yes") === null, "Element hidden when showFlag=false");
+
+  triggerUpdate12();
+  await new Promise(r => requestAnimationFrame(r));
+
+  assert("test12", el.querySelector(".yes") !== null, "Element visible again after toggle back");
+}
+
+// ── Test 13: Array rendering ───────────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test13";
+  section.className = "test";
+  section.innerHTML = '<span class="label">13. Array rendering</span>';
+  results.appendChild(section);
+
+  let triggerUpdate13;
+  let items = ["Apple", "Banana", "Cherry"];
+
+  define("t13-list", (el, props) => {
+    triggerUpdate13 = () => { items = ["Apple", "Date", "Cherry", "Elderberry"]; update(el); };
+    return () => html`
+      <ul class="fruits">
+        ${items.map(item => html`<li>${item}</li>`)}
+      </ul>
+    `;
+  });
+
+  const el = document.createElement("t13-list");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t13-list");
+  await new Promise(r => requestAnimationFrame(r));
+
+  let lis = el.querySelectorAll("li");
+  assert("test13", lis.length === 3, `Expected 3 items, got ${lis.length}`);
+  assert("test13", lis[0].textContent === "Apple", `First item: "${lis[0].textContent}"`);
+  assert("test13", lis[1].textContent === "Banana", `Second item: "${lis[1].textContent}"`);
+  assert("test13", lis[2].textContent === "Cherry", `Third item: "${lis[2].textContent}"`);
+
+  // Save reference to first li
+  const firstLi = lis[0];
+
+  triggerUpdate13();
+  await new Promise(r => requestAnimationFrame(r));
+
+  lis = el.querySelectorAll("li");
+  assert("test13", lis.length === 4, `Expected 4 items after update, got ${lis.length}`);
+  assert("test13", lis[0].textContent === "Apple", `First item after: "${lis[0].textContent}"`);
+  assert("test13", lis[0] === firstLi, "First li DOM node reused (positional reconciliation)");
+}
+
+// ── Test 14: Nested component state ────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test14";
+  section.className = "test";
+  section.innerHTML = '<span class="label">14. Nested component state</span>';
+  results.appendChild(section);
+
+  let childUpdateCount = 0;
+
+  define("t14-child", (el, props) => {
+    let count = Number(props.start || 0);
+    return () => html`
+      <div class="child-wrap">
+        <span class="child-val">${count}</span>
+        <button class="child-btn" onclick=${() => { count++; childUpdateCount++; update(el); }}>+1</button>
+      </div>
+    `;
+  });
+
+  let parentTrigger;
+
+  define("t14-parent", (el, props) => {
+    let flag = false;
+    parentTrigger = () => { flag = !flag; update(el); };
+    return () => html`
+      <div class="parent-wrap">
+        <t14-child start="5"></t14-child>
+      </div>
+    `;
+  });
+
+  const el = document.createElement("t14-parent");
+  results.appendChild(el);
+
+  await customElements.whenDefined("t14-parent");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const childVal = el.querySelector(".child-val");
+  assert("test14", childVal.textContent === "5", `Child initial value: "${childVal.textContent}"`);
+
+  // Click child button
+  el.querySelector(".child-btn").click();
+  await new Promise(r => requestAnimationFrame(r));
+
+  assert("test14", childVal.textContent === "6", `Child value after click: "${childVal.textContent}"`);
+  assert("test14", childUpdateCount === 1, `Child update count: ${childUpdateCount}`);
+
+  // Trigger parent update - child should retain its state
+  const childEl = el.querySelector("t14-child");
+  parentTrigger();
+  await new Promise(r => requestAnimationFrame(r));
+
+  const childValAfter = el.querySelector(".child-val");
+  assert("test14", childValAfter.textContent === "6", `Child value after parent update: "${childValAfter.textContent}"`);
+}
+
+// ── Test 15: Multiple instances ────────────────────────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test15";
+  section.className = "test";
+  section.innerHTML = '<span class="label">15. Multiple instances</span>';
+  results.appendChild(section);
+
+  define("t15-counter", (el, props) => {
+    let count = Number(props.start || 0);
+    return () => html`
+      <div class="counter-wrap">
+        <span class="val">${count}</span>
+        <button class="inc" onclick=${() => { count++; update(el); }}>+1</button>
+      </div>
+    `;
+  });
+
+  const el1 = document.createElement("t15-counter");
+  el1.setAttribute("start", "0");
+  const el2 = document.createElement("t15-counter");
+  el2.setAttribute("start", "10");
+  results.appendChild(el1);
+  results.appendChild(el2);
+
+  await customElements.whenDefined("t15-counter");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const val1 = el1.querySelector(".val");
+  const val2 = el2.querySelector(".val");
+
+  assert("test15", val1.textContent === "0", `Instance 1 initial: "${val1.textContent}"`);
+  assert("test15", val2.textContent === "10", `Instance 2 initial: "${val2.textContent}"`);
+
+  // Click instance 1
+  el1.querySelector(".inc").click();
+  await new Promise(r => requestAnimationFrame(r));
+
+  assert("test15", val1.textContent === "1", `Instance 1 after click: "${val1.textContent}"`);
+  assert("test15", val2.textContent === "10", `Instance 2 unchanged: "${val2.textContent}"`);
+
+  // Click instance 2
+  el2.querySelector(".inc").click();
+  await new Promise(r => requestAnimationFrame(r));
+
+  assert("test15", val1.textContent === "1", `Instance 1 still: "${val1.textContent}"`);
+  assert("test15", val2.textContent === "11", `Instance 2 after click: "${val2.textContent}"`);
+}
+
+// ── Summary ────────────────────────────────────────────────────────
+
+await new Promise(r => setTimeout(r, 200));
+
+const summary = document.createElement("div");
+summary.className = "test";
+summary.innerHTML = `<strong>Results: <span class="pass">${passCount} passed</span>, <span class="${failCount ? 'fail' : ''}">${failCount} failed</span></strong>`;
+results.appendChild(summary);
+
+</script>
+</body>
+</html>

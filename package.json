@@ -1,0 +1,6 @@
+{
+  "name": "micro-ui-monorepo",
+  "private": true,
+  "type": "module",
+  "description": "Micro-UI monorepo"
+}

@@ -1,0 +1,8 @@
+{
+  "targets": {
+    "web": {
+      "entry": "index.html",
+      "outdir": "dist"
+    }
+  }
+}

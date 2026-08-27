@@ -1,0 +1,26 @@
+{
+  "name": "@opentf/micro-ui",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src"
+  ],
+  "description": "A tiny functional Web Components library for AI agents to create lightweight micro-apps \u2014 ~400 lines, no VDOM, no signals, no compiler",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Open-Tech-Foundation/Micro-UI.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "web-components",
+    "micro-ui",
+    "functional",
+    "tiny",
+    "ai-agents"
+  ],
+  "author": "Open Tech Foundation"
+}

@@ -1,0 +1,49 @@
+# tasks.toml — workspace root anchor and config for `tsr` (https://tsr.opentechf.org)
+# Run any task from anywhere in the repo: `tsr <task> [-- <passthrough>]`
+# Inspect without executing: `tsr <task> --dry-run`  •  List: `tsr --list`  •  Edit: `tsr --config`
+
+[workspace]
+members = ["packages/*", "demo"]
+
+# ------------------------------------------------------------------ demo
+# Live demo workbench — `esdev start` defaults to http://localhost:5173
+[tasks.demo]
+run = "esdev start"
+dir = "demo"
+
+# ------------------------------------------------------------------ build
+[tasks.build]
+run = "esdev build --lib src --dts-bundle && cp ../../README.md README.md"
+dir = "packages/micro-ui"
+
+# ------------------------------------------------------------------ typecheck / test
+[tasks.typecheck]
+packages = ["packages/*", "demo"]
+run = "tsc --noEmit"
+
+# Tests run from the workspace root (not the package dir) so esdev's module
+# sandbox — which pins resolution to the process working directory — can reach
+# pnpm's hoisted store under root node_modules/.pnpm.
+[tasks.test]
+run = "esdev test packages/micro-ui"
+
+[tasks."test:e2e"]
+run = "esdev test"
+dir = "packages/micro-ui"
+
+# ------------------------------------------------------------------ lint / fmt (Biome)
+[tasks.lint]
+run = "biome lint"
+
+[tasks.fmt]
+run = "biome format --write"
+
+[tasks."fmt:check"]
+run = "biome check"
+
+# ------------------------------------------------------------------ ci
+[tasks.check]
+deps = ["typecheck", "lint", "fmt:check", "test"]
+
+[tasks.ci]
+deps = ["typecheck", "lint", "fmt:check", "test", "build"]

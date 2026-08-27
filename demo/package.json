@@ -1,0 +1,19 @@
+{
+  "name": "demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "esdev start",
+    "build": "esdev build --minify",
+    "build:debug": "esdev build",
+    "test": "esdev test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opentf/micro-ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@opentf/esrun-types": "latest",
+    "typescript": "^5.9.0"
+  }
+}
