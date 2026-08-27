@@ -1,15 +1,8 @@
-import {
-  define,
-  html,
-  onReady,
-  store,
-  subscribe,
-  update,
-} from "@opentf/micro-ui";
+import { define, html, onReady, store, update } from "@opentf/micro-ui";
 
 // ── init form store ────────────────────────────────────────────────
 
-store("form", {
+store.set("form", {
   name: "",
   email: "",
   address: { street: "", city: "", zip: "" },
@@ -19,16 +12,16 @@ store("form", {
 // ── form field component ───────────────────────────────────────────
 
 define("x-field", (el, props) => {
-  onReady(() => subscribe("form", () => update(el)));
+  onReady(() => store.subscribe("form", () => update(el)));
   return () => html`
     <div class="field">
       <label>${props.label}</label>
       <input
         type=${props.type || "text"}
         placeholder=${props.placeholder || ""}
-        value=${store<string>("form", undefined, { path: props.path! }) ?? ""}
+        value=${store.get<string>("form", { path: props.path! }) ?? ""}
         oninput=${(e: InputEvent) => {
-          store("form", (e.target as HTMLInputElement).value, {
+          store.set("form", (e.target as HTMLInputElement).value, {
             path: props.path!,
           });
         }}
@@ -40,15 +33,15 @@ define("x-field", (el, props) => {
 // ── form checkbox component ────────────────────────────────────────
 
 define("x-checkbox", (el, props) => {
-  onReady(() => subscribe("form", () => update(el)));
+  onReady(() => store.subscribe("form", () => update(el)));
   return () => html`
     <div class="field field-checkbox">
       <label>
         <input
           type="checkbox"
-          checked=${!!store<string>("form", undefined, { path: props.path! })}
+          checked=${!!store.get<string>("form", { path: props.path! })}
           onchange=${(e: Event) => {
-            store("form", (e.target as HTMLInputElement).checked, {
+            store.set("form", (e.target as HTMLInputElement).checked, {
               path: props.path!,
             });
           }}
@@ -63,11 +56,11 @@ define("x-checkbox", (el, props) => {
 
 define("x-form-preview", (el) => {
   onReady(() => {
-    return subscribe("form", () => update(el));
+    return store.subscribe("form", () => update(el));
   });
 
   return () => {
-    const data = store("form");
+    const data = store.get("form");
     // Use html.raw so the JSON renders as literal text — quotes, braces,
     // and colons show as themselves, not as &quot; / &amp; / etc.
     // The source is the app's own form state (trusted); user-typed
@@ -88,7 +81,7 @@ define("x-form-page", (el) => {
   onReady(() => console.log("x-form-page ready", el));
 
   const reset = () => {
-    store("form", {
+    store.set("form", {
       name: "",
       email: "",
       address: { street: "", city: "", zip: "" },
@@ -97,8 +90,8 @@ define("x-form-page", (el) => {
   };
 
   const submit = () => {
-    const data = store("form");
-    alert("Submitted:\n" + JSON.stringify(data, null, 2));
+    const data = store.get("form");
+    alert(`Submitted:\n${JSON.stringify(data, null, 2)}`);
   };
 
   return () => html`

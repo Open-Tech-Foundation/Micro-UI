@@ -1,27 +1,25 @@
-import {
-  define,
-  html,
-  onReady,
-  store,
-  subscribe,
-  update,
-} from "@opentf/micro-ui";
+import { define, html, onReady, store, update } from "@opentf/micro-ui";
 
 const PRODUCTS = [
-  { id: 1, name: "Mechanical Keyboard", price: 149.99, emoji: "⌨️" },
-  { id: 2, name: "Wireless Mouse", price: 79.99, emoji: "🖱️" },
-  { id: 3, name: "4K Monitor", price: 449.99, emoji: "🖥️" },
-  { id: 4, name: "USB-C Hub", price: 59.99, emoji: "🔌" },
-  { id: 5, name: "Noise Cancelling Headphones", price: 299.99, emoji: "🎧" },
-  { id: 6, name: "Webcam HD", price: 89.99, emoji: "📷" },
+  { id: 1, name: "Mechanical Keyboard", price: 149.99, emoji: "\u2328\uFE0F" },
+  { id: 2, name: "Wireless Mouse", price: 79.99, emoji: "\uD83D\uDDB1\uFE0F" },
+  { id: 3, name: "4K Monitor", price: 449.99, emoji: "\uD83D\uDDA5\uFE0F" },
+  { id: 4, name: "USB-C Hub", price: 59.99, emoji: "\uD83D\uDD0C" },
+  {
+    id: 5,
+    name: "Noise Cancelling Headphones",
+    price: 299.99,
+    emoji: "\uD83C\uDFA7",
+  },
+  { id: 6, name: "Webcam HD", price: 89.99, emoji: "\uD83D\uDCF7" },
 ];
 
 // ── cart actions ───────────────────────────────────────────────────
 
 function addToCart(product: (typeof PRODUCTS)[number]) {
-  const cart = store("cart") as any[];
+  const cart = store.get("cart") as any[];
   const existing = cart.find((i: any) => i.id === product.id);
-  store(
+  store.set(
     "cart",
     existing
       ? cart.map((i: any) =>
@@ -32,29 +30,31 @@ function addToCart(product: (typeof PRODUCTS)[number]) {
 }
 
 function removeFromCart(id: number) {
-  store(
+  store.set(
     "cart",
-    (store("cart") as any[]).filter((i: any) => i.id !== id),
+    (store.get("cart") as any[]).filter((i: any) => i.id !== id),
   );
 }
 
 function updateQty(id: number, qty: number) {
   if (qty <= 0) return removeFromCart(id);
-  store(
+  store.set(
     "cart",
-    (store("cart") as any[]).map((i: any) => (i.id === id ? { ...i, qty } : i)),
+    (store.get("cart") as any[]).map((i: any) =>
+      i.id === id ? { ...i, qty } : i,
+    ),
   );
 }
 
 function cartTotal() {
-  return (store("cart") as any[]).reduce(
+  return (store.get("cart") as any[]).reduce(
     (sum: number, i: any) => sum + i.price * i.qty,
     0,
   );
 }
 
 function cartCount() {
-  return (store("cart") as any[]).reduce(
+  return (store.get("cart") as any[]).reduce(
     (sum: number, i: any) => sum + i.qty,
     0,
   );
@@ -62,11 +62,11 @@ function cartCount() {
 
 // ── init store ─────────────────────────────────────────────────────
 
-store("cart", []);
+store.set("cart", []);
 
 // ── product list ───────────────────────────────────────────────────
 
-define("x-product-list", (el) => {
+define("x-product-list", (_el) => {
   return () => html`
     <div class="card">
       <h3>Products</h3>
@@ -91,12 +91,12 @@ define("x-product-list", (el) => {
 
 define("x-cart", (el) => {
   onReady(() => {
-    const unsub = subscribe("cart", () => update(el));
+    const unsub = store.subscribe("cart", () => update(el));
     return unsub;
   });
 
   return () => {
-    const cart = store("cart") as any[];
+    const cart = store.get("cart") as any[];
     return html`
       <div class="card">
         <h3>Cart ${cartCount() > 0 ? `(${cartCount()})` : ""}</h3>
@@ -117,7 +117,7 @@ define("x-cart", (el) => {
                     <span>${item.qty}</span>
                     <button onclick=${() => updateQty(item.id, item.qty + 1)}>+</button>
                   </div>
-                  <button class="cart-item-remove" onclick=${() => removeFromCart(item.id)}>×</button>
+                  <button class="cart-item-remove" onclick=${() => removeFromCart(item.id)}>\u00d7</button>
                 </li>
               `,
               )}
@@ -127,7 +127,7 @@ define("x-cart", (el) => {
                 <span>Total</span>
                 <span>$${cartTotal().toFixed(2)}</span>
               </div>
-              <button class="btn-checkout" onclick=${() => alert("Checkout — $" + cartTotal().toFixed(2))}>Checkout</button>
+              <button class="btn-checkout" onclick=${() => alert(`Checkout — $${cartTotal().toFixed(2)}`)}>Checkout</button>
             </div>
           `
         }
@@ -138,7 +138,7 @@ define("x-cart", (el) => {
 
 // ── shop page ──────────────────────────────────────────────────────
 
-define("x-shop", (el) => {
+define("x-shop", (_el) => {
   return () => html`
     <div class="shop-layout">
       <x-product-list></x-product-list>

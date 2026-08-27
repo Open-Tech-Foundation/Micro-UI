@@ -151,15 +151,15 @@ test("e2e: form fields sync via store path", async () => {
 // E2E: library store + subscribe with components
 test("e2e: library store drives component render and delete cleans up", async () => {
   setupDOM();
-  const { define, html, update, flush, store, subscribe, del, onReady } = await import(`../src/index.ts?libstore-${Date.now()}`);
+  const { define, html, update, flush, store, onReady } = await import(`../src/index.ts?libstore-${Date.now()}`);
 
-  store("items", ["alpha", "beta", "gamma"]);
+  store.set("items", ["alpha", "beta", "gamma"]);
 
   const tag = "e2e-libstore-" + Date.now();
   define(tag, (el) => {
-    onReady(() => subscribe("items", () => update(el)));
+    onReady(() => store.subscribe("items", () => update(el)));
     return () => {
-      const items = store("items") || [];
+      const items = store.get("items") || [];
       return html`<ul>${items.map((t, i) => html`<li key=${String(i)}>${t}</li>`)}</ul>`;
     };
   });
@@ -171,13 +171,13 @@ test("e2e: library store drives component render and delete cleans up", async ()
   assertEquals(el.textContent, "alphabetagamma");
 
   // Remove middle item via path-less store (replace entire list)
-  store("items", ["alpha", "gamma"]);
+  store.set("items", ["alpha", "gamma"]);
   await new Promise(r => queueMicrotask(r)); flush(); await new Promise(r => setTimeout(r, 5));
   assertEquals(el.querySelectorAll("li").length, 2);
   assertEquals(el.textContent, "alphagamma");
 
   // Delete entire key
-  del("items");
+  store.del("items");
   await new Promise(r => queueMicrotask(r)); flush(); await new Promise(r => setTimeout(r, 5));
   assertEquals(el.querySelectorAll("li").length, 0);
 });
@@ -185,15 +185,15 @@ test("e2e: library store drives component render and delete cleans up", async ()
 // E2E: path-based store with nested form fields
 test("e2e: path-based store updates nested fields independently", async () => {
   setupDOM();
-  const { define, html, update, flush, store, subscribe, onReady } = await import(`../src/index.ts?pathform-${Date.now()}`);
+  const { define, html, update, flush, store, onReady } = await import(`../src/index.ts?pathform-${Date.now()}`);
 
-  store("profile", { first: "", last: "", age: 0 });
+  store.set("profile", { first: "", last: "", age: 0 });
 
   const tag = "e2e-pathform-" + Date.now();
   define(tag, (el) => {
-    onReady(() => subscribe("profile", () => update(el)));
+    onReady(() => store.subscribe("profile", () => update(el)));
     return () => {
-      const p = store("profile") || {};
+      const p = store.get("profile") || {};
       return html`<div><span class="out">${p.first} ${p.last} (${p.age})</span></div>`;
     };
   });
@@ -203,15 +203,15 @@ test("e2e: path-based store updates nested fields independently", async () => {
   await new Promise(r => setTimeout(r, 10));
   assertEquals(el.querySelector(".out").textContent, "  (0)");
 
-  store("profile", "Ada", { path: "first" });
+  store.set("profile", "Ada", { path: "first" });
   await new Promise(r => queueMicrotask(r)); flush(); await new Promise(r => setTimeout(r, 5));
   assertEquals(el.querySelector(".out").textContent, "Ada  (0)");
 
-  store("profile", "Lovelace", { path: "last" });
+  store.set("profile", "Lovelace", { path: "last" });
   await new Promise(r => queueMicrotask(r)); flush(); await new Promise(r => setTimeout(r, 5));
   assertEquals(el.querySelector(".out").textContent, "Ada Lovelace (0)");
 
-  store("profile", 36, { path: "age" });
+  store.set("profile", 36, { path: "age" });
   await new Promise(r => queueMicrotask(r)); flush(); await new Promise(r => setTimeout(r, 5));
   assertEquals(el.querySelector(".out").textContent, "Ada Lovelace (36)");
 });
@@ -219,18 +219,18 @@ test("e2e: path-based store updates nested fields independently", async () => {
 // E2E: subscribe unsubscribe stops component updates
 test("e2e: unsubscribe stops subscriber from being called", async () => {
   setupDOM();
-  const { store, subscribe, del } = await import(`../src/index.ts?unsub-${Date.now()}`);
+  const { store } = await import(`../src/index.ts?unsub-${Date.now()}`);
 
-  store("counter", 0);
+  store.set("counter", 0);
   const calls = [];
-  const unsub = subscribe("counter", (v) => calls.push(v));
+  const unsub = store.subscribe("counter", (v) => calls.push(v));
 
-  store("counter", 1);
+  store.set("counter", 1);
   assertEquals(calls, [1]);
-  store("counter", 2);
+  store.set("counter", 2);
   assertEquals(calls, [1, 2]);
 
   unsub();
-  store("counter", 3);
+  store.set("counter", 3);
   assertEquals(calls, [1, 2]); // not called after unsub
 });

@@ -1,16 +1,9 @@
-import {
-  define,
-  html,
-  onReady,
-  store,
-  subscribe,
-  update,
-} from "@opentf/micro-ui";
+import { define, html, onReady, store, update } from "@opentf/micro-ui";
 
 // ── init store ─────────────────────────────────────────────────────
 
-store("posts", { items: [], loading: true, error: null });
-store("postsFilter", "");
+store.set("posts", { items: [], loading: true, error: null });
+store.set("postsFilter", "");
 
 // ── data page ──────────────────────────────────────────────────────
 
@@ -24,18 +17,18 @@ define("x-data-page", (el) => {
         return r.json();
       })
       .then((data) => {
-        store("posts", { items: data, loading: false, error: null });
+        store.set("posts", { items: data, loading: false, error: null });
       })
       .catch((err) => {
-        store("posts", { items: [], loading: false, error: err.message });
+        store.set("posts", { items: [], loading: false, error: err.message });
       });
 
-    return () => store("posts", { items: [], loading: false, error: null });
+    return () => store.set("posts", { items: [], loading: false, error: null });
   });
 
   onReady(() => {
-    const u1 = subscribe("posts", () => update(el));
-    const u2 = subscribe("postsFilter", () => update(el));
+    const u1 = store.subscribe("posts", () => update(el));
+    const u2 = store.subscribe("postsFilter", () => update(el));
     return () => {
       u1();
       u2();
@@ -43,7 +36,7 @@ define("x-data-page", (el) => {
   });
 
   return () => {
-    const { items, loading, error } = store("posts") as any;
+    const { items, loading, error } = store.get("posts") as any;
 
     return html`
       <div class="card">
@@ -60,9 +53,12 @@ define("x-data-page", (el) => {
                 <input
                   type="text"
                   placeholder="Search posts..."
-                  value=${(store("postsFilter") as string) || ""}
+                  value=${(store.get("postsFilter") as string) || ""}
                   oninput=${(e: InputEvent) => {
-                    store("postsFilter", (e.target as HTMLInputElement).value);
+                    store.set(
+                      "postsFilter",
+                      (e.target as HTMLInputElement).value,
+                    );
                     update(el);
                   }}
                 />
@@ -71,7 +67,7 @@ define("x-data-page", (el) => {
               <ul class="data-list">
                 ${items
                   .filter((p: any) => {
-                    const q = (store("postsFilter") as string) || "";
+                    const q = (store.get("postsFilter") as string) || "";
                     return (
                       !q || p.title.toLowerCase().includes(q.toLowerCase())
                     );
@@ -80,9 +76,9 @@ define("x-data-page", (el) => {
                     (
                       post: any,
                     ) => html`<li key=${post.id} class="data-item" onclick=${() => {
-                      store(
+                      store.set(
                         "selectedPost",
-                        (store("selectedPost") as any)?.id === post.id
+                        (store.get("selectedPost") as any)?.id === post.id
                           ? null
                           : post,
                       );
@@ -93,7 +89,7 @@ define("x-data-page", (el) => {
                         <span class="data-item-title">${post.title}</span>
                       </div>
                       ${
-                        (store("selectedPost") as any)?.id === post.id
+                        (store.get("selectedPost") as any)?.id === post.id
                           ? html`<p class="data-item-body">${post.body}</p>`
                           : null
                       }

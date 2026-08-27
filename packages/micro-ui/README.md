@@ -180,44 +180,44 @@ define("x-widget", (el) => {
 });
 ```
 
-### `store(key)` / `store(key, value)`
+### `store.get(key)` / `store.set(key, value)`
 
-Simple key-value store. Get with one argument, set with two. Does not trigger DOM updates — connect to components via `subscribe`.
-
-```js
-store("counter", 0);
-store("counter"); // 0
-store("counter", 1);
-```
-
-### `store(key, value, { path })`
-
-Set a nested value by dot-separated path. immutably clones the object tree along the path.
+Simple key-value store. Get with `store.get`, set with `store.set`. Does not trigger DOM updates — connect to components via `store.subscribe`.
 
 ```js
-store("form", { name: "", email: "" });
-store("form", "Ada", { path: "name" });
-store("form", undefined, { path: "name" }); // reads back "Ada"
+store.set("counter", 0);
+store.get("counter"); // 0
+store.set("counter", 1);
 ```
 
-### `subscribe(key, fn)`
+### `store.set(key, value, { path })`
+
+Set a nested value by dot-separated path. Immuntably clones the object tree along the path.
+
+```js
+store.set("form", { name: "", email: "" });
+store.set("form", "Ada", { path: "name" });
+store.get("form", { path: "name" }); // "Ada"
+```
+
+### `store.subscribe(key, fn)`
 
 Listen for changes to a store key. Returns an unsubscribe function. Call inside `onReady` to connect store changes to component re-renders.
 
 ```js
 define("x-counter", (el) => {
-  onReady(() => subscribe("counter", () => update(el)));
-  return () => html`<span>${store("counter")}</span>`;
+  onReady(() => store.subscribe("counter", () => update(el)));
+  return () => html`<span>${store.get("counter")}</span>`;
 });
 ```
 
-### `del(key)` / `del(key, { path })`
+### `store.del(key)` / `store.del(key, { path })`
 
 Delete a store key (resets to `undefined`) or remove a nested key from an object value. Notifies subscribers.
 
 ```js
-del("counter");                   // full key deleted
-del("form", { path: "name" });   // only removes "name", rest intact
+store.del("counter");                   // full key deleted
+store.del("form", { path: "name" });   // only removes "name", rest intact
 ```
 
 ## Security
