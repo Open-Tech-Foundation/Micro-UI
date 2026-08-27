@@ -101,7 +101,7 @@ export function del(key: string): void;
 export function del(key: string, opts: { path: string }): void;
 export function del(key: string, opts?: { path?: string }): void {
   const entry = getEntry(key);
-  if (opts?.path) {
+  if (opts?.path != null) {
     if (entry.value != null && typeof entry.value === "object") {
       entry.value = deleteByPath(entry.value, opts.path);
     }

@@ -487,6 +487,12 @@ test("del: deep nested path", async () => {
   del("deep", { path: "a.b.c" });
   assertEquals(store("deep", undefined, { path: "a.b" }), {});
 });
+test("del: empty-string path deletes only that key", async () => {
+  const { store, del } = await fresh();
+  store("emptyKey", { "": "secret", keep: 1 });
+  del("emptyKey", { path: "" });
+  assertEquals(store("emptyKey"), { keep: 1 });
+});
 test("del: path on non-object value is a no-op", async () => {
   const { store, del } = await fresh();
   store("str", "hello");
