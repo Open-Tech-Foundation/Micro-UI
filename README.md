@@ -1,8 +1,23 @@
+<div align="center">
+
 # Micro-UI
 
-A tiny functional JavaScript UI library for AI agents to generate lightweight, interactive micro-apps.
+*An [Open Tech Foundation](https://opentechf.org/) project*
 
-Native Custom Elements + closure state + explicit updates + DOM reconciliation. No VDOM, no signals, no compiler. ~400 lines.
+</div>
+
+> *A tiny functional JavaScript UI library for AI agents to generate lightweight, interactive micro-apps.*
+
+## Features
+
+* **Tiny & functional** — ~400 lines, no dependencies, no VDOM, no signals, no compiler.
+* **Native Custom Elements** — `define(tag, setup)` creates real Web Components, composable as `<x-parent><x-child></x-parent>`.
+* **Closure state** — ordinary `let` variables, no stores or reactive primitives.
+* **Explicit updates** — `update(el)` batched via `queueMicrotask`, full control over re-render.
+* **DOM identity** — inputs, videos, canvases survive updates — no `innerHTML` rebuilds.
+* **Keyed reconciliation** — `key=${id}` for stable lists (cart, data), positional fallback.
+* **Attribute interpolation** — `src=${url}`, `style="background:${color}"`, `class="btn ${active}"`.
+* **AI-agent friendly** — `define`/`html`/`update` + `mount` — easy for agents to generate micro-apps without toolchain.
 
 ## Installation
 
@@ -78,15 +93,6 @@ Triggers a re-render (batched via `queueMicrotask`). The render function is call
 - **Composition**: native Custom Elements. `<x-parent>` contains `<x-child>` as regular HTML.
 - **DOM identity**: elements, inputs, videos, canvases survive updates. No `innerHTML` rebuilds.
 - **Reconciliation**: positional by default; keyed when `key` present (`key=${id}`) — stable DOM reuse for cart / data lists. Matches old and new children by index or key. Unchanged nodes are reused. Changed nodes are patched in place.
-
-## File Structure
-
-```
-packages/micro-ui/src/index.js  # The entire library (~400 lines)
-src/micro-ui.js                 # Standalone copy
-test.html                       # 15 automated tests
-demo/                           # Shopping cart / Form / Data demo
-```
 
 ## Running
 
