@@ -6,6 +6,8 @@
 
 A tiny runtime for AI-generated micro-apps
 
+![Micro-UI Screenshot](Screenshot.png)
+
 </div>
 
 > *A tiny functional JavaScript UI library for AI agents to generate lightweight, interactive micro-apps.*
@@ -13,7 +15,7 @@ A tiny runtime for AI-generated micro-apps
 ## Features
 
 * **Lightweight** — zero dependencies, no build step, no virtual DOM overhead.
-* **Simple state management** — use plain variables, no stores or reactive primitives to learn.
+* **Simple state management** — use plain variables or the built-in `store` for shared state.
 * **Smooth updates** — changes are batched and applied efficiently, no flicker or jank.
 * **Form-friendly** — inputs, video, canvas, focus, and scroll position all survive re-renders.
 * **Stable lists** — reorder, add, or remove items without losing element state.
@@ -28,17 +30,30 @@ A tiny runtime for AI-generated micro-apps
 pnpm add @opentf/micro-ui
 # or
 npm i @opentf/micro-ui
+# or
+yarn add @opentf/micro-ui
+# or
+bun add @opentf/micro-ui
 ```
 
 ```js
-import { define, html, update } from "@opentf/micro-ui";
+import {
+  define,
+  html,
+  store,
+  update,
+  flush,
+  mount,
+  onReady,
+  onError,
+} from "@opentf/micro-ui";
 ```
 
 ## Quick Start
 
 ```html
 <script type="module">
-import { define, html, update } from "@opentf/micro-ui";
+import { define, html, update } from "https://esm.sh/@opentf/micro-ui";
 
 define("x-counter", (el, props) => {
   let count = Number(props.count || 0);
@@ -52,6 +67,19 @@ define("x-counter", (el, props) => {
 </script>
 
 <x-counter count="0"></x-counter>
+```
+
+**CDN alternatives:**
+
+```js
+// esm.sh
+import { define, html, update } from "https://esm.sh/@opentf/micro-ui";
+
+// esm.run (via jsDelivr)
+import { define, html, update } from "https://esm.run/@opentf/micro-ui";
+
+// unpkg
+import { define, html, update } from "https://esm.unpkg.com/@opentf/micro-ui";
 ```
 
 ## Usage

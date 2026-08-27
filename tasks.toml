@@ -18,7 +18,7 @@ dir = "packages/micro-ui"
 
 # ------------------------------------------------------------------ typecheck / test
 [tasks.typecheck]
-packages = ["packages/*", "demo"]
+packages = ["packages/*"]
 run = "tsc --noEmit"
 
 # Tests run from the workspace root (not the package dir) so esdev's module

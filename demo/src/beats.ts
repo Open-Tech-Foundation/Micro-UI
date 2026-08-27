@@ -622,12 +622,7 @@ function triggerStepSound(step: number) {
         playClap(ctx, time, vol);
         break;
       case "synth":
-        playSynth(
-          ctx,
-          time,
-          SYNTH_NOTES[step] || 261.63,
-          vol,
-        );
+        playSynth(ctx, time, SYNTH_NOTES[step] || 261.63, vol);
         break;
     }
   }
@@ -813,14 +808,17 @@ define("x-beats", (el) => {
         <div class="step-indicator-row">
           <div class="track-label-placeholder"></div>
           <div class="step-indicator-grid">
-            ${Array.from({ length: 16 }, (_, i) => html`
+            ${Array.from(
+              { length: 16 },
+              (_, i) => html`
               <div
                 key=${i}
                 class="step-indicator ${state.currentStep === i && state.playing ? "active" : ""} ${i % 4 === 0 ? "beat-start" : ""}"
               >
                 ${i + 1}
               </div>
-            `)}
+            `,
+            )}
           </div>
         </div>
 
