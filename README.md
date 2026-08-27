@@ -38,7 +38,7 @@ import { define, html, update } from "@opentf/micro-ui";
 
 ```html
 <script type="module">
-import { define, html, update } from "@opentf/micro-ui";
+import { define, html, update } from "https://esm.sh/@opentf/micro-ui";
 
 define("x-counter", (el, props) => {
   let count = Number(props.count || 0);
@@ -52,6 +52,19 @@ define("x-counter", (el, props) => {
 </script>
 
 <x-counter count="0"></x-counter>
+```
+
+**CDN alternatives:**
+
+```js
+// esm.sh
+import { define, html, update } from "https://esm.sh/@opentf/micro-ui";
+
+// esm.run (via jsDelivr)
+import { define, html, update } from "https://esm.run/@opentf/micro-ui";
+
+// unpkg
+import { define, html, update } from "https://esm.unpkg.com/@opentf/micro-ui";
 ```
 
 ## Usage
