@@ -10,7 +10,7 @@ importers:
 
   demo:
     dependencies:
-      '@micro-ui/core':
+      '@opentf/micro-ui':
         specifier: workspace:*
         version: link:../packages/micro-ui
     devDependencies:

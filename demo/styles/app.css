@@ -422,3 +422,42 @@ footer code { color: var(--accent); }
   padding-left: 2rem;
   line-height: 1.5;
 }
+
+/* ── gravity simulator ─────────────────────────────────────────── */
+.gravity-card { padding: 1.25rem; }
+.gravity-canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 640 / 400;
+  background: #0b1220;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 0.75rem 0;
+  cursor: crosshair;
+}
+.gravity-controls { display: flex; flex-direction: column; gap: 0.75rem; }
+.gravity-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+.gravity-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.gravity-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.gravity-controls .btn-row button.active {
+  background: var(--accent);
+  color: #0b1220;
+  border-color: var(--accent);
+}

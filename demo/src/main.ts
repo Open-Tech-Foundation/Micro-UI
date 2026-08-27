@@ -3,6 +3,7 @@ import "./components.ts";
 import "./shop.ts";
 import "./form.ts";
 import "./data.ts";
+import "./gravity.ts";
 
 const root = document.getElementById("app");
 if (!root) throw new Error("no #app");

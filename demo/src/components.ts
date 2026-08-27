@@ -177,6 +177,7 @@ define("x-app", (el) => {
         <button class="${page === "shop" ? "active" : ""}" onclick=${() => { page = "shop"; update(el); }}>Shopping Cart</button>
         <button class="${page === "form" ? "active" : ""}" onclick=${() => { page = "form"; update(el); }}>Form</button>
         <button class="${page === "data" ? "active" : ""}" onclick=${() => { page = "data"; update(el); }}>Data</button>
+        <button class="${page === "gravity" ? "active" : ""}" onclick=${() => { page = "gravity"; update(el); }}>Gravity</button>
       </nav>
     </header>
 
@@ -196,7 +197,9 @@ define("x-app", (el) => {
         ? html`<x-shop></x-shop>`
         : page === "form"
           ? html`<x-form-page></x-form-page>`
-          : html`<x-data-page></x-data-page>`}
+          : page === "data"
+            ? html`<x-data-page></x-data-page>`
+            : html`<x-gravity-page></x-gravity-page>`}
 
     <footer>
       <p>No VDOM. No signals. No compiler. Just <code>define</code>, <code>html</code>, <code>update</code>, <code>mount</code>.</p>
