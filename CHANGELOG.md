@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `form` demo: wrap the JSON preview in `html.raw` so the serialized output renders as literal text (quotes, braces, colons) instead of being HTML-escaped to entities. The source is the app's own form state, and `innerHTML`-inserted content does not execute `<script>` tags.
 - README: add a short tagline — *"A tiny runtime for AI-generated micro-apps"* — under the org banner.
 - **Deferred DOM creation** — `cloneNode()` now returns a descriptor-only (no `.dom`) during updates. Real DOM is materialised on-demand via `materializeNode()` only when reconcile decides to insert or replace. Eliminates O(N) superfluous `createElement` + `addEventListener` + `setProp` calls on keyed list reorders and repeated updates. Events are attached only to the retained node, not to throwaway descriptors.
+- Replace `Object.entries()` with `for...in` in `cloneNode`, `materializeNode`, and initial render path — avoids `[k,v][]` array allocation per element per render.
 
 ### Removed
 - Hand-synced dev copy at `src/micro-ui.js` and the now-empty `src/` directory. `test.html` now imports directly from `packages/micro-ui/src/index.js`. The package is the single source of truth.

@@ -170,7 +170,8 @@ function cloneNode(d, values, state, deferDOM) {
     }
 
     const attrs = {};
-    for (const [k, v] of Object.entries(d.attrs)) {
+    for (const k in d.attrs) {
+      const v = d.attrs[k];
       if (v && v.binding) {
         const parts = v.parts;
         if (parts.length === 2 && parts[0] === "" && parts[1] === "") {
@@ -189,7 +190,8 @@ function cloneNode(d, values, state, deferDOM) {
     }
 
     const events = {};
-    for (const [e, h] of Object.entries(d.events)) {
+    for (const e in d.events) {
+      const h = d.events[e];
       if (h && h.binding) {
         events[e] = values[state.vi++];
       } else {
@@ -204,12 +206,8 @@ function cloneNode(d, values, state, deferDOM) {
     }
 
     const el = document.createElement(d.tag);
-    for (const [k, v] of Object.entries(attrs)) {
-      setProp(el, k, v);
-    }
-    for (const [e, h] of Object.entries(events)) {
-      if (h != null) el.addEventListener(e, h);
-    }
+    for (const k in attrs) setProp(el, k, attrs[k]);
+    for (const e in events) { if (events[e] != null) el.addEventListener(e, events[e]); }
     for (const c of children) el.appendChild(c.dom);
 
     return { type: "element", tag: d.tag, attrs, events, key: resolvedKey, children, dom: el };
@@ -285,10 +283,8 @@ function materializeNode(node) {
     node.dom = document.createTextNode(node.value);
   } else if (node.type === "element") {
     const el = document.createElement(node.tag);
-    for (const [k, v] of Object.entries(node.attrs)) setProp(el, k, v);
-    for (const [e, h] of Object.entries(node.events)) {
-      if (h != null) el.addEventListener(e, h);
-    }
+    for (const k in node.attrs) setProp(el, k, node.attrs[k]);
+    for (const e in node.events) { if (node.events[e] != null) el.addEventListener(e, node.events[e]); }
     for (const c of node.children) {
       materializeNode(c);
       el.appendChild(c.dom);
