@@ -3,6 +3,7 @@ const instances = new WeakMap();
 const templates = new WeakMap();
 const pending = new Set();
 let flushing = false;
+let deferDOM = false;
 
 // ── html template tag (cached) ─────────────────────────────────────
 
@@ -12,7 +13,7 @@ export function html(strings, ...values) {
     tpl = buildTemplate(strings);
     templates.set(strings, tpl);
   }
-  return createTree(tpl, values);
+  return createTree(tpl, values, deferDOM);
 }
 
 // `html.raw\`...\`` returns a trusted-HTML node that bypasses text
@@ -121,13 +122,13 @@ function buildElDesc(el, bindings) {
 
 // ── tree creation (clone cached desc + inject values) ──────────────
 
-function createTree(tpl, values) {
-  return { type: "fragment", children: createNodes(tpl.tree, values, { vi: 0 }) };
+function createTree(tpl, values, deferDOM) {
+  return { type: "fragment", children: createNodes(tpl.tree, values, { vi: 0 }, deferDOM) };
 }
 
-function createNodes(descs, values, state) {
+function createNodes(descs, values, state, deferDOM) {
   const out = [];
-  for (const d of descs) pushNodes(cloneNode(d, values, state), out);
+  for (const d of descs) pushNodes(cloneNode(d, values, state, deferDOM), out);
   return out;
 }
 
@@ -139,18 +140,16 @@ function pushNodes(node, out) {
   }
 }
 
-function cloneNode(d, values, state) {
+function cloneNode(d, values, state, deferDOM) {
   if (d.type === "text") {
+    if (deferDOM) return { type: "text", value: d.value };
     return { type: "text", value: d.value, dom: document.createTextNode(d.value) };
   }
   if (d.type === "binding") {
     const v = values[state.vi++];
-    return resolveBinding(v);
+    return resolveBinding(v, deferDOM);
   }
   if (d.type === "element") {
-    const el = document.createElement(d.tag);
-    const attrs = {};
-    const events = {};
     let resolvedKey = d.key;
 
     // resolve dynamic key
@@ -170,50 +169,61 @@ function cloneNode(d, values, state) {
       }
     }
 
+    const attrs = {};
     for (const [k, v] of Object.entries(d.attrs)) {
       if (v && v.binding) {
         const parts = v.parts;
-        let val;
         if (parts.length === 2 && parts[0] === "" && parts[1] === "") {
-          val = values[state.vi++];
+          attrs[k] = values[state.vi++];
         } else {
           let out = "";
           for (let i = 0; i < parts.length; i++) {
             out += parts[i];
             if (i < parts.length - 1) out += String(values[state.vi++] ?? "");
           }
-          val = out;
+          attrs[k] = out;
         }
-        attrs[k] = val;
-        setProp(el, k, val);
       } else {
         attrs[k] = v;
-        el.setAttribute(k, v);
-      }
-    }
-    for (const [e, h] of Object.entries(d.events)) {
-      if (h && h.binding) {
-        const val = values[state.vi++];
-        events[e] = val;
-        if (val != null) el.addEventListener(e, val);
-      } else {
-        events[e] = h;
-        if (h != null) el.addEventListener(e, h);
       }
     }
 
-    const children = createNodes(d.children, values, state);
+    const events = {};
+    for (const [e, h] of Object.entries(d.events)) {
+      if (h && h.binding) {
+        events[e] = values[state.vi++];
+      } else {
+        events[e] = h;
+      }
+    }
+
+    const children = createNodes(d.children, values, state, deferDOM);
+
+    if (deferDOM) {
+      return { type: "element", tag: d.tag, attrs, events, key: resolvedKey, children };
+    }
+
+    const el = document.createElement(d.tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      setProp(el, k, v);
+    }
+    for (const [e, h] of Object.entries(events)) {
+      if (h != null) el.addEventListener(e, h);
+    }
     for (const c of children) el.appendChild(c.dom);
 
     return { type: "element", tag: d.tag, attrs, events, key: resolvedKey, children, dom: el };
   }
 }
 
-function resolveBinding(val) {
-  if (val == null || val === false) return { type: "text", value: "", dom: document.createTextNode("") };
+function resolveBinding(val, deferDOM) {
+  if (val == null || val === false) {
+    if (deferDOM) return { type: "text", value: "" };
+    return { type: "text", value: "", dom: document.createTextNode("") };
+  }
   if (Array.isArray(val)) {
     const nodes = [];
-    for (const item of val) nodes.push(resolveBinding(item));
+    for (const item of val) nodes.push(resolveBinding(item, deferDOM));
     return { type: "fragment", children: nodes };
   }
   if (val && val.type) {
@@ -223,6 +233,7 @@ function resolveBinding(val) {
   }
   // primitive: escape before creating a text node
   const s = escapeText(String(val));
+  if (deferDOM) return { type: "text", value: s };
   return { type: "text", value: s, dom: document.createTextNode(s) };
 }
 
@@ -264,6 +275,28 @@ function materializeRaw(raw) {
   tmpl.innerHTML = raw.html;
   const children = buildDesc(tmpl.content, []);
   return { type: "fragment", children: createNodes(children, [], { vi: 0 }) };
+}
+
+// ── materialize deferred descriptors ────────────────────────────────
+
+function materializeNode(node) {
+  if (node.dom) return;
+  if (node.type === "text") {
+    node.dom = document.createTextNode(node.value);
+  } else if (node.type === "element") {
+    const el = document.createElement(node.tag);
+    for (const [k, v] of Object.entries(node.attrs)) setProp(el, k, v);
+    for (const [e, h] of Object.entries(node.events)) {
+      if (h != null) el.addEventListener(e, h);
+    }
+    for (const c of node.children) {
+      materializeNode(c);
+      el.appendChild(c.dom);
+    }
+    node.dom = el;
+  } else if (node.type === "fragment") {
+    for (const c of node.children) materializeNode(c);
+  }
 }
 
 // ── DOM property helper ────────────────────────────────────────────
@@ -426,8 +459,11 @@ export function flush() {
     if (inst.errored) continue;
     let newTree;
     try {
+      deferDOM = true;
       newTree = inst.render();
+      deferDOM = false;
     } catch (err) {
+      deferDOM = false;
       mountErrorUI(el, err);
       inst.errored = true;
       const handlers = errorHandlers.get(el);
@@ -492,6 +528,7 @@ function safeCall(fn, el, err, phase) {
 
 function reconcile(old, next, parent) {
   if (old.type !== next.type) {
+    materializeNode(next);
     parent.replaceChild(next.dom, old.dom);
     return;
   }
@@ -506,9 +543,11 @@ function reconcile(old, next, parent) {
   }
   if (old.type === "element") {
     if (old.tag !== next.tag) {
+      materializeNode(next);
       parent.replaceChild(next.dom, old.dom);
       return;
     }
+    // same tag: reuse old DOM, discard the throwaway
     const dom = old.dom;
     next.dom = dom;
     patchAttrs(dom, old.attrs, next.attrs);
@@ -541,6 +580,10 @@ function patchLists(oldCh, newCh, parent) {
       reconcile(o, n, parent);
       return;
     }
+    // type mismatch: materialize the new one, then replace
+    materializeNode(n);
+    parent.replaceChild(n.dom, o.dom);
+    return;
   }
 
   const hasKeys = newCh.some((n) => n.key != null) || oldCh.some((o) => o.key != null);
@@ -557,10 +600,12 @@ function patchByIndex(oldCh, newCh, parent) {
     const o = oldCh[i];
     const n = newCh[i];
     if (!o) {
+      materializeNode(n);
       parent.appendChild(n.dom);
     } else if (!n) {
       o.dom.remove();
     } else {
+      materializeNode(n);
       reconcile(o, n, parent);
     }
   }
@@ -574,6 +619,7 @@ function patchKeyed(oldCh, newCh, parent) {
     const n = newCh[i];
     const o = n.key != null ? oldMap.get(String(n.key)) : null;
     if (o && o.dom.parentNode === parent) {
+      materializeNode(n);
       reconcile(o, n, parent);
       if (o.dom.nextSibling !== next) parent.insertBefore(o.dom, next);
       next = o.dom;
@@ -582,10 +628,12 @@ function patchKeyed(oldCh, newCh, parent) {
       // fallback: non-keyed position or new key
       const fallback = n.key == null ? oldCh[i] : null;
       if (fallback && fallback.dom.parentNode === parent && fallback.key == null) {
+        materializeNode(n);
         reconcile(fallback, n, parent);
         if (fallback.dom.nextSibling !== next) parent.insertBefore(fallback.dom, next);
         next = fallback.dom;
       } else {
+        materializeNode(n);
         parent.insertBefore(n.dom, next);
         next = n.dom;
       }

@@ -411,3 +411,197 @@ test("jsdom: errored component is not re-rendered on subsequent updates", async 
   flush();
   assert.strictEqual(el.querySelector("[data-micro-ui-error]"), errBox);
 });
+
+// ── deferred DOM creation (allocation optimisation) ────────────────
+
+test("jsdom: keyed reorder reuses DOM — no superfluous createElement for matched nodes", async () => {
+  const tag = uniqueTag("x-defer-keyed");
+  let items = [
+    { id: "a", label: "Alpha" },
+    { id: "b", label: "Beta" },
+    { id: "c", label: "Gamma" },
+  ];
+  define(tag, (el) => {
+    return () => html`
+      <ul>${items.map((i) => html`<li key=${i.id}>${i.label}</li>`)}</ul>
+    `;
+  });
+
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+  flush();
+
+  const lis = el.querySelectorAll("li");
+  const domA = lis[0];
+  const domB = lis[1];
+  const domC = lis[2];
+
+  // Reorder: c, a, b
+  items = [items[2], items[0], items[1]];
+  update(el);
+  await tick();
+  flush();
+
+  const after = el.querySelectorAll("li");
+  // Same DOM nodes reused, just reordered
+  assert.equal(after[0], domC);
+  assert.equal(after[1], domA);
+  assert.equal(after[2], domB);
+  assert.equal(after.length, 3);
+});
+
+test("jsdom: unkeyed list update reuses DOM nodes by position", async () => {
+  const tag = uniqueTag("x-defer-unkeyed");
+  let count = 3;
+  define(tag, (el) => {
+    return () => html`
+      <div>${Array.from({ length: count }, (_, i) => html`<span>${i}</span>`)}</div>
+    `;
+  });
+
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+  flush();
+
+  const spans = el.querySelectorAll("span");
+  const span0 = spans[0];
+  const span1 = spans[1];
+
+  // Update text content without changing structure
+  count = 3;
+  update(el);
+  await tick();
+  flush();
+
+  const after = el.querySelectorAll("span");
+  // Same DOM nodes reused
+  assert.equal(after[0], span0);
+  assert.equal(after[1], span1);
+});
+
+test("jsdom: new keyed items get fresh DOM on insert", async () => {
+  const tag = uniqueTag("x-defer-insert");
+  let items = [{ id: "a" }];
+  define(tag, (el) => {
+    return () => html`
+      <ul>${items.map((i) => html`<li key=${i.id}>${i.id}</li>`)}</ul>
+    `;
+  });
+
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+  flush();
+
+  const liA = el.querySelector("li");
+  assert.equal(liA.textContent, "a");
+
+  // Add new item at beginning
+  items = [{ id: "z" }, { id: "a" }];
+  update(el);
+  await tick();
+  flush();
+
+  const all = el.querySelectorAll("li");
+  assert.equal(all.length, 2);
+  assert.equal(all[0].textContent, "z");
+  assert.equal(all[1].textContent, "a");
+  // Original 'a' node preserved
+  assert.equal(all[1], liA);
+  // New 'z' node is a real DOM element
+  assert.equal(all[0].nodeType, 1);
+});
+
+test("jsdom: event listeners survive keyed reorder without re-attachment churn", async () => {
+  const tag = uniqueTag("x-defer-events");
+  let items = [
+    { id: "a", count: 0 },
+    { id: "b", count: 0 },
+  ];
+  let ref;
+  define(tag, (el) => {
+    ref = el;
+    return () => html`
+      <ul>${items.map((i) =>
+        html`<li key=${i.id}><button onclick=${() => { i.count++; update(el); }}>${i.count}</button></li>`
+      )}</ul>
+    `;
+  });
+
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+  flush();
+
+  const btnA = el.querySelectorAll("button")[0];
+  const btnB = el.querySelectorAll("button")[1];
+
+  // Click button A
+  btnA.click();
+  await tick();
+  flush();
+  assert.equal(btnA.textContent, "1");
+
+  // Reorder: b, a
+  items = [items[1], items[0]];
+  update(ref);
+  await tick();
+  flush();
+
+  // Same button DOM nodes, listeners still work
+  const afterBtns = el.querySelectorAll("button");
+  assert.equal(afterBtns[0], btnB);
+  assert.equal(afterBtns[1], btnA);
+
+  // Click button A again (now at index 1)
+  afterBtns[1].click();
+  await tick();
+  flush();
+  assert.equal(afterBtns[1].textContent, "2");
+});
+
+test("jsdom: conditional show/hide creates and discards DOM correctly", async () => {
+  const tag = uniqueTag("x-defer-cond");
+  let show = true;
+  let ref;
+  define(tag, (el) => {
+    ref = el;
+    return () => html`
+      <div>${show ? html`<span class="bonus">extra</span>` : null}<p>persistent</p></div>
+    `;
+  });
+
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+  flush();
+
+  const p = el.querySelector("p");
+  const span = el.querySelector("span");
+  assert.ok(span);
+  assert.equal(span.textContent, "extra");
+
+  // Hide
+  show = false;
+  update(ref);
+  await tick();
+  flush();
+
+  assert.equal(el.querySelector("span"), null);
+  // Persistent element reused
+  assert.equal(el.querySelector("p"), p);
+
+  // Show again
+  show = true;
+  update(ref);
+  await tick();
+  flush();
+
+  const span2 = el.querySelector("span");
+  assert.ok(span2);
+  assert.equal(span2.textContent, "extra");
+  // Persistent element still reused
+  assert.equal(el.querySelector("p"), p);
+});
