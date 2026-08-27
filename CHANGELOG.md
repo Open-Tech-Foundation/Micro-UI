@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `store`, `subscribe`, and `del` as library exports from `@opentf/micro-ui`
+  - `store(key)` / `store(key, value)` — get/set a top-level value
+  - `store(key, value, { path })` — set a nested value by dot-separated path (e.g. `"form.name"`)
+  - `store(key, undefined, { path })` — read a nested value by path
+  - `subscribe(key, fn)` — listen for changes; returns an unsubscribe function
+  - `del(key)` — reset a key to `undefined` and notify subscribers
+  - `del(key, { path })` — remove a nested key from an object value immutably
+  - Listener errors are caught per-listener so one failing callback cannot break others
+  - Empty-string paths are handled correctly (`opts?.path != null` guard)
+
 ## [0.1.0] - 2026-08-27
 
 ### Added
