@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write  # create tags and GitHub Releases
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      release_opentf_micro_ui: ${{ steps.check.outputs.release_opentf_micro_ui }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install otf-release
+        shell: bash
+        env:
+          OTF_RELEASE_VERSION: v0.38.0
+        run: curl -fsSL https://raw.githubusercontent.com/Open-Tech-Foundation/release/v0.38.0/install.sh | bash
+      - id: check
+        run: |
+          echo "should_release=$(otf-release check --exclude-package @opentf/micro-ui)" >> "$GITHUB_OUTPUT"
+          echo "release_opentf_micro_ui=$(otf-release check --package @opentf/micro-ui)" >> "$GITHUB_OUTPUT"
+
+  publish-opentf-micro-ui:
+    needs: [check-release]
+    if: needs.check-release.outputs.release_opentf_micro_ui == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+      - uses: Open-Tech-Foundation/ES-Runtime/.github/actions/setup-esdev@main
+      - uses: Open-Tech-Foundation/ES-Runtime/.github/actions/setup-tsr@main
+      - name: Build @opentf/micro-ui
+        run: tsr build
+        working-directory: packages/micro-ui
+      - name: Install otf-release
+        shell: bash
+        env:
+          OTF_RELEASE_VERSION: v0.38.0
+        run: curl -fsSL https://raw.githubusercontent.com/Open-Tech-Foundation/release/v0.38.0/install.sh | bash
+      - name: Publish
+        run: otf-release publish --package @opentf/micro-ui
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    needs: [check-release, publish-opentf-micro-ui]
+    if: >-
+      always() &&
+      needs.check-release.outputs.should_release == 'true' &&
+      needs.publish-opentf-micro-ui.result != 'failure' &&
+      needs.publish-opentf-micro-ui.result != 'cancelled'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+      - name: Install otf-release
+        shell: bash
+        env:
+          OTF_RELEASE_VERSION: v0.38.0
+        run: curl -fsSL https://raw.githubusercontent.com/Open-Tech-Foundation/release/v0.38.0/install.sh | bash
+      - name: Publish
+        run: otf-release publish --exclude-package @opentf/micro-ui
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

@@ -1,0 +1,35 @@
+adapters = ["npm"]
+tag_format = "v{version}"
+provider = "github"
+default_branch = "main"
+changelog_strategy = "curated"
+changelog_scope = "root"
+github_release_notes = "curated-changelog"
+
+[hooks]
+
+[publish.ignore_paths]
+"@opentf/micro-ui" = [
+    "**/*.md",
+    "**/__tests__/**",
+    "**/*.test.*",
+    "**/*.spec.*",
+    "**/test/**",
+    "**/tests/**",
+]
+
+[[package]]
+name = "@opentf/micro-ui"
+adapter = "npm"
+mode = "publish"
+matrix = false
+command = "tsr build"
+artifacts = ""
+manifest = "packages/micro-ui/package.json"
+provenance = true
+
+[[package.setup]]
+uses = "Open-Tech-Foundation/ES-Runtime/.github/actions/setup-esdev@main"
+
+[[package.setup]]
+uses = "Open-Tech-Foundation/ES-Runtime/.github/actions/setup-tsr@main"
