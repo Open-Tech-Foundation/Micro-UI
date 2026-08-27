@@ -4,6 +4,8 @@
 
 *An [Open Tech Foundation](https://opentechf.org/) project*
 
+A tiny runtime for AI-generated micro-apps
+
 </div>
 
 > *A tiny functional JavaScript UI library for AI agents to generate lightweight, interactive micro-apps.*

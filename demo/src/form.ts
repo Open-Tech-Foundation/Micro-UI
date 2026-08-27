@@ -58,10 +58,15 @@ define("x-form-preview", (el) => {
 
   return () => {
     const data = store("form");
+    // Use html.raw so the JSON renders as literal text — quotes, braces,
+    // and colons show as themselves, not as &quot; / &amp; / etc.
+    // The source is the app's own form state (trusted); user-typed
+    // values become literal text inside the <pre> because innerHTML-
+    // inserted content does not execute <script> tags.
     return html`
       <div class="card">
         <h3>Live Preview</h3>
-        <pre class="form-json">${JSON.stringify(data, null, 2)}</pre>
+        <pre class="form-json">${html.raw`${JSON.stringify(data, null, 2)}`}</pre>
       </div>
     `;
   };
