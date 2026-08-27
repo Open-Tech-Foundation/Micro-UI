@@ -512,3 +512,208 @@ button.danger:hover {
   white-space: pre-wrap;
   font-family: inherit;
 }
+
+/* ── beat maker ─────────────────────────────────────────────────── */
+.beats-card {
+  padding: 1.25rem;
+  overflow-x: auto;
+}
+.beats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.beats-transport {
+  display: flex;
+  gap: 0.5rem;
+}
+.btn-play {
+  background: var(--surface);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9rem;
+}
+.btn-play.playing {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--bg);
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
+}
+.btn-rnd {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--muted);
+}
+.btn-rnd:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
+.beats-toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  background: #0b1220;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  align-items: center;
+}
+.beats-toolbar label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.beats-toolbar input[type="range"] {
+  accent-color: var(--accent);
+  margin-bottom: 0;
+  width: 100%;
+}
+.preset-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+.preset-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 0.2rem;
+}
+.preset-group button {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+}
+.step-indicator-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  align-items: center;
+}
+.track-label-placeholder {
+  width: 140px;
+  flex-shrink: 0;
+}
+.step-indicator-grid {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  gap: 4px;
+  flex: 1;
+}
+.step-indicator {
+  font-size: 0.65rem;
+  text-align: center;
+  color: var(--muted);
+  padding: 2px 0;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.step-indicator.beat-start {
+  color: var(--text);
+  font-weight: 700;
+}
+.step-indicator.active {
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 700;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+}
+.tracks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.track-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.6rem;
+  transition: opacity 0.2s;
+}
+.track-row.muted {
+  opacity: 0.45;
+}
+.track-meta {
+  width: 140px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.track-emoji {
+  font-size: 1.1rem;
+}
+.track-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex: 1;
+}
+.track-actions {
+  display: flex;
+  gap: 0.2rem;
+}
+.btn-mute, .btn-track-clear {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.btn-mute:hover, .btn-track-clear:hover {
+  background: var(--border);
+}
+.btn-track-clear {
+  color: var(--red);
+  font-size: 1rem;
+  line-height: 1;
+}
+.step-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  gap: 4px;
+  flex: 1;
+}
+.step-btn {
+  aspect-ratio: 1 / 1;
+  min-width: 20px;
+  min-height: 28px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.05s, box-shadow 0.05s, border-color 0.1s;
+}
+.step-btn.beat-accent {
+  border-left-width: 2px;
+  border-left-color: rgba(255, 255, 255, 0.25);
+}
+.step-btn:hover {
+  border-color: var(--accent);
+  transform: scale(1.05);
+}
+.step-btn.active {
+  box-shadow: 0 0 8px currentColor;
+}
+.step-btn.playing {
+  outline: 2px solid #ffffff;
+  outline-offset: 1px;
+  transform: scale(1.12);
+  z-index: 2;
+}
+

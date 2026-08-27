@@ -4,6 +4,7 @@ import "./shop.ts";
 import "./form.ts";
 import "./data.ts";
 import "./gravity.ts";
+import "./beats.ts";
 import "./errors.ts";
 
 const root = document.getElementById("app");

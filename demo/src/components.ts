@@ -230,6 +230,10 @@ define("x-app", (el) => {
           page = "gravity";
           update(el);
         }}>Gravity</button>
+        <button class="${page === "beats" ? "active" : ""}" onclick=${() => {
+          page = "beats";
+          update(el);
+        }}>Beats</button>
         <button class="${page === "errors" ? "active" : ""}" onclick=${() => {
           page = "errors";
           update(el);
@@ -258,7 +262,9 @@ define("x-app", (el) => {
               ? html`<x-data-page></x-data-page>`
               : page === "gravity"
                 ? html`<x-gravity-page></x-gravity-page>`
-                : html`<x-errors-page></x-errors-page>`
+                : page === "beats"
+                  ? html`<x-beats-page></x-beats-page>`
+                  : html`<x-errors-page></x-errors-page>`
     }
 
     <footer>
