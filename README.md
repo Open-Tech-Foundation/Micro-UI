@@ -180,6 +180,46 @@ define("x-widget", (el) => {
 });
 ```
 
+### `store(key)` / `store(key, value)`
+
+Simple key-value store. Get with one argument, set with two. Does not trigger DOM updates — connect to components via `subscribe`.
+
+```js
+store("counter", 0);
+store("counter"); // 0
+store("counter", 1);
+```
+
+### `store(key, value, { path })`
+
+Set a nested value by dot-separated path. immutably clones the object tree along the path.
+
+```js
+store("form", { name: "", email: "" });
+store("form", "Ada", { path: "name" });
+store("form", undefined, { path: "name" }); // reads back "Ada"
+```
+
+### `subscribe(key, fn)`
+
+Listen for changes to a store key. Returns an unsubscribe function. Call inside `onReady` to connect store changes to component re-renders.
+
+```js
+define("x-counter", (el) => {
+  onReady(() => subscribe("counter", () => update(el)));
+  return () => html`<span>${store("counter")}</span>`;
+});
+```
+
+### `del(key)` / `del(key, { path })`
+
+Delete a store key (resets to `undefined`) or remove a nested key from an object value. Notifies subscribers.
+
+```js
+del("counter");                   // full key deleted
+del("form", { path: "name" });   // only removes "name", rest intact
+```
+
 ## Security
 
 ### HTML escaping by default
@@ -235,7 +275,7 @@ define("x-safe", (el) => {
 
 ## Design
 
-- **State**: ordinary JavaScript closures. No signals, stores, or reactive primitives.
+- **State**: ordinary JavaScript closures. Optional built-in `store`/`subscribe`/`del` for shared state — still no signals or reactive primitives.
 - **Composition**: native Custom Elements. `<x-parent>` contains `<x-child>` as regular HTML.
 - **DOM identity**: elements, inputs, videos, canvases survive updates. No `innerHTML` rebuilds.
 - **Reconciliation**: positional by default; keyed when `key` present (`key=${id}`) — stable DOM reuse for cart / data lists. Matches old and new children by index or key. Unchanged nodes are reused. Changed nodes are patched in place.
