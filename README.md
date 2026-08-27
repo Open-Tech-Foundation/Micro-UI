@@ -35,7 +35,7 @@ bun add @opentf/micro-ui
 ```
 
 ```js
-import { define, html, update } from "@opentf/micro-ui";
+import { define, html, store, update, flush, mount, onReady, onError } from "@opentf/micro-ui";
 ```
 
 ## Quick Start
