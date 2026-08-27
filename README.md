@@ -13,7 +13,7 @@ A tiny runtime for AI-generated micro-apps
 ## Features
 
 * **Lightweight** — zero dependencies, no build step, no virtual DOM overhead.
-* **Simple state management** — use plain variables, no stores or reactive primitives to learn.
+* **Simple state management** — use plain variables or the built-in `store` for shared state.
 * **Smooth updates** — changes are batched and applied efficiently, no flicker or jank.
 * **Form-friendly** — inputs, video, canvas, focus, and scroll position all survive re-renders.
 * **Stable lists** — reorder, add, or remove items without losing element state.
