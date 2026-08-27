@@ -3,7 +3,7 @@ import { setupDOM } from "./helpers/dom.mjs";
 
 let tagCounter = 0;
 function uniqueTag(prefix) { return `${prefix}-${++tagCounter}-${Date.now()}-${Math.floor(Math.random()*1e6)}`; }
-async function fresh() { return await import(`../src/index.js?${Date.now()}-${Math.random()}`); }
+async function fresh() { return await import(`../src/index.ts?${Date.now()}-${Math.random()}`); }
 const delay = (n=10) => new Promise(r => setTimeout(r, n));
 const micro = () => new Promise(r => queueMicrotask(r));
 

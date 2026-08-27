@@ -3,7 +3,7 @@ import { setupDOM } from "./helpers/dom.mjs";
 
 // E2E: full shopping cart flow via store + components (as demo does)
 test("e2e: shopping cart add / remove / qty / count stays in sync", async () => {
-  const { define, html, update, flush } = await import(`../src/index.js?e2e-${Date.now()}`);
+  const { define, html, update, flush } = await import(`../src/index.ts?e2e-${Date.now()}`);
   setupDOM();
 
   // Minimal store mock like demo/src/store.ts
@@ -41,7 +41,7 @@ test("e2e: shopping cart add / remove / qty / count stays in sync", async () => 
   define("e2e-product-list", () => () => html`<div>${PRODUCTS.map(p => html`<button class="add" onclick=${() => addToCart(p)}>${p.name}</button>`)}</div>`);
 // removed duplicate define
   // Use onReady via import
-  const { onReady } = await import(`../src/index.js?onready-${Date.now()}`);
+  const { onReady } = await import(`../src/index.ts?onready-${Date.now()}`);
   // Redefine e2e-cart with onReady for auto update
   // (avoid duplicate define, use unique tag)
   const cartTag = "e2e-cart-" + Date.now();
@@ -108,7 +108,7 @@ test("e2e: shopping cart add / remove / qty / count stays in sync", async () => 
 // E2E: form input + validation + submit
 test("e2e: form fields sync via store path", async () => {
   setupDOM();
-  const { define, html, update, onReady } = await import(`../src/index.js?form-${Date.now()}`);
+  const { define, html, update, onReady } = await import(`../src/index.ts?form-${Date.now()}`);
   const stores = new Map();
   function getByPath(o,p){ return p.split(".").reduce((a,k)=>a?.[k],o); }
   function setByPath(o,p,v){ const ks=p.split("."); const last=ks.pop(); let cur=o; for(const k of ks){ cur[k]=cur[k]??{}; cur=cur[k]; } cur[last]=v; return o; }
@@ -142,7 +142,7 @@ test("e2e: form fields sync via store path", async () => {
   await new Promise(r => queueMicrotask(r));
   // Need update via subscribe
   // onReady already subscribes, but we also need to flush
-  const { flush } = await import(`../src/index.js?flush-${Date.now()}`);
+  const { flush } = await import(`../src/index.ts?flush-${Date.now()}`);
   // store already notified, flush will have been queued
   await new Promise(r => setTimeout(r, 10));
   assertEquals(store("form", undefined, {path:"name"}), "Ada");

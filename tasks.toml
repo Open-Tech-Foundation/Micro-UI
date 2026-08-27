@@ -13,7 +13,7 @@ dir = "demo"
 
 # ------------------------------------------------------------------ build
 [tasks.build]
-run = "esdev build --lib src --dts-bundle && cp ../../README.md README.md"
+run = "esdev build --lib src --dts-bundle=src/index.ts && cp ../../README.md README.md"
 dir = "packages/micro-ui"
 
 # ------------------------------------------------------------------ typecheck / test
@@ -31,12 +31,9 @@ run = "esdev test packages/micro-ui/test/micro-ui"
 [tasks."test:e2e"]
 run = "esdev test packages/micro-ui/test/micro-ui.e2e"
 
-# Parallel real-DOM test layer using jsdom + Node's built-in test runner.
-# Runs only on Node — esdev's sandbox is bypassed intentionally so jsdom can
-# attach a real CustomElementRegistry. Lives next to (not replacing) the
-# in-house FakeDOM tests above.
+# jsdom tests run under bun (native TypeScript, real DOM).
 [tasks."test:jsdom"]
-run = "node --test test/jsdom/*.test.mjs"
+run = "bun test test/jsdom/*.test.mjs"
 dir = "packages/micro-ui"
 
 # ------------------------------------------------------------------ lint / fmt (Biome)

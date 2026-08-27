@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import "./setup.mjs";
 
 const { define, html, update, flush, onReady, onError } = await import(
-  `../../src/index.js?jsdom-${Date.now()}`
+  `../../src/index.ts?jsdom-${Date.now()}`
 );
 function uniqueTag(prefix) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
