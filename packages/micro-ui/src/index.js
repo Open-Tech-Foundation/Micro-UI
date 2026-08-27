@@ -15,6 +15,13 @@ export function html(strings, ...values) {
   return createTree(tpl, values);
 }
 
+// `html.raw\`...\`` returns a trusted-HTML node that bypasses text
+// escaping. Use only for content you control; everything user-supplied
+// must flow through the default (escaped) `html\`\``.
+html.raw = function raw(strings, ...values) {
+  return wrapRaw(buildRawString(strings, values));
+};
+
 function buildTemplate(strings) {
   let s = "";
   for (let i = 0; i < strings.length; i++) {
@@ -209,11 +216,54 @@ function resolveBinding(val) {
     for (const item of val) nodes.push(resolveBinding(item));
     return { type: "fragment", children: nodes };
   }
-  if (val.type) {
+  if (val && val.type) {
     if (val.type === "fragment") return val;
+    if (val.type === "raw") return materializeRaw(val);
     return val;
   }
-  return { type: "text", value: val, dom: document.createTextNode(String(val)) };
+  // primitive: escape before creating a text node
+  const s = escapeText(String(val));
+  return { type: "text", value: s, dom: document.createTextNode(s) };
+}
+
+// ── text escaping (XSS defense) ────────────────────────────────────
+
+const ESCAPE_MAP = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+const ESCAPE_RE = /[&<>"']/g;
+
+function escapeText(s) {
+  return s.replace(ESCAPE_RE, (c) => ESCAPE_MAP[c]);
+}
+
+// ── html.raw (trusted strings) ─────────────────────────────────────
+
+function buildRawString(strings, values) {
+  let out = "";
+  for (let i = 0; i < strings.length; i++) {
+    out += strings[i];
+    if (i < strings.length - 1) {
+      const v = values[i];
+      out += v == null || v === false ? "" : Array.isArray(v) ? v.join("") : String(v);
+    }
+  }
+  return out;
+}
+
+function wrapRaw(htmlString) {
+  return { type: "raw", html: htmlString };
+}
+
+function materializeRaw(raw) {
+  const tmpl = document.createElement("template");
+  tmpl.innerHTML = raw.html;
+  const children = buildDesc(tmpl.content, []);
+  return { type: "fragment", children: createNodes(children, [], { vi: 0 }) };
 }
 
 // ── DOM property helper ────────────────────────────────────────────

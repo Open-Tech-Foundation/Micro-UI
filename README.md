@@ -74,7 +74,7 @@ Props are derived from the element's HTML attributes (strings) and stay reactive
 
 Tagged template that produces an internal tree. Supports:
 
-- **Text interpolation**: `<p>${value}</p>`
+- **Text interpolation**: `<p>${value}</p>` — text is **HTML-escaped by default** (`& < > " '` → entities), so user-supplied content is safe to render directly.
 - **Mixed content**: `<p>Hello ${name}!</p>`
 - **Attribute interpolation**: `<img src=${url}>`, `style="background:${color}"`, `class="btn ${active}"` (prefix/suffix + multiple interpolations)
 - **Event binding**: `<button onclick=${handler}>` (via `on*`)
@@ -82,6 +82,7 @@ Tagged template that produces an internal tree. Supports:
 - **Conditional**: `${show ? html`<span>Yes</span>` : null}`
 - **Lists**: `${items.map(i => html`<li key=${i.id}>${i.name}</li>`)}`
 - **Nested html**: `${childTemplate}`
+- **Trusted HTML opt-in**: `html.raw\`...\`` — bypasses escaping for content you control. Never pass user input here.
 
 ### `update(el)`
 
