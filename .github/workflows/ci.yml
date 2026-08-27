@@ -32,5 +32,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - uses: oven-sh/setup-bun@v2
+
       - name: Run tsr ci
         run: tsr ci
