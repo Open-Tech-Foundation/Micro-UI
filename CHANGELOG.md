@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Errors` demo page (`demo/src/errors.ts`) — showcases the `onError` hook and error isolation with: a healthy ticking sibling, a counter that can be armed to throw on the next update, a counter that breaks after 3 renders with a "recover" rebuild, a one-shot throw button, and a live log of every error captured by the handlers. Wired into the nav in `x-app`.
 
 ### Changed
+- Split monolithic `src/index.ts` into focused modules: `types.ts`, `escape.ts`, `template.ts`, `vdom.ts`, `raw.ts`, `dom.ts`, `reconcile.ts`, `update.ts`, `define.ts`, `mount.ts`, `html.ts`, `lifecycle.ts`, `error.ts`, `state.ts`, with `index.ts` as barrel re-exports.
 - `form` demo: wrap the JSON preview in `html.raw` so the serialized output renders as literal text (quotes, braces, colons) instead of being HTML-escaped to entities. The source is the app's own form state, and `innerHTML`-inserted content does not execute `<script>` tags.
 - README: add a short tagline — *"A tiny runtime for AI-generated micro-apps"* — under the org banner.
 - **Deferred DOM creation** — `cloneNode()` now returns a descriptor-only (no `.dom`) during updates. Real DOM is materialised on-demand via `materializeNode()` only when reconcile decides to insert or replace. Eliminates O(N) superfluous `createElement` + `addEventListener` + `setProp` calls on keyed list reorders and repeated updates. Events are attached only to the retained node, not to throwaway descriptors.
