@@ -25,4 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Hand-synced dev copy at `src/micro-ui.js` and the now-empty `src/` directory. `test.html` now imports directly from `packages/micro-ui/src/index.js`. The package is the single source of truth.
+- Incorrect `~400 lines` claim from demo tagline.
+
+### Documentation
+- Added dedicated **Security** section to README covering HTML escaping, `html.raw` opt-in, and error isolation.
+- Documented all public APIs in README: `define`, `html`, `html.raw`, `update`, `flush`, `mount`, `onReady`, `onError`.
 

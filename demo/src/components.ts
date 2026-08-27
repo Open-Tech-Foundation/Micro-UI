@@ -171,7 +171,7 @@ define("x-app", (el) => {
   return () => html`
     <header>
       <h1>Micro-UI</h1>
-      <p class="tagline">~400 lines. Native Custom Elements + closure state + explicit updates.</p>
+      <p class="tagline">Native Custom Elements + closure state + explicit updates.</p>
       <nav class="nav">
         <button class="${page === "demos" ? "active" : ""}" onclick=${() => { page = "demos"; update(el); }}>Demos</button>
         <button class="${page === "shop" ? "active" : ""}" onclick=${() => { page = "shop"; update(el); }}>Shopping Cart</button>
