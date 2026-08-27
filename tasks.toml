@@ -51,4 +51,4 @@ run = "biome check"
 deps = ["typecheck", "lint", "fmt:check", "test", "test:jsdom"]
 
 [tasks.ci]
-deps = ["typecheck", "lint", "fmt:check", "test", "test:jsdom", "build"]
+deps = ["check", "build"]
