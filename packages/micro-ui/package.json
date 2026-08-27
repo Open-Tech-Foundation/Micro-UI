@@ -22,5 +22,6 @@
     "tiny",
     "ai-agents"
   ],
-  "author": "Open Tech Foundation"
+  "author": "Open Tech Foundation",
+  "devDependencies": {}
 }
