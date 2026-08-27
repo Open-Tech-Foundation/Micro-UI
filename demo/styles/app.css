@@ -461,3 +461,54 @@ footer code { color: var(--accent); }
   color: #0b1220;
   border-color: var(--accent);
 }
+
+/* ── errors demo ────────────────────────────────────────────────── */
+button.danger {
+  border-color: var(--red);
+  color: var(--red);
+}
+button.danger:hover {
+  background: var(--red);
+  color: #0b1220;
+}
+.error-log-card { margin-top: 1.5rem; }
+.error-log {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.error-log-item {
+  background: #0b1220;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-left: 3px solid var(--red);
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+.error-tag { color: var(--accent); }
+.error-phase { color: var(--muted); }
+.error-msg { color: var(--red); flex: 1; }
+[data-micro-ui-error] {
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  border-left: 3px solid var(--red);
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  color: var(--red);
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+}
+[data-micro-ui-error] pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: inherit;
+}
