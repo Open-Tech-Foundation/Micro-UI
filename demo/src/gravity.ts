@@ -228,7 +228,7 @@ define("x-gravity", (el) => {
           const p = b.trail[i]!;
           ctx.lineTo(p.x, p.y);
         }
-        ctx.strokeStyle = b.color + "55";
+        ctx.strokeStyle = `${b.color}55`;
         ctx.lineWidth = 1.5;
         ctx.stroke();
       }

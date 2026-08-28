@@ -634,7 +634,7 @@ function startSequencer(onTick: () => void) {
 
   const runTick = () => {
     const state = store.get<BeatsState>(STORE_KEY);
-    if (!state || !state.playing) return;
+    if (!state?.playing) return;
 
     stepCounter = (stepCounter + 1) % 16;
     store.set(STORE_KEY, stepCounter, { path: "currentStep" });

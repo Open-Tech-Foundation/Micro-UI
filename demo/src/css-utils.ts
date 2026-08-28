@@ -39,12 +39,13 @@ define("x-css-demo", (el) => {
             >
               ${tab.label}
             </button>
-          `
+          `,
           )}
         </div>
 
-        ${activeTab === "layout"
-          ? html`
+        ${
+          activeTab === "layout"
+            ? html`
           <div class="ui-stack ui-gap-4">
             <h2 class="ui-heading">Layout</h2>
 
@@ -95,8 +96,8 @@ define("x-css-demo", (el) => {
             </div>
           </div>
         `
-          : activeTab === "buttons"
-            ? html`
+            : activeTab === "buttons"
+              ? html`
           <div class="ui-stack ui-gap-4">
             <h2 class="ui-heading">Buttons</h2>
 
@@ -139,8 +140,8 @@ define("x-css-demo", (el) => {
             </div>
           </div>
         `
-            : activeTab === "forms"
-              ? html`
+              : activeTab === "forms"
+                ? html`
           <div class="ui-stack ui-gap-4">
             <h2 class="ui-heading">Forms</h2>
 
@@ -213,13 +214,14 @@ define("x-css-demo", (el) => {
                   }}>Submit</button>
                 </div>
 
-                ${formSubmitted
-                  ? html`
+                ${
+                  formSubmitted
+                    ? html`
                   <div class="ui-alert ui-alert-success">
                     Form submitted successfully!
                   </div>
                 `
-                  : null
+                    : null
                 }
               </div>
             </div>
@@ -250,8 +252,8 @@ define("x-css-demo", (el) => {
             </div>
           </div>
         `
-              : activeTab === "feedback"
-                ? html`
+                : activeTab === "feedback"
+                  ? html`
           <div class="ui-stack ui-gap-4">
             <h2 class="ui-heading">Feedback</h2>
 
@@ -312,7 +314,7 @@ define("x-css-demo", (el) => {
             </div>
           </div>
         `
-                : html`
+                  : html`
           <div class="ui-stack ui-gap-4">
             <h2 class="ui-heading">Components</h2>
 
