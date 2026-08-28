@@ -97,7 +97,6 @@ function patchByIndex(
     } else if (!n) {
       o.dom!.remove();
     } else {
-      materializeNode(n);
       reconcile(o, n, parent);
     }
   }
@@ -113,9 +112,11 @@ function patchKeyed(
   parent: HTMLElement | Element | DocumentFragment,
 ): void {
   const oldMap = new Map<string, VNode>();
+  const unmatchedUnkeyed = new Set<VNode>();
   for (const o of oldCh) {
     const k = getKey(o);
     if (k != null) oldMap.set(String(k), o);
+    else unmatchedUnkeyed.add(o);
   }
   let nextSib: Node | null = null;
   for (let i = newCh.length - 1; i >= 0; i--) {
@@ -135,6 +136,7 @@ function patchKeyed(
         fallback.dom?.parentNode === parent &&
         getKey(fallback) == null
       ) {
+        unmatchedUnkeyed.delete(fallback);
         materializeNode(n);
         reconcile(fallback, n, parent);
         if (fallback.dom!.nextSibling !== nextSib)
@@ -148,6 +150,8 @@ function patchKeyed(
     }
   }
   for (const o of oldMap.values())
+    if (o.dom?.parentNode === parent) o.dom!.remove();
+  for (const o of unmatchedUnkeyed)
     if (o.dom?.parentNode === parent) o.dom!.remove();
 }
 

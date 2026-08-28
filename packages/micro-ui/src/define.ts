@@ -49,7 +49,9 @@ export function define(tag: string, setup: SetupFn): void {
         try {
           const tree = render!();
           this.textContent = "";
-          if (tree.type !== "text") {
+          if (tree.type === "text") {
+            this.appendChild(tree.dom!);
+          } else {
             for (const c of tree.children) this.appendChild(c.dom!);
           }
           instances.set(this, { render: render!, tree, props, errored: false });

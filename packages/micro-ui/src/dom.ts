@@ -1,3 +1,5 @@
+import type { VNode } from "./types.ts";
+
 export function setProp(el: HTMLElement, k: string, v: unknown): void {
   if (k === "value") {
     if (v == null) {
@@ -67,5 +69,3 @@ export function materializeNode(node: VNode): void {
     for (const c of node.children) materializeNode(c);
   }
 }
-
-import type { VNode } from "./types.ts";

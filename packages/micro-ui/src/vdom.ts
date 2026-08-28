@@ -143,7 +143,12 @@ function resolveBinding(val: unknown, deferDOM: boolean): VNode {
     for (const item of val) nodes.push(resolveBinding(item, deferDOM));
     return { type: "fragment", children: nodes };
   }
-  if (val && typeof val === "object" && "type" in val) {
+  if (
+    val &&
+    typeof val === "object" &&
+    "type" in val &&
+    ("dom" in val || "children" in val || "value" in val || "html" in val)
+  ) {
     const vnode = val as VNode;
     if (vnode.type === "fragment") return vnode;
     if ("html" in val) return materializeRaw(val as RawVNode);
