@@ -56,7 +56,7 @@ function getEntry<T>(key: string): StoreEntry<T> {
   return entry;
 }
 
-function notify(entry: StoreEntry<any>): void {
+function notify(entry: StoreEntry<unknown>): void {
   for (const fn of entry.listeners) {
     try {
       fn(entry.value);
