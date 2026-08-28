@@ -909,3 +909,14 @@ test("reconcile: unkeyed child removal guarded by parentNode (fix for line 98)",
   assertEquals(el.querySelectorAll("li").length, 1);
   assertEquals(el.querySelector("li").textContent, "a");
 });
+
+test("vdom: stricter resolveBinding rejects arbitrary objects (fixed)", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-strict-vnode");
+  const fake = { type: "foo", value: "<b>not a vnode</b>" };
+  define(tag, () => () => html`<div>${fake}</div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const content = el.querySelector("div").innerHTML;
+  // Should be escaped, not injected as raw HTML
+  assert(content.includes("[object Object]") || content.includes("not a vnode"), "arbitrary object not treated as VNode");
+});

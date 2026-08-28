@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **reconcile.ts** — `patchKeyed` now removes orphaned un-keyed old nodes that aren't matched as fallbacks, preventing DOM leaks when mixing keyed and un-keyed children.
 - **vdom.ts** — `resolveBinding` type check for VNode is more robust; requires `dom`, `children`, `value`, or `html` property in addition to `type`, preventing plain objects from being misidentified as VNodes.
 - **store.ts** — `set()` with path now guards against primitive entry values (previously could silently corrupt data when the stored value was a non-object primitive).
+- **vdom.ts** — stricter `resolveBinding` validates exact `type` and required properties (`value`, `children`, `tag`, `html`) to prevent arbitrary objects from being misidentified as VNodes.
 - **reconcile.ts** — `patchByIndex` now guards `.remove()` with `parentNode` check to prevent `NotFoundError` when a node was already detached.
 - **README.md** — fixed typo: "Immuntably" → "Immutably".
 
