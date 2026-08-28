@@ -12,18 +12,6 @@
       }
     }
   },
-  "overrides": [
-    {
-      "includes": ["demo/**/*.ts"],
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noExplicitAny": "off"
-          }
-        }
-      }
-    }
-  ],
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -38,7 +26,6 @@
   "files": {
     "includes": [
       "packages/**/*.ts",
-      "demo/**/*.ts",
       "!!**/node_modules",
       "!!**/dist",
       "!!**/*.d.ts"

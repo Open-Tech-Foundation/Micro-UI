@@ -260,6 +260,10 @@ define("x-app", (el) => {
           page = "notes";
           update(el);
         }}>Notes</button>
+        <button class="ui-btn ${page === "kanban" ? "is-active" : ""}" onclick=${() => {
+          page = "kanban";
+          update(el);
+        }}>Kanban</button>
         <button class="ui-btn ${page === "errors" ? "is-active" : ""}" onclick=${() => {
           page = "errors";
           update(el);
@@ -300,11 +304,13 @@ define("x-app", (el) => {
                   ? html`<x-beats-page></x-beats-page>`
                   : page === "notes"
                     ? html`<x-notes-page></x-notes-page>`
-                    : page === "css"
-                      ? html`<x-css-demo></x-css-demo>`
-                      : page === "svg"
-                        ? html`<x-svg-page></x-svg-page>`
-                        : html`<x-errors-page></x-errors-page>`
+                    : page === "kanban"
+                      ? html`<x-kanban></x-kanban>`
+                      : page === "css"
+                        ? html`<x-css-demo></x-css-demo>`
+                        : page === "svg"
+                          ? html`<x-svg-page></x-svg-page>`
+                          : html`<x-errors-page></x-errors-page>`
     }
 
     <footer>

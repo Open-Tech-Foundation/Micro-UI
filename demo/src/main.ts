@@ -7,6 +7,7 @@ import "./data.ts";
 import "./gravity.ts";
 import "./beats.ts";
 import "./notes.ts";
+import "./kanban.ts";
 import "./errors.ts";
 import "./css-utils.ts";
 import "./svg.ts";
