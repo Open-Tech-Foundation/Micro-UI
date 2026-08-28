@@ -220,7 +220,7 @@ store.set("counter", 1);
 
 ### `store.set(key, value, { path })`
 
-Set a nested value by dot-separated path. Immuntably clones the object tree along the path.
+Set a nested value by dot-separated path. Immutably clones the object tree along the path.
 
 ```js
 store.set("form", { name: "", email: "" });
@@ -308,13 +308,23 @@ A tiny, semantic, framework-free CSS utility and component layer for building **
 **No Tailwind. No Bootstrap. No build step required.**
 
 ```js
-import "@opentf/micro-ui/styles.css";
+import "@opentf/micro-ui/styles.css"; // full bundle (tokens + base + components)
+```
+
+Split imports — pay only for what you use:
+
+```js
+import "@opentf/micro-ui/styles/tokens.css";     // vars only
+import "@opentf/micro-ui/styles/base.css";        // reset + layout
+import "@opentf/micro-ui/styles/components.css"; // buttons, forms, cards...
 ```
 
 Or via CDN:
 
 ```html
 <link rel="stylesheet" href="https://unpkg.com/@opentf/micro-ui/dist/styles.css">
+<!-- or split -->
+<link rel="stylesheet" href="https://unpkg.com/@opentf/micro-ui/dist/styles/tokens.css">
 ```
 
 ## Class Reference
@@ -322,7 +332,7 @@ Or via CDN:
 | Category | Classes |
 |----------|---------|
 | **Layout** | `ui-container`, `ui-stack`, `ui-row`, `ui-grid`, `ui-grid-2/3/4`, `ui-wrap`, `ui-center`, `ui-between`, `ui-grow` |
-| **Spacing** | `ui-gap-{1-12}`, `ui-p-{0-8}`, `ui-px-{4,6}`, `ui-py-{2,4,6}`, `ui-mt-{2,4,6,8}`, `ui-mb-{2,4,6,8}` |
+| **Spacing** | `ui-gap-{1,2,3,4,5,6,8,10,12}`, `ui-p-{0,2,3,4,5,6,8}`, `ui-px-{4,6}`, `ui-py-{2,4,6}`, `ui-mt-{2,4,6,8}`, `ui-mb-{2,4,6,8}` |
 | **Typography** | `ui-title`, `ui-heading`, `ui-text`, `ui-muted`, `ui-label`, `ui-caption`, `ui-error-text`, `ui-link` |
 | **Buttons** | `ui-btn`, `ui-btn-primary`, `ui-btn-secondary`, `ui-btn-ghost`, `ui-btn-danger`, `ui-btn-success`, `ui-btn-sm`, `ui-btn-lg`, `ui-btn-icon` |
 | **Forms** | `ui-field`, `ui-input`, `ui-textarea`, `ui-select`, `ui-checkbox`, `ui-radio`, `ui-switch` |
@@ -344,7 +354,7 @@ Or via CDN:
 | **Status** | `ui-status`, `ui-status-success/warning/danger/info` |
 | **Drag & Drop** | `ui-draggable`, `ui-dropzone`, `ui-dragging` |
 | **Utilities** | `ui-hidden`, `ui-visible`, `ui-w-full`, `ui-rounded-*`, `ui-shadow-*`, `ui-relative/absolute/fixed/sticky` |
-| **States** | `is-active`, `is-disabled`, `is-loading`, `is-invalid`, `is-dragover` |
+| **States** | `is-active`, `is-disabled`, `is-loading`, `is-invalid`, `is-dragover`, `is-dragging` |
 
 ## Theming
 
@@ -357,7 +367,14 @@ Override CSS custom properties for theming:
 }
 ```
 
-Dark mode via `data-theme="dark"` attribute.
+Dark mode — automatic via `@media (prefers-color-scheme: dark)` in tokens. Override it on any element with `data-theme="dark"` or `data-theme="light"`; an explicit attribute always wins over the system preference (and you can theme individual containers).
+
+Layers — all rules are in `@layer micro-ui.*` so your app CSS wins without `!important`:
+```css
+@layer micro-ui, app; /* app layer after micro-ui */
+```
+
+Opt-in CSS — `package.json` has `"sideEffects": ["*.css"]` so JS tree-shakes, import CSS only where needed.
 
 > **[Full CSS Documentation](./packages/micro-ui/docs/css-utils.md)**
 

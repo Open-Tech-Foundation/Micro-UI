@@ -1448,7 +1448,8 @@
   background: var(--ui-primary-soft);
 }
 
-.ui-dragging {
+.ui-dragging,
+.is-dragging {
   opacity: 0.5;
 }
 
@@ -1494,70 +1495,7 @@
 
 
 /* ---------------------------------------------------------
-   49. THEME: DARK
-   --------------------------------------------------------- */
-
-[data-theme="dark"] {
-  --ui-background: #09090b;
-  --ui-surface: #18181b;
-  --ui-surface-muted: #27272a;
-  --ui-surface-hover: #27272a;
-
-  --ui-text: #fafafa;
-  --ui-text-secondary: #a1a1aa;
-  --ui-text-muted: #71717a;
-  --ui-text-disabled: #52525b;
-
-  --ui-border: #27272a;
-  --ui-border-hover: #3f3f46;
-  --ui-border-focus: #818cf8;
-
-  --ui-primary: #818cf8;
-  --ui-primary-hover: #a5b4fc;
-  --ui-primary-active: #6366f1;
-  --ui-primary-soft: #1e1b4b;
-  --ui-primary-text: #c7d2fe;
-  --ui-primary-foreground: #18181b;
-
-  --ui-success: #22c55e;
-  --ui-success-hover: #16a34a;
-  --ui-success-soft: #052e16;
-  --ui-success-text: #86efac;
-
-  --ui-warning: #f59e0b;
-  --ui-warning-hover: #d97706;
-  --ui-warning-soft: #451a03;
-  --ui-warning-text: #fcd34d;
-
-  --ui-danger: #ef4444;
-  --ui-danger-hover: #dc2626;
-  --ui-danger-soft: #450a0a;
-  --ui-danger-text: #fca5a5;
-
-  --ui-info: #38bdf8;
-  --ui-info-hover: #0ea5e9;
-  --ui-info-soft: #082f49;
-  --ui-info-text: #7dd3fc;
-
-  --ui-shadow-xs:
-    0 1px 2px rgb(0 0 0 / 0.25);
-
-  --ui-shadow-sm:
-    0 1px 3px rgb(0 0 0 / 0.3);
-
-  --ui-shadow-md:
-    0 4px 12px rgb(0 0 0 / 0.35);
-
-  --ui-shadow-lg:
-    0 12px 32px rgb(0 0 0 / 0.45);
-
-  --ui-focus-ring:
-    0 0 0 3px rgb(129 140 248 / 0.25);
-}
-
-
-/* ---------------------------------------------------------
-   50. REDUCED MOTION
+   49. REDUCED MOTION
    --------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
@@ -1573,7 +1511,7 @@
 
 
 /* ---------------------------------------------------------
-   51. RESPONSIVE
+   50. RESPONSIVE
    --------------------------------------------------------- */
 
 @media (max-width: 768px) {
@@ -1606,7 +1544,7 @@
 
 
 /* ---------------------------------------------------------
-   52. PRINT
+   51. PRINT
    --------------------------------------------------------- */
 
 @media print {

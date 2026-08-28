@@ -462,7 +462,9 @@ test("e2e: components.css defines drag & drop", () => {
   assert.ok(hasProperty(componentsCss, ".ui-dropzone", "border"));
   assert.ok(hasProperty(componentsCss, ".ui-dropzone", "border-radius"));
   assert.ok(hasProperty(componentsCss, ".ui-dropzone.is-dragover", "border-color"));
-  assert.ok(hasProperty(componentsCss, ".ui-dragging", "opacity"));
+  assert.ok(componentsCss.includes(".ui-dragging,"), "ui-dragging must exist");
+  assert.ok(componentsCss.includes(".is-dragging"), "is-dragging alias must exist");
+  assert.ok(hasProperty(componentsCss, ".is-dragging", "opacity"));
 });
 
 // ── SPLIT PARTIALS: tokens.css content ────────────────────────────
@@ -491,18 +493,13 @@ test("e2e: tokens.css defines shadow tokens", () => {
   });
 });
 
-// ── SPLIT MATCH: tokens.css matches styles.css ────────────────────
+// ── SPLIT MATCH: styles.css re-exports the partials ───────────────
 
-test("e2e: split tokens match full bundle for all core colors", () => {
-  ["--ui-background", "--ui-surface", "--ui-text", "--ui-border", "--ui-primary", "--ui-success", "--ui-danger"].forEach(t => {
-    assert.equal(extractToken(tokensCss, t), extractToken(stylesCss, t), `${t} mismatch`);
-  });
-});
-
-test("e2e: split tokens match full bundle for spacing", () => {
-  ["--ui-space-1", "--ui-space-4", "--ui-space-8"].forEach(t => {
-    assert.equal(extractToken(tokensCss, t), extractToken(stylesCss, t), `${t} mismatch`);
-  });
+test("e2e: full bundle re-exports the split partials", () => {
+  assert.ok(stylesCss.includes('@import url("./styles/tokens.css");'), "must import tokens.css");
+  assert.ok(stylesCss.includes('@import url("./styles/base.css");'), "must import base.css");
+  assert.ok(stylesCss.includes('@import url("./styles/components.css");'), "must import components.css");
+  assert.ok(stylesCss.indexOf("@layer") < stylesCss.indexOf("@import"), "layer order must precede imports");
 });
 
 // ── DARK MODE: in tokens.css ──────────────────────────────────────
@@ -515,6 +512,24 @@ test("e2e: tokens.css dark mode is after light tokens", () => {
   const tokensEnd = tokensCss.indexOf("}", tokensCss.lastIndexOf("--ui-container-xl:"));
   const darkIdx = tokensCss.indexOf("@media (prefers-color-scheme: dark)");
   assert.ok(darkIdx > tokensEnd, "dark mode must come after light tokens");
+});
+
+test("e2e: tokens.css defines data-theme dark/light pins", () => {
+  assert.ok(tokensCss.includes('[data-theme="dark"]'), "must define data-theme=\"dark\"");
+  assert.ok(tokensCss.includes('[data-theme="light"]'), "must define data-theme=\"light\"");
+  assert.ok(!componentsCss.includes('[data-theme="'), "theme pin blocks must live in tokens.css, not components");
+});
+
+test("e2e: automatic and attribute dark use the same token values", () => {
+  const media = tokensCss.slice(tokensCss.indexOf("@media (prefers-color-scheme: dark)"));
+  const attr = tokensCss.slice(tokensCss.indexOf('[data-theme="dark"]'));
+  for (const t of ["--ui-background", "--ui-primary", "--ui-danger-soft", "--ui-text-disabled", "--ui-focus-ring", "--ui-shadow-lg"]) {
+    const m = new RegExp(`${t}:\\s*([^;]+);`).exec(media);
+    const a = new RegExp(`${t}:\\s*([^;]+);`).exec(attr);
+    assert.ok(m, `${t} must be defined in automatic dark`);
+    assert.ok(a, `${t} must be defined in attribute dark`);
+    assert.equal(m[1].trim(), a[1].trim(), `${t} must match between automatic and attribute dark`);
+  }
 });
 
 // ── LAYERS: structure ─────────────────────────────────────────────

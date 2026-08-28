@@ -35,7 +35,7 @@ Micro-UI Utils turns that into:
 // Full bundle
 import "@opentf/micro-ui/styles.css";
 
-// Or split — pay only for what you use (tokens ~3k, base ~7k)
+// Or split — pay only for what you use (tokens ~3k, base ~5k)
 import "@opentf/micro-ui/styles/tokens.css";
 import "@opentf/micro-ui/styles/base.css";
 import "@opentf/micro-ui/styles/components.css";
@@ -45,7 +45,7 @@ All rules are in `@layer micro-ui.*` so your app CSS wins without `!important`:
 ```css
 @layer micro-ui, app;
 ```
-Dark mode is automatic via `@media (prefers-color-scheme: dark)` in tokens.
+Dark mode is automatic via `@media (prefers-color-scheme: dark)` in tokens; use `data-theme="dark"` / `data-theme="light"` to pin the theme on any element (see [Dark Mode](#dark-mode)).
 
 Package has `"sideEffects": ["*.css"]` — import CSS only where needed, JS still tree-shakes.
 
@@ -969,13 +969,21 @@ No source modification is required.
 
 # Dark Mode
 
-Dark mode can be enabled using:
+Dark mode is applied **automatically** via `@media (prefers-color-scheme: dark)` (all tokens, including status/soft colors, are re-scaled for dark surfaces).
+
+You can also pin the theme explicitly. An explicit attribute always wins over the system preference:
 
 ```html
 <body data-theme="dark">
 ```
 
-Or on any application container:
+Force light mode even when the OS prefers dark:
+
+```html
+<html data-theme="light">
+```
+
+Or on any application container — custom properties inherit, so this themes just that subtree:
 
 ```html
 <div data-theme="dark">
