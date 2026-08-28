@@ -1,0 +1,2032 @@
+/* =========================================================
+   Micro-UI CSS
+   Semantic, vanilla CSS foundation for Micro-UI apps
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   1. DESIGN TOKENS
+   --------------------------------------------------------- */
+
+:root {
+  /* Colors */
+  --ui-background: #f8fafc;
+  --ui-surface: #ffffff;
+  --ui-surface-muted: #f1f5f9;
+  --ui-surface-hover: #f8fafc;
+
+  --ui-text: #0f172a;
+  --ui-text-secondary: #475569;
+  --ui-text-muted: #94a3b8;
+  --ui-text-disabled: #cbd5e1;
+
+  --ui-border: #e2e8f0;
+  --ui-border-hover: #cbd5e1;
+  --ui-border-focus: #818cf8;
+
+  --ui-primary: #6366f1;
+  --ui-primary-hover: #4f46e5;
+  --ui-primary-active: #4338ca;
+  --ui-primary-soft: #eef2ff;
+  --ui-primary-text: #4338ca;
+  --ui-primary-foreground: #ffffff;
+
+  --ui-success: #16a34a;
+  --ui-success-hover: #15803d;
+  --ui-success-soft: #f0fdf4;
+  --ui-success-text: #166534;
+
+  --ui-warning: #d97706;
+  --ui-warning-hover: #b45309;
+  --ui-warning-soft: #fffbeb;
+  --ui-warning-text: #92400e;
+
+  --ui-danger: #dc2626;
+  --ui-danger-hover: #b91c1c;
+  --ui-danger-soft: #fef2f2;
+  --ui-danger-text: #991b1b;
+
+  --ui-info: #0284c7;
+  --ui-info-hover: #0369a1;
+  --ui-info-soft: #f0f9ff;
+  --ui-info-text: #075985;
+
+  /* Spacing */
+  --ui-space-1: 0.25rem;
+  --ui-space-2: 0.5rem;
+  --ui-space-3: 0.75rem;
+  --ui-space-4: 1rem;
+  --ui-space-5: 1.25rem;
+  --ui-space-6: 1.5rem;
+  --ui-space-8: 2rem;
+  --ui-space-10: 2.5rem;
+  --ui-space-12: 3rem;
+  --ui-space-16: 4rem;
+
+  /* Radius */
+  --ui-radius-sm: 0.375rem;
+  --ui-radius-md: 0.625rem;
+  --ui-radius-lg: 0.875rem;
+  --ui-radius-xl: 1.25rem;
+  --ui-radius-2xl: 1.5rem;
+  --ui-radius-full: 9999px;
+
+  /* Typography */
+  --ui-font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  --ui-font-xs: 0.75rem;
+  --ui-font-sm: 0.875rem;
+  --ui-font-md: 1rem;
+  --ui-font-lg: 1.125rem;
+  --ui-font-xl: 1.25rem;
+  --ui-font-2xl: 1.5rem;
+  --ui-font-3xl: 1.875rem;
+  --ui-font-4xl: 2.25rem;
+
+  /* Shadows */
+  --ui-shadow-xs:
+    0 1px 2px rgb(15 23 42 / 0.04);
+
+  --ui-shadow-sm:
+    0 1px 3px rgb(15 23 42 / 0.08);
+
+  --ui-shadow-md:
+    0 4px 12px rgb(15 23 42 / 0.10);
+
+  --ui-shadow-lg:
+    0 12px 32px rgb(15 23 42 / 0.14);
+
+  /* Motion */
+  --ui-duration-fast: 100ms;
+  --ui-duration: 150ms;
+  --ui-duration-slow: 250ms;
+
+  --ui-ease:
+    cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Focus */
+  --ui-focus-ring:
+    0 0 0 3px rgb(99 102 241 / 0.18);
+
+  /* Layout */
+  --ui-container-sm: 640px;
+  --ui-container-md: 768px;
+  --ui-container-lg: 1024px;
+  --ui-container-xl: 1280px;
+}
+
+
+/* ---------------------------------------------------------
+   2. RESET / BASE
+   --------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--ui-font-family);
+  color: var(--ui-text);
+  background: var(--ui-background);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--ui-background);
+  color: var(--ui-text);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  border: 0;
+}
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+
+/* ---------------------------------------------------------
+   3. LAYOUT
+   --------------------------------------------------------- */
+
+.ui-container {
+  width: min(
+    calc(100% - 2rem),
+    var(--ui-container-lg)
+  );
+  margin-inline: auto;
+}
+
+.ui-container-sm {
+  width: min(
+    calc(100% - 2rem),
+    var(--ui-container-sm)
+  );
+  margin-inline: auto;
+}
+
+.ui-container-md {
+  width: min(
+    calc(100% - 2rem),
+    var(--ui-container-md)
+  );
+  margin-inline: auto;
+}
+
+.ui-container-lg {
+  width: min(
+    calc(100% - 2rem),
+    var(--ui-container-lg)
+  );
+  margin-inline: auto;
+}
+
+.ui-container-xl {
+  width: min(
+    calc(100% - 2rem),
+    var(--ui-container-xl)
+  );
+  margin-inline: auto;
+}
+
+.ui-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-row {
+  display: flex;
+  align-items: center;
+}
+
+.ui-grid {
+  display: grid;
+}
+
+.ui-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ui-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ui-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ui-wrap {
+  flex-wrap: wrap;
+}
+
+.ui-center {
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-start {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.ui-end {
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.ui-between {
+  justify-content: space-between;
+}
+
+.ui-around {
+  justify-content: space-around;
+}
+
+.ui-grow {
+  flex: 1 1 0%;
+}
+
+.ui-shrink-0 {
+  flex-shrink: 0;
+}
+
+
+/* ---------------------------------------------------------
+   4. GAP
+   --------------------------------------------------------- */
+
+.ui-gap-1 { gap: var(--ui-space-1); }
+.ui-gap-2 { gap: var(--ui-space-2); }
+.ui-gap-3 { gap: var(--ui-space-3); }
+.ui-gap-4 { gap: var(--ui-space-4); }
+.ui-gap-5 { gap: var(--ui-space-5); }
+.ui-gap-6 { gap: var(--ui-space-6); }
+.ui-gap-8 { gap: var(--ui-space-8); }
+.ui-gap-10 { gap: var(--ui-space-10); }
+.ui-gap-12 { gap: var(--ui-space-12); }
+
+
+/* ---------------------------------------------------------
+   5. SPACING
+   --------------------------------------------------------- */
+
+.ui-p-0 { padding: 0; }
+.ui-p-2 { padding: var(--ui-space-2); }
+.ui-p-3 { padding: var(--ui-space-3); }
+.ui-p-4 { padding: var(--ui-space-4); }
+.ui-p-5 { padding: var(--ui-space-5); }
+.ui-p-6 { padding: var(--ui-space-6); }
+.ui-p-8 { padding: var(--ui-space-8); }
+
+.ui-px-4 {
+  padding-inline: var(--ui-space-4);
+}
+
+.ui-px-6 {
+  padding-inline: var(--ui-space-6);
+}
+
+.ui-py-2 {
+  padding-block: var(--ui-space-2);
+}
+
+.ui-py-4 {
+  padding-block: var(--ui-space-4);
+}
+
+.ui-py-6 {
+  padding-block: var(--ui-space-6);
+}
+
+.ui-m-0 { margin: 0; }
+
+.ui-mt-2 { margin-top: var(--ui-space-2); }
+.ui-mt-4 { margin-top: var(--ui-space-4); }
+.ui-mt-6 { margin-top: var(--ui-space-6); }
+.ui-mt-8 { margin-top: var(--ui-space-8); }
+
+.ui-mb-2 { margin-bottom: var(--ui-space-2); }
+.ui-mb-4 { margin-bottom: var(--ui-space-4); }
+.ui-mb-6 { margin-bottom: var(--ui-space-6); }
+.ui-mb-8 { margin-bottom: var(--ui-space-8); }
+
+
+/* ---------------------------------------------------------
+   6. TYPOGRAPHY
+   --------------------------------------------------------- */
+
+.ui-title {
+  margin: 0;
+  color: var(--ui-text);
+  font-size: var(--ui-font-2xl);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.ui-heading {
+  margin: 0;
+  color: var(--ui-text);
+  font-size: var(--ui-font-lg);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.ui-text {
+  margin: 0;
+  color: var(--ui-text-secondary);
+  font-size: var(--ui-font-md);
+}
+
+.ui-muted {
+  margin: 0;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-font-sm);
+}
+
+.ui-label {
+  display: block;
+  margin-bottom: var(--ui-space-2);
+  color: var(--ui-text);
+  font-size: var(--ui-font-sm);
+  font-weight: 600;
+}
+
+.ui-caption {
+  display: block;
+  margin-top: var(--ui-space-2);
+  color: var(--ui-text-muted);
+  font-size: var(--ui-font-xs);
+}
+
+.ui-error-text {
+  display: block;
+  margin-top: var(--ui-space-2);
+  color: var(--ui-danger);
+  font-size: var(--ui-font-xs);
+}
+
+.ui-link {
+  color: var(--ui-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.ui-link:hover {
+  text-decoration: underline;
+}
+
+
+/* ---------------------------------------------------------
+   7. SURFACES
+   --------------------------------------------------------- */
+
+.ui-surface {
+  background: var(--ui-surface);
+}
+
+.ui-card {
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-xl);
+  padding: var(--ui-space-6);
+  box-shadow: var(--ui-shadow-sm);
+}
+
+.ui-card-flat {
+  box-shadow: none;
+}
+
+.ui-card-hover {
+  transition:
+    border-color var(--ui-duration) var(--ui-ease),
+    box-shadow var(--ui-duration) var(--ui-ease),
+    transform var(--ui-duration) var(--ui-ease);
+}
+
+.ui-card-hover:hover {
+  border-color: var(--ui-border-hover);
+  box-shadow: var(--ui-shadow-md);
+  transform: translateY(-1px);
+}
+
+.ui-section {
+  padding-block: var(--ui-space-8);
+}
+
+.ui-panel {
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+}
+
+
+/* ---------------------------------------------------------
+   8. DIVIDER
+   --------------------------------------------------------- */
+
+.ui-divider {
+  width: 100%;
+  height: 1px;
+  border: 0;
+  background: var(--ui-border);
+}
+
+.ui-divider-vertical {
+  width: 1px;
+  height: 100%;
+  background: var(--ui-border);
+}
+
+
+/* ---------------------------------------------------------
+   9. BUTTONS
+   --------------------------------------------------------- */
+
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-2);
+
+  min-height: 2.5rem;
+  padding-inline: var(--ui-space-4);
+
+  border: 1px solid transparent;
+  border-radius: var(--ui-radius-md);
+
+  background: var(--ui-surface-muted);
+  color: var(--ui-text);
+
+  font-size: var(--ui-font-sm);
+  font-weight: 600;
+  line-height: 1;
+
+  white-space: nowrap;
+  user-select: none;
+
+  transition:
+    background var(--ui-duration) var(--ui-ease),
+    border-color var(--ui-duration) var(--ui-ease),
+    color var(--ui-duration) var(--ui-ease),
+    box-shadow var(--ui-duration) var(--ui-ease),
+    transform var(--ui-duration-fast) var(--ui-ease);
+}
+
+.ui-btn:hover {
+  background: var(--ui-border);
+}
+
+.ui-btn:active {
+  transform: scale(0.98);
+}
+
+.ui-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.ui-btn-primary {
+  background: var(--ui-primary);
+  color: var(--ui-primary-foreground);
+}
+
+.ui-btn-primary:hover {
+  background: var(--ui-primary-hover);
+}
+
+.ui-btn-primary:active {
+  background: var(--ui-primary-active);
+}
+
+.ui-btn-secondary {
+  background: var(--ui-surface);
+  border-color: var(--ui-border);
+  color: var(--ui-text);
+}
+
+.ui-btn-secondary:hover {
+  background: var(--ui-surface-muted);
+}
+
+.ui-btn-ghost {
+  background: transparent;
+  color: var(--ui-text-secondary);
+}
+
+.ui-btn-ghost:hover {
+  background: var(--ui-surface-muted);
+  color: var(--ui-text);
+}
+
+.ui-btn-danger {
+  background: var(--ui-danger);
+  color: white;
+}
+
+.ui-btn-danger:hover {
+  background: var(--ui-danger-hover);
+}
+
+.ui-btn-success {
+  background: var(--ui-success);
+  color: white;
+}
+
+.ui-btn-success:hover {
+  background: var(--ui-success-hover);
+}
+
+.ui-btn-sm {
+  min-height: 2rem;
+  padding-inline: var(--ui-space-3);
+  font-size: var(--ui-font-xs);
+}
+
+.ui-btn-lg {
+  min-height: 3rem;
+  padding-inline: var(--ui-space-6);
+  font-size: var(--ui-font-md);
+}
+
+.ui-btn-icon {
+  width: 2.5rem;
+  padding-inline: 0;
+}
+
+.ui-btn-icon.ui-btn-sm {
+  width: 2rem;
+}
+
+.ui-btn-icon.ui-btn-lg {
+  width: 3rem;
+}
+
+.ui-btn:disabled,
+.ui-btn.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.ui-btn.is-loading {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+
+/* ---------------------------------------------------------
+   10. BUTTON GROUP
+   --------------------------------------------------------- */
+
+.ui-btn-group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ui-btn-group .ui-btn {
+  border-radius: 0;
+}
+
+.ui-btn-group .ui-btn:first-child {
+  border-radius:
+    var(--ui-radius-md) 0 0 var(--ui-radius-md);
+}
+
+.ui-btn-group .ui-btn:last-child {
+  border-radius:
+    0 var(--ui-radius-md) var(--ui-radius-md) 0;
+}
+
+
+/* ---------------------------------------------------------
+   11. FORM FIELD
+   --------------------------------------------------------- */
+
+.ui-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-field.is-disabled {
+  opacity: 0.55;
+}
+
+
+/* ---------------------------------------------------------
+   12. INPUTS
+   --------------------------------------------------------- */
+
+.ui-input,
+.ui-textarea,
+.ui-select {
+  width: 100%;
+
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-md);
+
+  background: var(--ui-surface);
+  color: var(--ui-text);
+
+  font-size: var(--ui-font-sm);
+
+  outline: none;
+
+  transition:
+    border-color var(--ui-duration) var(--ui-ease),
+    box-shadow var(--ui-duration) var(--ui-ease);
+}
+
+.ui-input,
+.ui-select {
+  height: 2.5rem;
+  padding-inline: var(--ui-space-3);
+}
+
+.ui-textarea {
+  min-height: 7rem;
+  padding: var(--ui-space-3);
+  resize: vertical;
+}
+
+.ui-input::placeholder,
+.ui-textarea::placeholder {
+  color: var(--ui-text-muted);
+}
+
+.ui-input:hover,
+.ui-textarea:hover,
+.ui-select:hover {
+  border-color: var(--ui-border-hover);
+}
+
+.ui-input:focus,
+.ui-textarea:focus,
+.ui-select:focus {
+  border-color: var(--ui-border-focus);
+  box-shadow: var(--ui-focus-ring);
+}
+
+.ui-input:disabled,
+.ui-textarea:disabled,
+.ui-select:disabled {
+  background: var(--ui-surface-muted);
+  color: var(--ui-text-disabled);
+  cursor: not-allowed;
+}
+
+.ui-input.is-invalid,
+.ui-textarea.is-invalid,
+.ui-select.is-invalid {
+  border-color: var(--ui-danger);
+}
+
+.ui-input.is-invalid:focus,
+.ui-textarea.is-invalid:focus,
+.ui-select.is-invalid:focus {
+  box-shadow:
+    0 0 0 3px rgb(220 38 38 / 0.15);
+}
+
+
+/* ---------------------------------------------------------
+   13. CHECKBOX
+   --------------------------------------------------------- */
+
+.ui-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ui-checkbox input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--ui-primary);
+}
+
+
+/* ---------------------------------------------------------
+   14. RADIO
+   --------------------------------------------------------- */
+
+.ui-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ui-radio input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--ui-primary);
+}
+
+
+/* ---------------------------------------------------------
+   15. SWITCH
+   --------------------------------------------------------- */
+
+.ui-switch {
+  position: relative;
+  display: inline-flex;
+  width: 2.75rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+.ui-switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ui-switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--ui-radius-full);
+  background: var(--ui-border-hover);
+  transition: background var(--ui-duration) var(--ui-ease);
+}
+
+.ui-switch-thumb {
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+
+  width: 1.125rem;
+  height: 1.125rem;
+
+  border-radius: 50%;
+  background: white;
+
+  box-shadow: var(--ui-shadow-sm);
+
+  transition:
+    transform var(--ui-duration) var(--ui-ease);
+}
+
+.ui-switch input:checked + .ui-switch-track {
+  background: var(--ui-primary);
+}
+
+.ui-switch input:checked
+  + .ui-switch-track
+  + .ui-switch-thumb {
+  transform: translateX(1.25rem);
+}
+
+
+/* ---------------------------------------------------------
+   16. BADGES
+   --------------------------------------------------------- */
+
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 1.5rem;
+  padding-inline: var(--ui-space-2);
+
+  border-radius: var(--ui-radius-full);
+
+  background: var(--ui-surface-muted);
+  color: var(--ui-text-secondary);
+
+  font-size: var(--ui-font-xs);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.ui-badge-primary {
+  background: var(--ui-primary-soft);
+  color: var(--ui-primary-text);
+}
+
+.ui-badge-success {
+  background: var(--ui-success-soft);
+  color: var(--ui-success-text);
+}
+
+.ui-badge-warning {
+  background: var(--ui-warning-soft);
+  color: var(--ui-warning-text);
+}
+
+.ui-badge-danger {
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger-text);
+}
+
+.ui-badge-info {
+  background: var(--ui-info-soft);
+  color: var(--ui-info-text);
+}
+
+
+/* ---------------------------------------------------------
+   17. ALERTS
+   --------------------------------------------------------- */
+
+.ui-alert {
+  display: flex;
+  gap: var(--ui-space-3);
+
+  padding: var(--ui-space-4);
+
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+
+  background: var(--ui-surface-muted);
+  color: var(--ui-text-secondary);
+
+  font-size: var(--ui-font-sm);
+}
+
+.ui-alert-info {
+  border-color: #bae6fd;
+  background: var(--ui-info-soft);
+  color: var(--ui-info-text);
+}
+
+.ui-alert-success {
+  border-color: #bbf7d0;
+  background: var(--ui-success-soft);
+  color: var(--ui-success-text);
+}
+
+.ui-alert-warning {
+  border-color: #fde68a;
+  background: var(--ui-warning-soft);
+  color: var(--ui-warning-text);
+}
+
+.ui-alert-danger {
+  border-color: #fecaca;
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger-text);
+}
+
+
+/* ---------------------------------------------------------
+   18. PROGRESS
+   --------------------------------------------------------- */
+
+.ui-progress {
+  width: 100%;
+  height: 0.5rem;
+
+  overflow: hidden;
+
+  border-radius: var(--ui-radius-full);
+
+  background: var(--ui-surface-muted);
+}
+
+.ui-progress-bar {
+  height: 100%;
+  width: 0;
+
+  border-radius: inherit;
+
+  background: var(--ui-primary);
+
+  transition: width var(--ui-duration-slow) var(--ui-ease);
+}
+
+.ui-progress-success .ui-progress-bar {
+  background: var(--ui-success);
+}
+
+.ui-progress-danger .ui-progress-bar {
+  background: var(--ui-danger);
+}
+
+
+/* ---------------------------------------------------------
+   19. SPINNER
+   --------------------------------------------------------- */
+
+.ui-spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+
+  border: 2px solid var(--ui-border);
+  border-top-color: var(--ui-primary);
+
+  border-radius: 50%;
+
+  animation: ui-spin 700ms linear infinite;
+}
+
+.ui-spinner-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.ui-spinner-lg {
+  width: 2rem;
+  height: 2rem;
+}
+
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* ---------------------------------------------------------
+   20. AVATAR
+   --------------------------------------------------------- */
+
+.ui-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 2.5rem;
+  height: 2.5rem;
+
+  overflow: hidden;
+
+  border-radius: 50%;
+
+  background: var(--ui-primary-soft);
+  color: var(--ui-primary-text);
+
+  font-size: var(--ui-font-sm);
+  font-weight: 700;
+}
+
+.ui-avatar-sm {
+  width: 2rem;
+  height: 2rem;
+  font-size: var(--ui-font-xs);
+}
+
+.ui-avatar-lg {
+  width: 3rem;
+  height: 3rem;
+  font-size: var(--ui-font-md);
+}
+
+.ui-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+/* ---------------------------------------------------------
+   21. LIST
+   --------------------------------------------------------- */
+
+.ui-list {
+  display: flex;
+  flex-direction: column;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.ui-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+
+  padding: var(--ui-space-3) var(--ui-space-4);
+
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.ui-list-item:last-child {
+  border-bottom: 0;
+}
+
+.ui-list-item-hover:hover {
+  background: var(--ui-surface-hover);
+}
+
+
+/* ---------------------------------------------------------
+   22. TABLE
+   --------------------------------------------------------- */
+
+.ui-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+}
+
+.ui-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  background: var(--ui-surface);
+
+  font-size: var(--ui-font-sm);
+}
+
+.ui-table th {
+  padding: var(--ui-space-3) var(--ui-space-4);
+
+  background: var(--ui-surface-muted);
+
+  color: var(--ui-text-secondary);
+
+  font-weight: 600;
+  text-align: left;
+
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.ui-table td {
+  padding: var(--ui-space-3) var(--ui-space-4);
+
+  color: var(--ui-text-secondary);
+
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.ui-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.ui-table-hover tbody tr:hover {
+  background: var(--ui-surface-hover);
+}
+
+
+/* ---------------------------------------------------------
+   23. TABS
+   --------------------------------------------------------- */
+
+.ui-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.ui-tab {
+  position: relative;
+
+  padding:
+    var(--ui-space-3)
+    var(--ui-space-4);
+
+  background: transparent;
+  color: var(--ui-text-muted);
+
+  font-size: var(--ui-font-sm);
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.ui-tab:hover {
+  color: var(--ui-text);
+}
+
+.ui-tab.is-active {
+  color: var(--ui-primary);
+}
+
+.ui-tab.is-active::after {
+  content: "";
+
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+
+  height: 2px;
+
+  background: var(--ui-primary);
+}
+
+
+/* ---------------------------------------------------------
+   24. BREADCRUMBS
+   --------------------------------------------------------- */
+
+.ui-breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+
+  color: var(--ui-text-muted);
+  font-size: var(--ui-font-sm);
+}
+
+.ui-breadcrumb {
+  color: var(--ui-text-secondary);
+  text-decoration: none;
+}
+
+.ui-breadcrumb:hover {
+  color: var(--ui-primary);
+}
+
+.ui-breadcrumb-separator {
+  color: var(--ui-text-disabled);
+}
+
+
+/* ---------------------------------------------------------
+   25. PAGINATION
+   --------------------------------------------------------- */
+
+.ui-pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+}
+
+.ui-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 2.25rem;
+  height: 2.25rem;
+
+  border-radius: var(--ui-radius-md);
+
+  background: transparent;
+  color: var(--ui-text-secondary);
+
+  font-size: var(--ui-font-sm);
+  font-weight: 500;
+}
+
+.ui-page:hover {
+  background: var(--ui-surface-muted);
+}
+
+.ui-page.is-active {
+  background: var(--ui-primary);
+  color: white;
+}
+
+
+/* ---------------------------------------------------------
+   26. DROPDOWN / MENU
+   --------------------------------------------------------- */
+
+.ui-menu {
+  min-width: 12rem;
+
+  padding: var(--ui-space-1);
+
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+
+  background: var(--ui-surface);
+  box-shadow: var(--ui-shadow-lg);
+}
+
+.ui-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+
+  width: 100%;
+
+  padding:
+    var(--ui-space-2)
+    var(--ui-space-3);
+
+  border-radius: var(--ui-radius-sm);
+
+  background: transparent;
+  color: var(--ui-text-secondary);
+
+  font-size: var(--ui-font-sm);
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.ui-menu-item:hover {
+  background: var(--ui-surface-muted);
+  color: var(--ui-text);
+}
+
+.ui-menu-divider {
+  height: 1px;
+  margin: var(--ui-space-1) 0;
+  background: var(--ui-border);
+}
+
+
+/* ---------------------------------------------------------
+   27. MODAL
+   --------------------------------------------------------- */
+
+.ui-modal {
+  position: fixed;
+  inset: 0;
+
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: var(--ui-space-4);
+
+  background: rgb(15 23 42 / 0.5);
+}
+
+.ui-dialog {
+  width: min(100%, 32rem);
+
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-xl);
+
+  background: var(--ui-surface);
+
+  box-shadow: var(--ui-shadow-lg);
+
+  overflow: hidden;
+}
+
+.ui-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding:
+    var(--ui-space-5)
+    var(--ui-space-6);
+
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.ui-dialog-body {
+  padding: var(--ui-space-6);
+}
+
+.ui-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ui-space-2);
+
+  padding:
+    var(--ui-space-4)
+    var(--ui-space-6);
+
+  border-top: 1px solid var(--ui-border);
+}
+
+
+/* ---------------------------------------------------------
+   28. DRAWER
+   --------------------------------------------------------- */
+
+.ui-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+
+  z-index: 1000;
+
+  width: min(90vw, 24rem);
+
+  background: var(--ui-surface);
+
+  box-shadow: var(--ui-shadow-lg);
+
+  overflow-y: auto;
+}
+
+.ui-drawer-left {
+  left: 0;
+}
+
+.ui-drawer-right {
+  right: 0;
+}
+
+.ui-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: var(--ui-space-5);
+
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.ui-drawer-body {
+  padding: var(--ui-space-5);
+}
+
+
+/* ---------------------------------------------------------
+   29. TOOLTIP
+   --------------------------------------------------------- */
+
+.ui-tooltip {
+  position: relative;
+}
+
+.ui-tooltip-content {
+  position: absolute;
+
+  z-index: 1100;
+
+  bottom: calc(100% + var(--ui-space-2));
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  width: max-content;
+  max-width: 16rem;
+
+  padding:
+    var(--ui-space-2)
+    var(--ui-space-3);
+
+  border-radius: var(--ui-radius-md);
+
+  background: var(--ui-text);
+  color: white;
+
+  font-size: var(--ui-font-xs);
+
+  box-shadow: var(--ui-shadow-md);
+
+  pointer-events: none;
+}
+
+
+/* ---------------------------------------------------------
+   30. POPOVER
+   --------------------------------------------------------- */
+
+.ui-popover {
+  position: absolute;
+  z-index: 900;
+
+  min-width: 12rem;
+
+  padding: var(--ui-space-4);
+
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+
+  background: var(--ui-surface);
+
+  box-shadow: var(--ui-shadow-lg);
+}
+
+
+/* ---------------------------------------------------------
+   31. EMPTY STATE
+   --------------------------------------------------------- */
+
+.ui-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: var(--ui-space-12);
+
+  text-align: center;
+}
+
+.ui-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 3.5rem;
+  height: 3.5rem;
+
+  margin-bottom: var(--ui-space-4);
+
+  border-radius: var(--ui-radius-xl);
+
+  background: var(--ui-surface-muted);
+
+  color: var(--ui-text-muted);
+
+  font-size: var(--ui-font-xl);
+}
+
+
+/* ---------------------------------------------------------
+   32. SKELETON
+   --------------------------------------------------------- */
+
+.ui-skeleton {
+  background:
+    linear-gradient(
+      90deg,
+      var(--ui-surface-muted) 25%,
+      var(--ui-border) 50%,
+      var(--ui-surface-muted) 75%
+    );
+
+  background-size: 200% 100%;
+
+  animation: ui-skeleton 1.5s infinite;
+
+  border-radius: var(--ui-radius-sm);
+}
+
+@keyframes ui-skeleton {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   33. ICON
+   --------------------------------------------------------- */
+
+.ui-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 1.25rem;
+  height: 1.25rem;
+
+  flex-shrink: 0;
+}
+
+.ui-icon-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.ui-icon-lg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+
+/* ---------------------------------------------------------
+   34. VISIBILITY
+   --------------------------------------------------------- */
+
+.ui-hidden {
+  display: none !important;
+}
+
+.ui-visible {
+  display: block !important;
+}
+
+.ui-invisible {
+  visibility: hidden;
+}
+
+
+/* ---------------------------------------------------------
+   35. WIDTH / HEIGHT
+   --------------------------------------------------------- */
+
+.ui-w-full {
+  width: 100%;
+}
+
+.ui-w-auto {
+  width: auto;
+}
+
+.ui-h-full {
+  height: 100%;
+}
+
+.ui-min-h-screen {
+  min-height: 100vh;
+}
+
+
+/* ---------------------------------------------------------
+   36. TEXT ALIGNMENT
+   --------------------------------------------------------- */
+
+.ui-text-left {
+  text-align: left;
+}
+
+.ui-text-center {
+  text-align: center;
+}
+
+.ui-text-right {
+  text-align: right;
+}
+
+
+/* ---------------------------------------------------------
+   37. FONT WEIGHT
+   --------------------------------------------------------- */
+
+.ui-font-normal {
+  font-weight: 400;
+}
+
+.ui-font-medium {
+  font-weight: 500;
+}
+
+.ui-font-semibold {
+  font-weight: 600;
+}
+
+.ui-font-bold {
+  font-weight: 700;
+}
+
+
+/* ---------------------------------------------------------
+   38. BORDER RADIUS
+   --------------------------------------------------------- */
+
+.ui-rounded-none {
+  border-radius: 0;
+}
+
+.ui-rounded-sm {
+  border-radius: var(--ui-radius-sm);
+}
+
+.ui-rounded {
+  border-radius: var(--ui-radius-md);
+}
+
+.ui-rounded-lg {
+  border-radius: var(--ui-radius-lg);
+}
+
+.ui-rounded-xl {
+  border-radius: var(--ui-radius-xl);
+}
+
+.ui-rounded-full {
+  border-radius: var(--ui-radius-full);
+}
+
+
+/* ---------------------------------------------------------
+   39. SHADOW
+   --------------------------------------------------------- */
+
+.ui-shadow-none {
+  box-shadow: none;
+}
+
+.ui-shadow-sm {
+  box-shadow: var(--ui-shadow-sm);
+}
+
+.ui-shadow-md {
+  box-shadow: var(--ui-shadow-md);
+}
+
+.ui-shadow-lg {
+  box-shadow: var(--ui-shadow-lg);
+}
+
+
+/* ---------------------------------------------------------
+   40. OVERFLOW
+   --------------------------------------------------------- */
+
+.ui-overflow-hidden {
+  overflow: hidden;
+}
+
+.ui-overflow-auto {
+  overflow: auto;
+}
+
+.ui-overflow-x-auto {
+  overflow-x: auto;
+}
+
+.ui-overflow-y-auto {
+  overflow-y: auto;
+}
+
+
+/* ---------------------------------------------------------
+   41. POSITION
+   --------------------------------------------------------- */
+
+.ui-relative {
+  position: relative;
+}
+
+.ui-absolute {
+  position: absolute;
+}
+
+.ui-fixed {
+  position: fixed;
+}
+
+.ui-sticky {
+  position: sticky;
+}
+
+
+/* ---------------------------------------------------------
+   42. Z-INDEX
+   --------------------------------------------------------- */
+
+.ui-z-10 {
+  z-index: 10;
+}
+
+.ui-z-50 {
+  z-index: 50;
+}
+
+.ui-z-100 {
+  z-index: 100;
+}
+
+.ui-z-1000 {
+  z-index: 1000;
+}
+
+
+/* ---------------------------------------------------------
+   43. INTERACTION
+   --------------------------------------------------------- */
+
+.ui-pointer {
+  cursor: pointer;
+}
+
+.ui-not-allowed {
+  cursor: not-allowed;
+}
+
+.ui-select-none {
+  user-select: none;
+}
+
+.ui-select-text {
+  user-select: text;
+}
+
+
+/* ---------------------------------------------------------
+   44. ASPECT / MEDIA
+   --------------------------------------------------------- */
+
+.ui-aspect-square {
+  aspect-ratio: 1;
+}
+
+.ui-aspect-video {
+  aspect-ratio: 16 / 9;
+}
+
+.ui-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ui-contain {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+
+/* ---------------------------------------------------------
+   45. DIVIDER TEXT
+   --------------------------------------------------------- */
+
+.ui-divider-text {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+
+  color: var(--ui-text-muted);
+  font-size: var(--ui-font-xs);
+}
+
+.ui-divider-text::before,
+.ui-divider-text::after {
+  content: "";
+
+  flex: 1;
+
+  height: 1px;
+
+  background: var(--ui-border);
+}
+
+
+/* ---------------------------------------------------------
+   46. CODE
+   --------------------------------------------------------- */
+
+.ui-code {
+  padding:
+    0.125rem
+    0.375rem;
+
+  border-radius: var(--ui-radius-sm);
+
+  background: var(--ui-surface-muted);
+
+  color: var(--ui-text-secondary);
+
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+
+  font-size: 0.875em;
+}
+
+.ui-code-block {
+  padding: var(--ui-space-4);
+
+  overflow-x: auto;
+
+  border-radius: var(--ui-radius-lg);
+
+  background: #0f172a;
+  color: #e2e8f0;
+
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+
+  font-size: var(--ui-font-sm);
+  line-height: 1.7;
+}
+
+
+/* ---------------------------------------------------------
+   47. DRAG & DROP
+   --------------------------------------------------------- */
+
+.ui-draggable {
+  cursor: grab;
+}
+
+.ui-draggable:active {
+  cursor: grabbing;
+}
+
+.ui-dropzone {
+  min-height: 5rem;
+
+  border: 2px dashed var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+
+  transition:
+    border-color var(--ui-duration) var(--ui-ease),
+    background var(--ui-duration) var(--ui-ease);
+}
+
+.ui-dropzone.is-dragover {
+  border-color: var(--ui-primary);
+  background: var(--ui-primary-soft);
+}
+
+.ui-dragging {
+  opacity: 0.5;
+}
+
+
+/* ---------------------------------------------------------
+   48. STATUS DOT
+   --------------------------------------------------------- */
+
+.ui-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+
+  font-size: var(--ui-font-sm);
+}
+
+.ui-status::before {
+  content: "";
+
+  width: 0.5rem;
+  height: 0.5rem;
+
+  border-radius: 50%;
+
+  background: var(--ui-text-muted);
+}
+
+.ui-status-success::before {
+  background: var(--ui-success);
+}
+
+.ui-status-warning::before {
+  background: var(--ui-warning);
+}
+
+.ui-status-danger::before {
+  background: var(--ui-danger);
+}
+
+.ui-status-info::before {
+  background: var(--ui-info);
+}
+
+
+/* ---------------------------------------------------------
+   49. THEME: DARK
+   --------------------------------------------------------- */
+
+[data-theme="dark"] {
+  --ui-background: #09090b;
+  --ui-surface: #18181b;
+  --ui-surface-muted: #27272a;
+  --ui-surface-hover: #27272a;
+
+  --ui-text: #fafafa;
+  --ui-text-secondary: #a1a1aa;
+  --ui-text-muted: #71717a;
+  --ui-text-disabled: #52525b;
+
+  --ui-border: #27272a;
+  --ui-border-hover: #3f3f46;
+  --ui-border-focus: #818cf8;
+
+  --ui-primary: #818cf8;
+  --ui-primary-hover: #a5b4fc;
+  --ui-primary-active: #6366f1;
+  --ui-primary-soft: #1e1b4b;
+  --ui-primary-text: #c7d2fe;
+  --ui-primary-foreground: #18181b;
+
+  --ui-success: #22c55e;
+  --ui-success-hover: #16a34a;
+  --ui-success-soft: #052e16;
+  --ui-success-text: #86efac;
+
+  --ui-warning: #f59e0b;
+  --ui-warning-hover: #d97706;
+  --ui-warning-soft: #451a03;
+  --ui-warning-text: #fcd34d;
+
+  --ui-danger: #ef4444;
+  --ui-danger-hover: #dc2626;
+  --ui-danger-soft: #450a0a;
+  --ui-danger-text: #fca5a5;
+
+  --ui-info: #38bdf8;
+  --ui-info-hover: #0ea5e9;
+  --ui-info-soft: #082f49;
+  --ui-info-text: #7dd3fc;
+
+  --ui-shadow-xs:
+    0 1px 2px rgb(0 0 0 / 0.25);
+
+  --ui-shadow-sm:
+    0 1px 3px rgb(0 0 0 / 0.3);
+
+  --ui-shadow-md:
+    0 4px 12px rgb(0 0 0 / 0.35);
+
+  --ui-shadow-lg:
+    0 12px 32px rgb(0 0 0 / 0.45);
+
+  --ui-focus-ring:
+    0 0 0 3px rgb(129 140 248 / 0.25);
+}
+
+
+/* ---------------------------------------------------------
+   50. REDUCED MOTION
+   --------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   51. RESPONSIVE
+   --------------------------------------------------------- */
+
+@media (max-width: 768px) {
+
+  .ui-grid-2,
+  .ui-grid-3,
+  .ui-grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-container,
+  .ui-container-sm,
+  .ui-container-md,
+  .ui-container-lg,
+  .ui-container-xl {
+    width: min(
+      calc(100% - 1.5rem),
+      var(--ui-container-xl)
+    );
+  }
+
+  .ui-section {
+    padding-block: var(--ui-space-6);
+  }
+
+  .ui-card {
+    padding: var(--ui-space-4);
+  }
+}
+
+
+/* ---------------------------------------------------------
+   52. PRINT
+   --------------------------------------------------------- */
+
+@media print {
+
+  .ui-no-print {
+    display: none !important;
+  }
+
+  .ui-card {
+    box-shadow: none;
+  }
+
+  body {
+    background: white;
+  }
+}

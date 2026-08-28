@@ -7,10 +7,12 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./styles.css": "./dist/styles.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "description": "A tiny functional JavaScript UI library for AI agents to generate lightweight, interactive micro-apps. — no VDOM, no signals, no compiler",
   "repository": {

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **CSS Utils** — semantic, framework-free CSS utility layer (`packages/micro-ui/src/styles.css`):
+  - Layout: `ui-container`, `ui-stack`, `ui-row`, `ui-grid`, `ui-wrap`, `ui-center`, `ui-between`
+  - Spacing: `ui-gap-*`, `ui-p-*`, `ui-px-*`, `ui-py-*`, `ui-mt-*`, `ui-mb-*`
+  - Typography: `ui-title`, `ui-heading`, `ui-text`, `ui-muted`, `ui-label`, `ui-caption`
+  - Buttons: `ui-btn`, `ui-btn-primary/secondary/ghost/danger/success`, `ui-btn-sm/lg`, `ui-btn-icon`, `ui-btn-group`
+  - Forms: `ui-field`, `ui-input`, `ui-textarea`, `ui-select`, `ui-checkbox`, `ui-radio`, `ui-switch`
+  - Surfaces: `ui-card`, `ui-card-flat`, `ui-card-hover`, `ui-panel`, `ui-section`
+  - Feedback: `ui-badge`, `ui-alert`, `ui-progress`, `ui-spinner`, `ui-status`
+  - Navigation: `ui-tabs`, `ui-tab`, `ui-breadcrumbs`, `ui-pagination`, `ui-menu`
+  - Overlay: `ui-modal`, `ui-dialog`, `ui-drawer`, `ui-tooltip`, `ui-popover`
+  - Components: `ui-avatar`, `ui-list`, `ui-table`, `ui-empty`, `ui-skeleton`
+  - Utilities: `ui-hidden`, `ui-visible`, `ui-rounded-*`, `ui-shadow-*`, `ui-overflow-*`, `ui-relative/absolute/fixed/sticky`
+  - States: `is-active`, `is-disabled`, `is-loading`, `is-invalid`, `is-dragover`
+  - Dark mode via `data-theme="dark"` attribute
+  - CSS custom properties for full theming support
+  - Reduced-motion and print media queries
+- CSS Utils demo page (`demo/src/css-utils.ts`) showcasing layout, buttons, forms, feedback, and components
+- Dark mode toggle in demo app with `localStorage` persistence
+- Full CSS documentation (`packages/micro-ui/docs/css-utils.md`)
+
 ## [0.2.0] - 2026-08-27
 
 ### Added

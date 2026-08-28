@@ -203,12 +203,34 @@ define("x-nested-child", (el, props) => {
  */
 define("x-app", (el) => {
   let page = "demos";
+  let dark = localStorage.getItem("theme") === "dark";
+  if (dark) document.body.setAttribute("data-theme", "dark");
+
+  const toggleTheme = () => {
+    dark = !dark;
+    if (dark) {
+      document.body.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.body.removeAttribute("data-theme");
+      localStorage.setItem("theme", "light");
+    }
+    update(el);
+  };
+
   onReady(() => console.log("x-app ready", el));
 
   return () => html`
     <header>
-      <h1>Micro-UI</h1>
-      <p class="tagline">Native Custom Elements + closure state + explicit updates.</p>
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div>
+          <h1>Micro-UI</h1>
+          <p class="tagline">Native Custom Elements + closure state + explicit updates.</p>
+        </div>
+        <button class="ui-btn ui-btn-ghost" onclick=${toggleTheme}>
+          ${dark ? "☀️ Light" : "🌙 Dark"}
+        </button>
+      </div>
       <nav class="nav">
         <button class="${page === "demos" ? "active" : ""}" onclick=${() => {
           page = "demos";
@@ -242,6 +264,10 @@ define("x-app", (el) => {
           page = "errors";
           update(el);
         }}>Errors</button>
+        <button class="${page === "css" ? "active" : ""}" onclick=${() => {
+          page = "css";
+          update(el);
+        }}>CSS Utils</button>
       </nav>
     </header>
 
@@ -270,7 +296,9 @@ define("x-app", (el) => {
                   ? html`<x-beats-page></x-beats-page>`
                   : page === "notes"
                     ? html`<x-notes-page></x-notes-page>`
-                    : html`<x-errors-page></x-errors-page>`
+                    : page === "css"
+                      ? html`<x-css-demo></x-css-demo>`
+                      : html`<x-errors-page></x-errors-page>`
     }
 
     <footer>

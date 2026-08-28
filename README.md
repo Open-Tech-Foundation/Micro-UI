@@ -301,6 +301,68 @@ define("x-safe", (el) => {
 });
 ```
 
+# Micro-UI Utils
+
+A tiny, semantic, framework-free CSS utility and component layer for building **Micro-UI apps**.
+
+**No Tailwind. No Bootstrap. No build step required.**
+
+```js
+import "@opentf/micro-ui/styles.css";
+```
+
+Or via CDN:
+
+```html
+<link rel="stylesheet" href="https://unpkg.com/@opentf/micro-ui/dist/styles.css">
+```
+
+## Class Reference
+
+| Category | Classes |
+|----------|---------|
+| **Layout** | `ui-container`, `ui-stack`, `ui-row`, `ui-grid`, `ui-grid-2/3/4`, `ui-wrap`, `ui-center`, `ui-between`, `ui-grow` |
+| **Spacing** | `ui-gap-{1-12}`, `ui-p-{0-8}`, `ui-px-{4,6}`, `ui-py-{2,4,6}`, `ui-mt-{2,4,6,8}`, `ui-mb-{2,4,6,8}` |
+| **Typography** | `ui-title`, `ui-heading`, `ui-text`, `ui-muted`, `ui-label`, `ui-caption`, `ui-error-text`, `ui-link` |
+| **Buttons** | `ui-btn`, `ui-btn-primary`, `ui-btn-secondary`, `ui-btn-ghost`, `ui-btn-danger`, `ui-btn-success`, `ui-btn-sm`, `ui-btn-lg`, `ui-btn-icon` |
+| **Forms** | `ui-field`, `ui-input`, `ui-textarea`, `ui-select`, `ui-checkbox`, `ui-radio`, `ui-switch` |
+| **Surfaces** | `ui-card`, `ui-card-flat`, `ui-card-hover`, `ui-panel`, `ui-section` |
+| **Badges** | `ui-badge`, `ui-badge-primary/success/warning/danger/info` |
+| **Alerts** | `ui-alert`, `ui-alert-info/success/warning/danger` |
+| **Progress** | `ui-progress`, `ui-progress-bar`, `ui-progress-success/danger` |
+| **Loading** | `ui-spinner`, `ui-spinner-sm/lg` |
+| **Avatar** | `ui-avatar`, `ui-avatar-sm/lg` |
+| **Lists** | `ui-list`, `ui-list-item`, `ui-list-item-hover` |
+| **Tables** | `ui-table-wrap`, `ui-table`, `ui-table-hover` |
+| **Navigation** | `ui-tabs`, `ui-tab`, `ui-breadcrumbs`, `ui-pagination` |
+| **Menus** | `ui-menu`, `ui-menu-item`, `ui-menu-divider` |
+| **Dialogs** | `ui-modal`, `ui-dialog`, `ui-dialog-header/body/footer` |
+| **Drawer** | `ui-drawer`, `ui-drawer-left/right`, `ui-drawer-header/body` |
+| **Tooltip** | `ui-tooltip`, `ui-tooltip-content` |
+| **Empty State** | `ui-empty`, `ui-empty-icon` |
+| **Skeleton** | `ui-skeleton` |
+| **Status** | `ui-status`, `ui-status-success/warning/danger/info` |
+| **Drag & Drop** | `ui-draggable`, `ui-dropzone`, `ui-dragging` |
+| **Utilities** | `ui-hidden`, `ui-visible`, `ui-w-full`, `ui-rounded-*`, `ui-shadow-*`, `ui-relative/absolute/fixed/sticky` |
+| **States** | `is-active`, `is-disabled`, `is-loading`, `is-invalid`, `is-dragover` |
+
+## Theming
+
+Override CSS custom properties for theming:
+
+```css
+:root {
+  --ui-primary: #2563eb;
+  --ui-primary-hover: #1d4ed8;
+}
+```
+
+Dark mode via `data-theme="dark"` attribute.
+
+> **[Full CSS Documentation](./packages/micro-ui/docs/css-utils.md)**
+
+---
+
 ## Design
 
 - **State**: ordinary JavaScript closures. Optional built-in `store`/`subscribe`/`del` for shared state — still no signals or reactive primitives.
