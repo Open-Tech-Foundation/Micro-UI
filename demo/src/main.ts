@@ -1,5 +1,5 @@
 import { mount } from "@opentf/micro-ui";
-import "@opentf/micro-ui/dist/styles.css";
+import "@opentf/micro-ui/styles.css";
 import "./components.ts";
 import "./shop.ts";
 import "./form.ts";
