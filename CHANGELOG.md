@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **store** — new `store.clear()` method removes all entries and resets the store Map, preventing memory leaks in long-running SPAs with dynamic keys.
 - **package.json** — added `"main": "./dist/index.js"` fallback for older bundlers/tools that don't support the `exports` field.
 - 6 new tests covering text VNode rendering, `store.clear()`, `store.set()` with path on primitives, mixed keyed/unkeyed reconciliation, and text binding rendering.
+- 19 new tests covering `html.raw` template (trusted markup, interpolation, null values, nested structure), `onError` lifecycle (setup/render/reconcile errors, handler args, handler throwing, multiple handlers, outside-define guard), `mount()` return value, and `update()` on disconnected elements.
 
 ### Changed
 - **dom.ts** — moved `VNode` type import from bottom to top of file for conventional import ordering.

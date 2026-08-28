@@ -671,3 +671,230 @@ test("define: text VNode from binding renders correctly", async () => {
   const el = document.createElement(tag); document.body.appendChild(el); await delay();
   assertEquals(el.textContent, "just text");
 });
+
+// ── html.raw ───────────────────────────────────────────────────────
+
+test("html.raw: injects trusted HTML unescaped", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-raw-basic");
+  define(tag, () => () => html`<div>${html.raw`<b>bold</b>`}</div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const b = el.querySelector("b");
+  assert(b !== null, "raw markup should produce a <b> element");
+  assertEquals(b.textContent, "bold");
+});
+
+test("html.raw: interpolation inside raw is rendered as text", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-raw-interp");
+  define(tag, () => () => {
+    const name = "world";
+    return html`<div>${html.raw`<span>Hello ${name}</span>`}</div>`;
+  });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const span = el.querySelector("span");
+  assert(span !== null, "raw with interpolation should produce a <span>");
+  assertEquals(span.textContent, "Hello world");
+});
+
+test("html.raw: null interpolation renders empty string", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-raw-null");
+  define(tag, () => () => html`<div>${html.raw`<b>${null}</b>`}</div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const b = el.querySelector("b");
+  assert(b !== null, "raw with null should still produce the <b> element");
+  assertEquals(b.textContent, "");
+});
+
+test("html.raw: nested structure is preserved", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-raw-nested");
+  define(tag, () => () => html`<div>${html.raw`<ul><li>a</li><li>b</li></ul>`}</div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.querySelectorAll("li").length, 2);
+  assertEquals(el.querySelector("li").textContent, "a");
+});
+
+test("html.raw: interpolation values are NOT escaped (trusted raw)", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-raw-trust");
+  define(tag, () => () => {
+    const x = "<b>trusted</b>";
+    return html`<div>${html.raw`<p>${x}</p>`}</div>`;
+  });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const b = el.querySelector("b");
+  assert(b !== null, "raw interpolation should NOT be escaped — trusted HTML");
+  assertEquals(b.textContent, "trusted");
+});
+
+// ── onError ────────────────────────────────────────────────────────
+
+test("onError: catches setup errors and mounts error fallback", async () => {
+  setupDOM(); const { define, html, onError } = await fresh();
+  const tag = uniqueTag("t-err-setup");
+  define(tag, () => {
+    onError(() => {});
+    throw new Error("setup-fail");
+    return () => html`<div>ok</div>`;
+  });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(el.querySelector("pre") !== null, "should mount error fallback UI with <pre>");
+  assert(el.textContent.includes("setup-fail"));
+});
+
+test("onError: catches render errors and mounts error fallback", async () => {
+  setupDOM(); const { define, html, onError } = await fresh();
+  const tag = uniqueTag("t-err-render");
+  define(tag, () => {
+    onError(() => {});
+    return () => { throw new Error("render-fail"); };
+  });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(el.querySelector("pre") !== null, "should mount error fallback on render throw");
+  assert(el.textContent.includes("render-fail"));
+});
+
+test("onError: handler receives (el, error, phase)", async () => {
+  setupDOM(); const { define, html, onError } = await fresh();
+  const tag = uniqueTag("t-err-args"); let captured = null;
+  define(tag, () => {
+    onError((el, err, phase) => { captured = { el, err, phase }; });
+    return () => { throw new Error("boom"); };
+  });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(captured !== null, "handler should have been called");
+  assert(captured.phase === "render");
+  assert(captured.err.message === "boom");
+});
+
+test("onError: handler throwing does not break host", async () => {
+  setupDOM(); const { define, html, onError } = await fresh();
+  const tag = uniqueTag("t-err-throw");
+  define(tag, () => {
+    onError(() => { throw new Error("handler-bug"); });
+    return () => { throw new Error("render-fail"); };
+  });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(el.querySelector("pre") !== null, "error fallback should still be mounted");
+});
+
+test("onError: called outside define throws", async () => {
+  setupDOM(); const { onError } = await fresh();
+  let threw = false;
+  try { onError(() => {}); } catch (e) { threw = true; }
+  assert(threw, "onError outside define should throw");
+});
+
+test("onError: multiple handlers all called", async () => {
+  setupDOM(); const { define, html, onError } = await fresh();
+  const tag = uniqueTag("t-err-multi"); const calls = [];
+  define(tag, () => {
+    onError(() => calls.push("a"));
+    onError(() => calls.push("b"));
+    return () => { throw new Error("multi"); };
+  });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(calls, ["a", "b"]);
+});
+
+test("onError: reconciler error is caught", async () => {
+  setupDOM(); const { define, html, update, flush, onError } = await fresh();
+  const tag = uniqueTag("t-err-reconcile"); let ref; let errPhase = null;
+  let shouldThrow = false;
+  define(tag, el2 => {
+    ref = el2;
+    onError((_, __, phase) => { errPhase = phase; });
+    return () => {
+      if (shouldThrow) {
+        const bad = { type: "element", tag: "div", attrs: {}, events: {}, key: null, children: [] };
+        bad.children = [bad]; // circular — will blow up during reconcile
+        return bad;
+      }
+      return html`<div>ok</div>`;
+    };
+  });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.textContent, "ok");
+  shouldThrow = true;
+  update(ref); await micro(); flush(); await delay(5);
+  assert(el.querySelector("pre") !== null, "reconcile error should mount fallback");
+  assertEquals(errPhase, "reconcile");
+});
+
+// ── mount() ────────────────────────────────────────────────────────
+
+test("mount: returns the created child element", async () => {
+  setupDOM(); const { define, html, mount } = await fresh();
+  const tag = uniqueTag("t-mount-ret");
+  define(tag, () => () => html`<span>child</span>`);
+  const host = document.createElement("div"); document.body.appendChild(host);
+  const child = mount(host, tag);
+  assert(child !== null, "mount should return a value");
+  assertEquals(typeof child, "object");
+  assert(child.tagName !== undefined, "returned value should be an element");
+});
+
+test("mount: returned element has correct tag name", async () => {
+  setupDOM(); const { define, html, mount } = await fresh();
+  const tag = uniqueTag("t-mount-tag");
+  define(tag, () => () => html`<p>hello</p>`);
+  const host = document.createElement("div"); document.body.appendChild(host);
+  const child = mount(host, tag);
+  assertEquals(child.tagName.toLowerCase(), tag);
+});
+
+test("mount: returned element is appended to host", async () => {
+  setupDOM(); const { define, html, mount } = await fresh();
+  const tag = uniqueTag("t-mount-parent");
+  define(tag, () => () => html`<b>x</b>`);
+  const host = document.createElement("div"); document.body.appendChild(host);
+  const child = mount(host, tag);
+  assertEquals(child.parentNode, host);
+  assertEquals(host.childNodes.length, 1);
+});
+
+test("mount: clears host content before appending", async () => {
+  setupDOM(); const { define, html, mount } = await fresh();
+  const tag = uniqueTag("t-mount-clear");
+  define(tag, () => () => html`<span>new</span>`);
+  const host = document.createElement("div");
+  host.appendChild(document.createTextNode("old"));
+  document.body.appendChild(host);
+  mount(host, tag);
+  await delay();
+  assert(!host.textContent.includes("old"), "old content should be cleared");
+  assert(host.textContent.includes("new"));
+});
+
+// ── update() edge cases ────────────────────────────────────────────
+
+test("update: called on disconnected element is a no-op", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-upd-disc");
+  let renders = 0;
+  define(tag, el2 => () => { renders++; return html`<div>ok</div>`; });
+  const el = document.createElement(tag);
+  // Never append to body — element is disconnected
+  update(el); await micro(); flush(); await delay(5);
+  assertEquals(renders, 0, "should not render for disconnected element");
+});
+
+test("update: called on unknown element is a no-op", async () => {
+  setupDOM(); const { update, flush } = await fresh();
+  const fake = document.createElement("div");
+  update(fake); await micro(); flush(); // should not throw
+  assert(true);
+});
+
+test("update: after disconnect, pending update is skipped", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-upd-after-disc"); let renders = 0; let ref;
+  define(tag, el2 => { ref = el2; return () => { renders++; return html`<div>${renders}</div>`; }; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(renders, 1);
+  el.remove(); // disconnect
+  update(ref); await micro(); flush(); await delay(5);
+  assertEquals(renders, 1, "should not re-render after disconnect");
+});
