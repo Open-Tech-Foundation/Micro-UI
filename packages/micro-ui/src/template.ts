@@ -1,6 +1,7 @@
 export const MARKER = "\ue000";
 
 import { HTML_NS, SVG_NS } from "./ns.ts";
+
 import type {
   AttrValue,
   BindingDesc,
@@ -9,6 +10,13 @@ import type {
   EventValue,
   TemplateCache,
 } from "./types.ts";
+
+const SVG_TAGS = new Set([
+  "svg", "g", "circle", "rect", "path", "line", "text", "tspan", "textpath",
+  "ellipse", "polygon", "polyline", "use", "image", "defs", "lineargradient",
+  "radialgradient", "stop", "clippath", "mask", "pattern", "marker", "symbol",
+  "foreignobject", "view", "desc", "title", "metadata", "switch", "a"
+]);
 
 export function buildTemplate(strings: TemplateStringsArray): TemplateCache {
   let s = "";
@@ -59,22 +67,14 @@ function buildElDesc(
   parentNS: string | null,
 ): ElementDesc {
   const tag = el.tagName.toLowerCase();
-  // Hybrid NS detection: trust DOM namespaceURI when present, otherwise inherit.
+  // Hybrid NS detection: trust DOM namespaceURI, SVG tag set, or inheritance.
   let ns: string | null;
   const domNS = (el as Element).namespaceURI;
   if (domNS === SVG_NS) {
     ns = SVG_NS;
-  } else if (tag === "svg") {
-    ns = SVG_NS;
-  } else if (tag === "foreignobject") {
-    // foreignObject itself is SVG, but its children revert to HTML
+  } else if (SVG_TAGS.has(tag)) {
     ns = SVG_NS;
   } else if (parentNS === SVG_NS) {
-    // Children of SVG stay SVG unless parent was foreignObject
-    // We need to know if parent was foreignObject — check via parentNS derivation:
-    // If parentNS is SVG but parent tag was foreignObject, children should be HTML.
-    // Since we only have parentNS as string, we track foreignObject children specially:
-    // The caller passes parentNS correctly (foreignObject children get HTML_NS).
     ns = SVG_NS;
   } else {
     ns = HTML_NS;
