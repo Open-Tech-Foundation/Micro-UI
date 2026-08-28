@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-28
+
 ### Added
 - **CSS split bundle** — `src/styles.css` is now an aggregator that re-exports the split partials (`tokens.css`, `base.css`, `components.css`) in declaration order, so the full bundle and the split imports share a single source of truth and the same `@layer` structure.
 - **Kanban demo** — `demo/src/kanban.ts` (`x-kanban`): three-column board with native drag & drop (move + reorder via insertion index, `.is-dragging`/`.is-drop-target` classes), store-backed state with `store.subscribe` re-renders, add-card composer, per-column counts, and reset. Drag events touch DOM classes directly so `dragover` never re-renders the board.
