@@ -16,6 +16,7 @@ export interface TextDesc {
 export interface ElementDesc {
   type: "element";
   tag: string;
+  ns: string | null;
   attrs: Record<string, AttrValue>;
   events: Record<string, EventValue>;
   key: string | BindingDesc | null;
@@ -33,6 +34,7 @@ export interface TextVNode {
 export interface ElementVNode {
   type: "element";
   tag: string;
+  ns: string | null;
   attrs: Record<string, unknown>;
   events: Record<string, unknown>;
   key: string | null | undefined;

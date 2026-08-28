@@ -9,6 +9,7 @@ import "./beats.ts";
 import "./notes.ts";
 import "./errors.ts";
 import "./css-utils.ts";
+import "./svg.ts";
 
 const root = document.getElementById("app");
 if (!root) throw new Error("no #app");

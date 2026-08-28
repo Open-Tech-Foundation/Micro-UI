@@ -268,6 +268,10 @@ define("x-app", (el) => {
           page = "css";
           update(el);
         }}>CSS Utils</button>
+        <button class="ui-btn ${page === "svg" ? "is-active" : ""}" onclick=${() => {
+          page = "svg";
+          update(el);
+        }}>SVG</button>
       </nav>
     </header>
 
@@ -298,7 +302,9 @@ define("x-app", (el) => {
                     ? html`<x-notes-page></x-notes-page>`
                     : page === "css"
                       ? html`<x-css-demo></x-css-demo>`
-                      : html`<x-errors-page></x-errors-page>`
+                      : page === "svg"
+                        ? html`<x-svg-page></x-svg-page>`
+                        : html`<x-errors-page></x-errors-page>`
     }
 
     <footer>

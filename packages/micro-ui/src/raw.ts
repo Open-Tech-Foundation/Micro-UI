@@ -1,3 +1,4 @@
+import { HTML_NS } from "./ns.ts";
 import { buildDesc } from "./template.ts";
 import type { RawVNode, VNode } from "./types.ts";
 import { createNodes } from "./vdom.ts";
@@ -29,7 +30,7 @@ export function wrapRaw(htmlString: string): RawVNode {
 export function materializeRaw(raw: RawVNode): VNode {
   const tmpl = document.createElement("template");
   tmpl.innerHTML = raw.html;
-  const children = buildDesc(tmpl.content, []);
+  const children = buildDesc(tmpl.content, [], HTML_NS);
   return {
     type: "fragment",
     children: createNodes(children, [], { vi: 0 }, false),

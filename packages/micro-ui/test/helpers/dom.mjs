@@ -1,4 +1,5 @@
 // Minimal DOM mock for Micro-UI - ESM, no Node builtins, with proper template parsing
+const SVG_NS = "http://www.w3.org/2000/svg";
 let registry = new Map();
 
 class FakeNode {
@@ -101,9 +102,11 @@ class FakeText extends FakeNode {
 }
 
 class FakeElement extends FakeNode {
-  constructor(tag) {
+  constructor(tag, ns = null) {
     super();
     this.tagName = tag.toUpperCase();
+    // ns: null = HTML, SVG_NS = SVG
+    this.namespaceURI = ns;
     this.attributes = [];
     this._attrs = {};
     this._text = "";
@@ -115,6 +118,9 @@ class FakeElement extends FakeNode {
   getAttribute(name) {
     return this._attrs[name] ?? null;
   }
+  getAttributeNS(_ns, name) {
+    return this.getAttribute(name);
+  }
   setAttribute(name, value) {
     this._attrs[name] = String(value);
     const existing = this.attributes.find(a => a.name === name);
@@ -122,12 +128,19 @@ class FakeElement extends FakeNode {
     else this.attributes.push({ name, value: String(value) });
     if (name === "class") this.className = String(value);
   }
+  setAttributeNS(_ns, name, value) {
+    this.setAttribute(name, value);
+  }
   removeAttribute(name) {
     delete this._attrs[name];
     this.attributes = this.attributes.filter(a => a.name !== name);
     if (name === "class") this.className = "";
   }
+  removeAttributeNS(_ns, name) {
+    this.removeAttribute(name);
+  }
   hasAttribute(name) { return name in this._attrs; }
+  hasAttributeNS(_ns, name) { return this.hasAttribute(name); }
   querySelector(sel) {
     const all = this.querySelectorAll(sel);
     return all[0] || null;
@@ -184,11 +197,19 @@ class FakeElement extends FakeNode {
   set innerHTML(html) {
     this.childNodes = [];
     if (!html) return;
-    // Simple parser for Micro-UI templates
-    // We need to handle MARKER (\ue000) inside text and attributes
-    // Use a stack to handle nested elements
+    // Simple parser for Micro-UI templates - NS-aware
     const stack = [this];
     let i = 0;
+    function childNSFor(parent, tag) {
+      const t = tag.toLowerCase();
+      const pNS = parent.namespaceURI;
+      const pTag = parent.tagName ? parent.tagName.toLowerCase() : "";
+      if (pNS === SVG_NS && pTag === "foreignobject") return null;
+      if (t === "svg") return SVG_NS;
+      if (t === "foreignobject") return SVG_NS;
+      if (pNS === SVG_NS) return SVG_NS;
+      return null;
+    }
     while (i < html.length) {
       if (html[i] === "<") {
         const closeIdx = html.indexOf(">", i);
@@ -201,7 +222,8 @@ class FakeElement extends FakeNode {
         } else if (tagContent.endsWith("/")) {
           // self-closing
           const tagName = tagContent.slice(0, -1).trim().split(/\s+/)[0];
-          const el = document.createElement(tagName);
+          const ns = childNSFor(stack[stack.length-1], tagName);
+          const el = ns ? document.createElementNS(ns, tagName) : document.createElement(tagName);
           // parse attrs
           const attrStr = tagContent.slice(tagName.length).trim().replace(/\/$/, "");
           parseAttrs(el, attrStr);
@@ -212,7 +234,8 @@ class FakeElement extends FakeNode {
           let tagName, attrStr;
           if (spaceIdx === -1) { tagName = tagContent; attrStr = ""; }
           else { tagName = tagContent.slice(0, spaceIdx); attrStr = tagContent.slice(spaceIdx+1); }
-          const el = document.createElement(tagName);
+          const ns = childNSFor(stack[stack.length-1], tagName);
+          const el = ns ? document.createElementNS(ns, tagName) : document.createElement(tagName);
           parseAttrs(el, attrStr);
           stack[stack.length-1].appendChild(el);
           // Check if next part is closing tag for same element (no children)
@@ -295,6 +318,9 @@ class FakeTemplate extends FakeElement {
 
 const documentMock = {
   createElement(tag) {
+    return this.createElementNS(null, tag);
+  },
+  createElementNS(ns, tag) {
     if (tag.toLowerCase() === "template") return new FakeTemplate();
     const Cls = registry.get(tag.toLowerCase());
     if (Cls) {
@@ -302,20 +328,21 @@ const documentMock = {
       // Ensure tagName is set
       el.tagName = tag.toUpperCase();
       el.nodeType = 1;
+      el.namespaceURI = ns || null;
       el.childNodes = el.childNodes || [];
       el.attributes = el.attributes || [];
       el._attrs = el._attrs || {};
       return el;
     }
-    return new FakeElement(tag);
+    return new FakeElement(tag, ns || null);
   },
   createTextNode(text) {
     const n = new FakeText(text);
     n.nodeType = 3;
     return n;
   },
-  body: new FakeElement("body"),
-  head: new FakeElement("head"),
+  body: new FakeElement("body", null),
+  head: new FakeElement("head", null),
   querySelector(sel) { return this.body.querySelector(sel); },
   querySelectorAll(sel) { return this.body.querySelectorAll(sel); },
 };
