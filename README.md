@@ -220,7 +220,7 @@ store.set("counter", 1);
 
 ### `store.set(key, value, { path })`
 
-Set a nested value by dot-separated path. Immuntably clones the object tree along the path.
+Set a nested value by dot-separated path. Immutably clones the object tree along the path.
 
 ```js
 store.set("form", { name: "", email: "" });

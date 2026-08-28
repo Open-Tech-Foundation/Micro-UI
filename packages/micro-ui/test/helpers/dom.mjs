@@ -12,10 +12,7 @@ class FakeNode {
     this.childNodes.push(child);
     child.parentNode = this;
     if (child.connectedCallback) {
-      // Defer to next tick to mimic custom elements upgrade
       Promise.resolve().then(() => child.connectedCallback());
-      // Also call synchronously for our mock
-      try { child.connectedCallback(); } catch {}
     }
     return child;
   }

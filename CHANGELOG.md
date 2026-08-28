@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **define.ts** — initial render of text-type VNode now correctly appends the text node instead of skipping it.
+- **reconcile.ts** — `patchByIndex` no longer eagerly materializes new nodes before `reconcile()` checks for DOM reuse, eliminating wasted DOM creation on indexed reconciliation.
+- **reconcile.ts** — `patchKeyed` now removes orphaned un-keyed old nodes that aren't matched as fallbacks, preventing DOM leaks when mixing keyed and un-keyed children.
+- **vdom.ts** — `resolveBinding` type check for VNode is more robust; requires `dom`, `children`, `value`, or `html` property in addition to `type`, preventing plain objects from being misidentified as VNodes.
+- **store.ts** — `set()` with path now guards against primitive entry values (previously could silently corrupt data when the stored value was a non-object primitive).
+- **README.md** — fixed typo: "Immuntably" → "Immutably".
+
+### Added
+- **store** — new `store.clear()` method removes all entries and resets the store Map, preventing memory leaks in long-running SPAs with dynamic keys.
+- **package.json** — added `"main": "./dist/index.js"` fallback for older bundlers/tools that don't support the `exports` field.
+- 6 new tests covering text VNode rendering, `store.clear()`, `store.set()` with path on primitives, mixed keyed/unkeyed reconciliation, and text binding rendering.
+
+### Changed
+- **dom.ts** — moved `VNode` type import from bottom to top of file for conventional import ordering.
+- **test/helpers/dom.mjs** — removed double `connectedCallback()` call (sync + async) that could run setup twice; now defers to next tick only.
+
 ### Changed
 - **CSS split imports** — `src/styles.css` now re-exports split partials: `import "@opentf/micro-ui/styles/tokens.css"` (tokens only), `import "@opentf/micro-ui/styles/base.css"` (reset+layout), `import "@opentf/micro-ui/styles/components.css"` (components). Full bundle still `import "@opentf/micro-ui/styles.css"`. `package.json` now `exports["./styles/*"]` → `dist/styles/*`.
 - **CSS layers** — all rules wrapped in `@layer micro-ui.tokens, micro-ui.base, micro-ui.components, micro-ui.utilities` so app CSS overrides without `!important` (just declare your own `@layer` after).

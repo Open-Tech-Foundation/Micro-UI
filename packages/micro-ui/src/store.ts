@@ -81,7 +81,11 @@ function set<T>(key: string, value: T, opts: { path: string }): void;
 function set<T>(key: string, value: T, opts?: { path?: string }): void {
   const entry = getEntry<T>(key);
   if (opts?.path != null) {
-    entry.value = setByPath(entry.value ?? {}, opts.path, value) as T;
+    if (entry.value != null && typeof entry.value === "object") {
+      entry.value = setByPath(entry.value, opts.path, value) as T;
+    } else {
+      entry.value = setByPath({}, opts.path, value) as T;
+    }
   } else {
     entry.value = value;
   }
@@ -108,9 +112,14 @@ function subscribe<T>(key: string, fn: Listener<T>): () => boolean {
   return () => entry.listeners.delete(fn);
 }
 
+function clear(): void {
+  stores.clear();
+}
+
 export const store: {
   get: typeof get;
   set: typeof set;
   del: typeof del;
   subscribe: typeof subscribe;
-} = { get, set, del, subscribe };
+  clear: typeof clear;
+} = { get, set, del, subscribe, clear };

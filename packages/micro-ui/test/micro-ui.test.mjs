@@ -598,3 +598,76 @@ test("subscribe: many subscribers all notified", async () => {
   store.set("many", "x");
   assertEquals(results.length, 50);
 });
+
+// ── Bug fixes ──────────────────────────────────────────────────────
+
+test("define: text-only VNode renders correctly", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-text-only");
+  define(tag, () => () => html`hello`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.textContent, "hello");
+});
+
+test("store: clear removes all entries", async () => {
+  const { store } = await fresh();
+  store.set("a", 1);
+  store.set("b", 2);
+  assertEquals(store.get("a"), 1);
+  store.clear();
+  assertEquals(store.get("a"), undefined);
+  assertEquals(store.get("b"), undefined);
+});
+
+test("store: clear resets listeners", async () => {
+  const { store } = await fresh();
+  let called = false;
+  store.subscribe("x", () => { called = true; });
+  store.clear();
+  store.set("x", 1);
+  assertEquals(called, false);
+});
+
+test("store: set with path on primitive key initializes as object", async () => {
+  const { store } = await fresh();
+  store.set("num", 42);
+  store.set("num", "nested", { path: "foo" });
+  assertEquals(store.get("num", { path: "foo" }), "nested");
+});
+
+test("store: set with path on undefined key initializes as object", async () => {
+  const { store } = await fresh();
+  store.set("new", "val", { path: "x.y" });
+  assertEquals(store.get("new", { path: "x.y" }), "val");
+});
+
+test("reconcile: mixed keyed and unkeyed children cleans up orphaned unkeyed nodes", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-mixed-key"); let ref;
+  let items = [
+    { id: 1, keyed: true },
+    { text: "a", keyed: false },
+    { id: 2, keyed: true },
+  ];
+  define(tag, el2 => {
+    ref = el2;
+    return () => html`<ul>${items.map(i => i.keyed
+      ? html`<li key=${i.id}>${i.id}</li>`
+      : html`<li>${i.text}</li>`
+    )}</ul>`;
+  });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.querySelectorAll("li").length, 3);
+
+  items = [{ id: 1, keyed: true }, { id: 2, keyed: true }];
+  update(ref); await micro(); flush(); await delay(5);
+  assertEquals(el.querySelectorAll("li").length, 2);
+});
+
+test("define: text VNode from binding renders correctly", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-text-bind");
+  define(tag, () => () => html`${"just text"}`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.textContent, "just text");
+});
