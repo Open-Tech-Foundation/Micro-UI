@@ -1,36 +1,20 @@
 import { test, assert, assertEquals } from "runtime:test";
 import { setupDOM } from "./helpers/dom.mjs";
 
-// E2E: full shopping cart flow via store + components (as demo does)
+// E2E: full shopping cart flow via library store + components
 test("e2e: shopping cart add / remove / qty / count stays in sync", async () => {
-  const { define, html, update, flush } = await import(`../src/index.ts?e2e-${Date.now()}`);
+  const { define, html, update, flush, store, onReady } = await import(`../src/index.ts?e2e-${Date.now()}`);
   setupDOM();
 
-  // Minimal store mock like demo/src/store.ts
-  const stores = new Map();
-  function store(key, value) {
-    if (!stores.has(key)) stores.set(key, { value: [], listeners: new Set() });
-    const s = stores.get(key);
-    if (value !== undefined) {
-      s.value = value;
-      s.listeners.forEach(fn => fn(value));
-    }
-    return s.value;
-  }
-  function subscribe(key, fn) {
-    if (!stores.has(key)) stores.set(key, { value: [], listeners: new Set() });
-    stores.get(key).listeners.add(fn);
-    return () => stores.get(key).listeners.delete(fn);
-  }
-  store("cart", []);
+  store.set("cart", []);
 
   function addToCart(p) {
-    const cart = store("cart");
-    const ex = cart.find(i => i.id === p.id);
-    store("cart", ex ? cart.map(i => i.id === p.id ? { ...i, qty: i.qty + 1 } : i) : [...cart, { ...p, qty: 1 }]);
+    const cart = store.get("cart");
+    const ex = cart.find((i) => i.id === p.id);
+    store.set("cart", ex ? cart.map((i) => i.id === p.id ? { ...i, qty: i.qty + 1 } : i) : [...cart, { ...p, qty: 1 }]);
   }
-  function removeFromCart(id) { store("cart", store("cart").filter(i => i.id !== id)); }
-  function updateQty(id, qty) { if (qty <= 0) return removeFromCart(id); store("cart", store("cart").map(i => i.id === id ? { ...i, qty } : i)); }
+  function removeFromCart(id) { store.set("cart", (store.get("cart")).filter((i) => i.id !== id)); }
+  function updateQty(id, qty) { if (qty <= 0) return removeFromCart(id); store.set("cart", (store.get("cart")).map((i) => i.id === id ? { ...i, qty } : i)); }
 
   const PRODUCTS = [
     { id: 1, name: "Keyboard", price: 10 },
@@ -39,18 +23,13 @@ test("e2e: shopping cart add / remove / qty / count stays in sync", async () => 
   ];
 
   define("e2e-product-list", () => () => html`<div>${PRODUCTS.map(p => html`<button class="add" onclick=${() => addToCart(p)}>${p.name}</button>`)}</div>`);
-// removed duplicate define
-  // Use onReady via import
-  const { onReady } = await import(`../src/index.ts?onready-${Date.now()}`);
-  // Redefine e2e-cart with onReady for auto update
-  // (avoid duplicate define, use unique tag)
   const cartTag = "e2e-cart-" + Date.now();
   define(cartTag, (el) => {
-    onReady(() => subscribe("cart", () => update(el)));
+    onReady(() => store.subscribe("cart", () => update(el)));
     return () => {
-      const cart = store("cart");
+      const cart = store.get("cart");
       const count = cart.reduce((s, i) => s + i.qty, 0);
-      return html`<div><h3>Cart (${count})</h3><ul>${cart.map(it => html`<li key=${it.id} data-id="${it.id}">${it.name}:${it.qty}<button class="rem" onclick=${() => removeFromCart(it.id)}>x</button></li>`)}</ul></div>`;
+      return html`<div><h3>Cart (${count})</h3><ul>${cart.map((it) => html`<li key=${it.id} data-id="${it.id}">${it.name}:${it.qty}<button class="rem" onclick=${() => removeFromCart(it.id)}>x</button></li>`)}</ul></div>`;
     };
   });
 
@@ -62,12 +41,7 @@ test("e2e: shopping cart add / remove / qty / count stays in sync", async () => 
   host.appendChild(cartEl);
   await new Promise(r => setTimeout(r, 10));
 
-  // Add 3 products
-  const adds = list.querySelectorAll("button");
-  // Need to find buttons via our mock's querySelectorAll (supports tag only, not class)
-  // Fallback: use childNodes
-  // For mock, querySelector with class may fail, so use manual
-  assertEquals(store("cart").length, 0);
+  assertEquals((store.get("cart")).length, 0);
   addToCart(PRODUCTS[0]);
   await new Promise(r => queueMicrotask(r)); flush(); await new Promise(r => setTimeout(r, 5));
   assertEquals(cartEl.querySelectorAll("li").length, 1);
@@ -82,17 +56,14 @@ test("e2e: shopping cart add / remove / qty / count stays in sync", async () => 
   await new Promise(r => queueMicrotask(r)); flush(); await new Promise(r => setTimeout(r, 5));
   assertEquals(cartEl.querySelectorAll("li").length, 3);
 
-  // Remove middle (id 2) — the bug we fixed
+  // Remove middle (id 2)
   removeFromCart(2);
   await new Promise(r => queueMicrotask(r)); flush(); await new Promise(r => setTimeout(r, 5));
   assertEquals(cartEl.querySelectorAll("li").length, 2);
-  // After removing id 2, only Keyboard (1) and Monitor (3) should remain; header "(2)" is count, not an item
-  const lis = cartEl.querySelectorAll("li");
-  assertEquals(lis.length, 2);
   const ids = [...cartEl.querySelectorAll("li")].map(n => n.getAttribute("data-id"));
-  assertEquals(ids.includes("1"), true);
-  assertEquals(ids.includes("3"), true);
-  assertEquals(ids.includes("2"), false);
+  assert(ids.includes("1"));
+  assert(ids.includes("3"));
+  assert(!ids.includes("2"));
 
   // Qty decrement to 0 should remove
   updateQty(1, 0);
@@ -105,47 +76,28 @@ test("e2e: shopping cart add / remove / qty / count stays in sync", async () => 
   assertEquals(cartEl.querySelectorAll("li").length, 0);
 });
 
-// E2E: form input + validation + submit
+// E2E: form input via library store path
 test("e2e: form fields sync via store path", async () => {
   setupDOM();
-  const { define, html, update, onReady } = await import(`../src/index.ts?form-${Date.now()}`);
-  const stores = new Map();
-  function getByPath(o,p){ return p.split(".").reduce((a,k)=>a?.[k],o); }
-  function setByPath(o,p,v){ const ks=p.split("."); const last=ks.pop(); let cur=o; for(const k of ks){ cur[k]=cur[k]??{}; cur=cur[k]; } cur[last]=v; return o; }
-  function store(key, value, opts){
-    if(!stores.has(key)) stores.set(key,{value:undefined, listeners:new Set()});
-    const s=stores.get(key);
-    if(value!==undefined){
-      if(opts?.path) s.value=setByPath(structuredClone(s.value??{}), opts.path, value);
-      else s.value=value;
-      s.listeners.forEach(fn=>fn(s.value));
-    }
-    return opts?.path? getByPath(s.value, opts.path): s.value;
-  }
-  function subscribe(k,fn){ if(!stores.has(k)) stores.set(k,{value:undefined,listeners:new Set()}); stores.get(k).listeners.add(fn); return ()=>stores.get(k).listeners.delete(fn); }
-  store("form", { name:"", email:"" });
+  const { define, html, update, flush, store, onReady } = await import(`../src/index.ts?form-${Date.now()}`);
+
+  store.set("form", { name: "", email: "" });
 
   const tag = "e2e-form-" + Date.now();
   define(tag, (el) => {
-    onReady(() => subscribe("form", () => update(el)));
-    return () => html`<div><input value=${store("form", undefined, {path:"name"}) ?? ""} oninput=${e=>store("form", e.target.value, {path:"name"})}></div>`;
+    onReady(() => store.subscribe("form", () => update(el)));
+    return () => html`<div><input value=${store.get("form", { path: "name" }) ?? ""} oninput=${(e) => store.set("form", (e.target).value, { path: "name" })}></div>`;
   });
   const el = document.createElement(tag);
   document.body.appendChild(el);
   await new Promise(r => setTimeout(r, 10));
   const input = el.querySelector("input");
-  // Simulate typing
   input.value = "Ada";
   input.dispatchEvent(new (globalThis.Event || window.Event)("input", { bubbles: true }));
-  // Direct store set as oninput does
-  store("form", "Ada", {path:"name"});
-  await new Promise(r => queueMicrotask(r));
-  // Need update via subscribe
-  // onReady already subscribes, but we also need to flush
-  const { flush } = await import(`../src/index.ts?flush-${Date.now()}`);
-  // store already notified, flush will have been queued
+  store.set("form", "Ada", { path: "name" });
+  await new Promise(r => queueMicrotask(r)); flush();
   await new Promise(r => setTimeout(r, 10));
-  assertEquals(store("form", undefined, {path:"name"}), "Ada");
+  assertEquals(store.get("form", { path: "name" }), "Ada");
 });
 
 // E2E: library store + subscribe with components
@@ -170,13 +122,11 @@ test("e2e: library store drives component render and delete cleans up", async ()
   assertEquals(el.querySelectorAll("li").length, 3);
   assertEquals(el.textContent, "alphabetagamma");
 
-  // Remove middle item via path-less store (replace entire list)
   store.set("items", ["alpha", "gamma"]);
   await new Promise(r => queueMicrotask(r)); flush(); await new Promise(r => setTimeout(r, 5));
   assertEquals(el.querySelectorAll("li").length, 2);
   assertEquals(el.textContent, "alphagamma");
 
-  // Delete entire key
   store.del("items");
   await new Promise(r => queueMicrotask(r)); flush(); await new Promise(r => setTimeout(r, 5));
   assertEquals(el.querySelectorAll("li").length, 0);
@@ -232,5 +182,5 @@ test("e2e: unsubscribe stops subscriber from being called", async () => {
 
   unsub();
   store.set("counter", 3);
-  assertEquals(calls, [1, 2]); // not called after unsub
+  assertEquals(calls, [1, 2]);
 });
