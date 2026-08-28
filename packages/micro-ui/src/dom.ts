@@ -7,6 +7,29 @@ function createEl(tag: string, ns: string | null): Element {
     : document.createElement(tag);
 }
 
+const BOOLEAN_PROPS = new Set([
+  "checked",
+  "selected",
+  "disabled",
+  "indeterminate",
+  "readonly",
+  "required",
+  "multiple",
+  "autofocus",
+  "hidden",
+  "open",
+  "inert",
+  "itemscope",
+]);
+
+function isTruthyAttrVal(v: unknown): boolean {
+  if (v == null || v === false) return false;
+  if (v === true) return true;
+  if (typeof v === "string")
+    return v !== "" && v !== "false" && v !== "0" && v !== "off" && v !== "no";
+  return !!v;
+}
+
 export function setProp(el: Element, k: string, v: unknown): void {
   const isSvg = el.namespaceURI === SVG_NS;
   if (!isSvg) {
@@ -20,18 +43,14 @@ export function setProp(el: Element, k: string, v: unknown): void {
       }
       return;
     }
-    if (k === "checked") {
-      const b = !!v && v !== "" && v !== "false" && v !== false;
-      (el as HTMLInputElement).checked = b;
-      if (b) el.setAttribute(k, "");
-      else el.removeAttribute(k);
-      return;
-    }
-    if (k === "selected" || k === "disabled" || k === "indeterminate") {
-      const b = !!v && v !== "" && v !== false;
-      if (k === "selected") (el as HTMLOptionElement).selected = b;
+    if (BOOLEAN_PROPS.has(k)) {
+      const b = isTruthyAttrVal(v);
+      if (k === "checked") (el as HTMLInputElement).checked = b;
+      else if (k === "selected") (el as HTMLOptionElement).selected = b;
       else if (k === "disabled") (el as HTMLInputElement).disabled = b;
-      else if (k === "indeterminate") (el as HTMLInputElement).indeterminate = b;
+      else if (k === "indeterminate")
+        (el as HTMLInputElement).indeterminate = b;
+      else if (k in el) (el as unknown as Record<string, unknown>)[k] = b;
       if (b) el.setAttribute(k, "");
       else el.removeAttribute(k);
       return;
@@ -41,7 +60,9 @@ export function setProp(el: Element, k: string, v: unknown): void {
   if (v == null || v === false) {
     el.removeAttribute(k);
     if (k.includes(":") && isSvg) {
-      try { el.removeAttributeNS(null, k); } catch {}
+      try {
+        el.removeAttributeNS(null, k);
+      } catch {}
     }
     if (!isSvg) {
       try {
@@ -66,7 +87,10 @@ export function setProp(el: Element, k: string, v: unknown): void {
       };
       const ns = nsMap[prefix ?? ""];
       if (ns) {
-        try { el.setAttributeNS(ns, k, v); return; } catch {}
+        try {
+          el.setAttributeNS(ns, k, v);
+          return;
+        } catch {}
       }
     }
     el.setAttribute(k, v);

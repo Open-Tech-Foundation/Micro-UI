@@ -1,11 +1,20 @@
-export type AttrValue = string | { binding: true; parts?: string[] };
-export type EventValue = string | ((e: Event) => void) | { binding: true };
+export type AttrValue =
+  | string
+  | { binding: true; parts?: string[]; idx?: number; count?: number };
+export type EventValue =
+  | string
+  | ((e: Event) => void)
+  | { binding: true; idx?: number };
 
 export interface BindingDesc {
   type: "binding";
   binding: true;
   parts?: string[];
   name?: string;
+  /** Index of the first value this binding consumes from the values array. */
+  idx?: number;
+  /** Number of values this binding consumes (parts.length - 1). */
+  count?: number;
 }
 
 export interface TextDesc {

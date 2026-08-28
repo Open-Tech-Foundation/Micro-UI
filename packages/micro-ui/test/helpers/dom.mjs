@@ -1,6 +1,5 @@
 // Minimal DOM mock for Micro-UI - ESM, no Node builtins, with proper template parsing
 const SVG_NS = "http://www.w3.org/2000/svg";
-const SVG_TAGS = new Set(["svg","g","circle","rect","path","line","text","tspan","textpath","ellipse","polygon","polyline","use","image","defs","lineargradient","radialgradient","stop","clippath","mask","pattern","marker","symbol","foreignobject","view","desc","title","metadata","switch","a"]);
 let registry = new Map();
 
 class FakeNode {
@@ -206,7 +205,8 @@ class FakeElement extends FakeNode {
       const pNS = parent.namespaceURI;
       const pTag = parent.tagName ? parent.tagName.toLowerCase() : "";
       if (pNS === SVG_NS && pTag === "foreignobject") return null;
-      if (SVG_TAGS.has(t)) return SVG_NS;
+      if (t === "svg") return SVG_NS;
+      if (t === "foreignobject") return SVG_NS;
       if (pNS === SVG_NS) return SVG_NS;
       return null;
     }

@@ -12,8 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SVG tests** — 8 new FakeDOM tests (`test/micro-ui.svg.test.mjs`) and 6 jsdom tests (`test/jsdom/svg.test.mjs`) for namespace, dynamic attrs, DOM identity, `foreignObject`, keyed reorder, events, `viewBox`/`class`.
 - **SVG demo** — `demo/src/svg.ts` (`x-svg-demo`/`x-svg-page`) with interactive circle (sliders + `viewBox`), keyed `circle` list, `path` sparkline, `foreignObject`, mixed HTML+SVG; wired into `demo/src/main.ts` and `x-app` nav.
 - **Test helper** — `test/helpers/dom.mjs` upgraded to NS-aware: `createElementNS`, `namespaceURI`, `setAttributeNS`/`removeAttributeNS`, NS stack in `innerHTML` parser (SVG + `foreignObject` reset).
+- **Tests** — expanded `test/micro-ui.test.mjs` (binding-order interleaving, boolean-prop coercion, keyed detached-node reclaim / no orphaned nodes, `html.raw` DOM reuse on same-structure updates, keyed fragment inside raw) and `test/jsdom/svg.test.mjs` (HTML `<a>`/`<title>` stay HTML, SVG `<a>` stays SVG, mixed HTML/SVG siblings).
 
 ### Fixed
+- **template.ts / vdom.ts** — template bindings now record their value-slot index, so `cloneNode` consumes interpolated values in template order instead of the fixed key→attrs→events→children order. Interleaved bindings (e.g. an event attr before a `data-*`, or a `key` as the first expression) no longer misbind values.
+- **dom.ts** — boolean-typed properties (`disabled`, `selected`, `checked`, `readonly`, `multiple`, …) now coerce attribute-string values (`"false"`, `"0"`, `"off"`, `"no"`) to their real boolean via `isTruthyAttrVal`, matching browser attribute semantics.
+- **raw.ts / vdom.ts** — `materializeRaw` now honors `deferDOM`: during batched, deferred renders raw content is built as a virtual tree and unchanged raw subtrees are reused instead of re-materialized.
+- **template.ts / ns** — namespace detection no longer relies on an ad-hoc SVG tag list; it trusts DOM `namespaceURI` plus `svg`/`foreignObject` roots and `parentNS` inheritance, so HTML `<a>`/`<title>` are no longer misclassified as SVG (covered by new real-DOM jsdom tests).
 - **define.ts** — initial render of text-type VNode now correctly appends the text node instead of skipping it.
 - **reconcile.ts** — `patchByIndex` no longer eagerly materializes new nodes before `reconcile()` checks for DOM reuse, eliminating wasted DOM creation on indexed reconciliation.
 - **reconcile.ts** — `patchKeyed` now removes orphaned un-keyed old nodes that aren't matched as fallbacks, preventing DOM leaks when mixing keyed and un-keyed children.

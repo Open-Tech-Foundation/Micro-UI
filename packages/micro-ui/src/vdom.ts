@@ -1,8 +1,16 @@
-import { SVG_NS } from "./ns.ts";
 import { setProp } from "./dom.ts";
 import { escapeText } from "./escape.ts";
+import { SVG_NS } from "./ns.ts";
 import { materializeRaw } from "./raw.ts";
-import type { DescNode, ElementVNode, FragmentVNode, RawVNode, TemplateCache, TextVNode, VNode } from "./types.ts";
+import type {
+  DescNode,
+  ElementVNode,
+  FragmentVNode,
+  RawVNode,
+  TemplateCache,
+  TextVNode,
+  VNode,
+} from "./types.ts";
 
 function createEl(tag: string, ns: string | null): Element {
   return ns === SVG_NS
@@ -40,6 +48,32 @@ function pushNodes(node: VNode, out: VNode[]): void {
   }
 }
 
+function take(
+  values: unknown[],
+  idx: number | undefined,
+  state: { vi: number },
+): unknown {
+  if (idx != null) return values[idx];
+  return values[state.vi++];
+}
+
+function interpolate(
+  parts: string[],
+  values: unknown[],
+  idx: number | undefined,
+  state: { vi: number },
+): string {
+  let out = "";
+  for (let i = 0; i < parts.length; i++) {
+    out += parts[i];
+    if (i < parts.length - 1)
+      out += String(
+        take(values, idx != null ? idx + i : undefined, state) ?? "",
+      );
+  }
+  return out;
+}
+
 function cloneNode(
   d: DescNode,
   values: unknown[],
@@ -55,8 +89,7 @@ function cloneNode(
     };
   }
   if (d.type === "binding") {
-    const v = values[state.vi++];
-    return resolveBinding(v, deferDOM);
+    return resolveBinding(take(values, d.idx, state), deferDOM);
   }
   if (d.type === "element") {
     let resolvedKey: string | null | undefined =
@@ -65,15 +98,10 @@ function cloneNode(
     if (d.key && typeof d.key === "object" && d.key.binding) {
       const parts = d.key.parts!;
       if (parts.length === 2 && parts[0] === "" && parts[1] === "") {
-        resolvedKey = values[state.vi++] as string | undefined;
-        if (resolvedKey != null) resolvedKey = String(resolvedKey);
+        const rv = take(values, d.key.idx, state) as string | undefined;
+        if (rv != null) resolvedKey = String(rv);
       } else {
-        let out = "";
-        for (let i = 0; i < parts.length; i++) {
-          out += parts[i];
-          if (i < parts.length - 1) out += String(values[state.vi++] ?? "");
-        }
-        resolvedKey = out;
+        resolvedKey = interpolate(parts, values, d.key.idx, state);
       }
     }
 
@@ -83,14 +111,9 @@ function cloneNode(
       if (v && typeof v === "object" && v.binding) {
         const parts = v.parts!;
         if (parts.length === 2 && parts[0] === "" && parts[1] === "") {
-          attrs[k] = values[state.vi++];
+          attrs[k] = take(values, v.idx, state);
         } else {
-          let out = "";
-          for (let i = 0; i < parts.length; i++) {
-            out += parts[i];
-            if (i < parts.length - 1) out += String(values[state.vi++] ?? "");
-          }
-          attrs[k] = out;
+          attrs[k] = interpolate(parts, values, v.idx, state);
         }
       } else {
         attrs[k] = v;
@@ -101,7 +124,7 @@ function cloneNode(
     for (const e in d.events) {
       const h = d.events[e];
       if (h && typeof h === "object" && h.binding) {
-        events[e] = values[state.vi++];
+        events[e] = take(values, h.idx, state);
       } else {
         events[e] = h;
       }
@@ -152,18 +175,33 @@ function resolveBinding(val: unknown, deferDOM: boolean): VNode {
     for (const item of val) nodes.push(resolveBinding(item, deferDOM));
     return { type: "fragment", children: nodes };
   }
-  const vnodeType = (val && typeof val === "object" && "type" in val) ? (val as Record<string, unknown>).type : undefined;
-  if (vnodeType === "text" && typeof (val as Record<string, unknown>).value === "string") {
+  const vnodeType =
+    val && typeof val === "object" && "type" in val
+      ? (val as Record<string, unknown>).type
+      : undefined;
+  if (
+    vnodeType === "text" &&
+    typeof (val as Record<string, unknown>).value === "string"
+  ) {
     return val as TextVNode;
   }
-  if (vnodeType === "fragment" && Array.isArray((val as Record<string, unknown>).children)) {
+  if (
+    vnodeType === "fragment" &&
+    Array.isArray((val as Record<string, unknown>).children)
+  ) {
     return val as FragmentVNode;
   }
-  if (vnodeType === "element" && typeof (val as Record<string, unknown>).tag === "string") {
+  if (
+    vnodeType === "element" &&
+    typeof (val as Record<string, unknown>).tag === "string"
+  ) {
     return val as ElementVNode;
   }
-  if (vnodeType === "raw" && typeof (val as Record<string, unknown>).html === "string") {
-    return materializeRaw(val as RawVNode);
+  if (
+    vnodeType === "raw" &&
+    typeof (val as Record<string, unknown>).html === "string"
+  ) {
+    return materializeRaw(val as RawVNode, deferDOM);
   }
   const s = escapeText(String(val));
   if (deferDOM) return { type: "text", value: s };

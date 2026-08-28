@@ -1,7 +1,6 @@
 export const MARKER = "\ue000";
 
 import { HTML_NS, SVG_NS } from "./ns.ts";
-
 import type {
   AttrValue,
   BindingDesc,
@@ -10,13 +9,6 @@ import type {
   EventValue,
   TemplateCache,
 } from "./types.ts";
-
-const SVG_TAGS = new Set([
-  "svg", "g", "circle", "rect", "path", "line", "text", "tspan", "textpath",
-  "ellipse", "polygon", "polyline", "use", "image", "defs", "lineargradient",
-  "radialgradient", "stop", "clippath", "mask", "pattern", "marker", "symbol",
-  "foreignobject", "view", "desc", "title", "metadata", "switch", "a"
-]);
 
 export function buildTemplate(strings: TemplateStringsArray): TemplateCache {
   let s = "";
@@ -46,8 +38,9 @@ export function buildDesc(
         const parts = t.split(MARKER);
         for (let j = 0; j < parts.length; j++) {
           if (j > 0) {
+            const idx = bindings.length;
             bindings.push({ type: "binding", binding: true });
-            nodes.push({ type: "binding", binding: true });
+            nodes.push({ type: "binding", binding: true, idx });
           }
           if (parts[j] !== "") {
             nodes.push({ type: "text", value: parts[j]! });
@@ -67,12 +60,15 @@ function buildElDesc(
   parentNS: string | null,
 ): ElementDesc {
   const tag = el.tagName.toLowerCase();
-  // Hybrid NS detection: trust DOM namespaceURI, SVG tag set, or inheritance.
+  // Hybrid NS detection: trust DOM namespaceURI when present, otherwise inherit.
   let ns: string | null;
   const domNS = (el as Element).namespaceURI;
   if (domNS === SVG_NS) {
     ns = SVG_NS;
-  } else if (SVG_TAGS.has(tag)) {
+  } else if (tag === "svg") {
+    ns = SVG_NS;
+  } else if (tag === "foreignobject") {
+    // foreignObject itself is SVG, but its children revert to HTML (handled below)
     ns = SVG_NS;
   } else if (parentNS === SVG_NS) {
     ns = SVG_NS;
@@ -99,9 +95,16 @@ function buildElDesc(
     if (name === "key") {
       if (value.includes(MARKER)) {
         const parts = value.split(MARKER);
+        const idx = bindings.length;
         for (let i = 0; i < parts.length - 1; i++)
           bindings.push({ type: "binding", binding: true });
-        key = { type: "binding", binding: true, parts };
+        key = {
+          type: "binding",
+          binding: true,
+          parts,
+          idx,
+          count: parts.length - 1,
+        };
       } else {
         key = value;
       }
@@ -112,9 +115,10 @@ function buildElDesc(
     if (value.includes(MARKER) && isOnEvent) {
       const ev = name.slice(2);
       const parts = value.split(MARKER);
+      const idx = bindings.length;
       for (let i = 0; i < parts.length - 1; i++)
         bindings.push({ type: "binding", binding: true, name: ev });
-      events[ev] = { binding: true };
+      events[ev] = { binding: true, idx };
       continue;
     }
     if (isOnEvent && !value.includes(MARKER)) {
@@ -124,9 +128,10 @@ function buildElDesc(
 
     if (value.includes(MARKER)) {
       const parts = value.split(MARKER);
+      const idx = bindings.length;
       for (let i = 0; i < parts.length - 1; i++)
         bindings.push({ type: "binding", binding: true, name });
-      attrs[name] = { binding: true, parts };
+      attrs[name] = { binding: true, parts, idx, count: parts.length - 1 };
     } else {
       attrs[name] = value;
     }

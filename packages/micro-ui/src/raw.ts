@@ -27,12 +27,12 @@ export function wrapRaw(htmlString: string): RawVNode {
   return { type: "raw", html: htmlString };
 }
 
-export function materializeRaw(raw: RawVNode): VNode {
+export function materializeRaw(raw: RawVNode, deferDOM = false): VNode {
   const tmpl = document.createElement("template");
   tmpl.innerHTML = raw.html;
   const children = buildDesc(tmpl.content, [], HTML_NS);
   return {
     type: "fragment",
-    children: createNodes(children, [], { vi: 0 }, false),
+    children: createNodes(children, [], { vi: 0 }, deferDOM),
   };
 }

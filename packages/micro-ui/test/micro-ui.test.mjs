@@ -252,6 +252,33 @@ test("lists: key prefix e.g. key=prefix-${id}", async () => {
   assertEquals(el.querySelectorAll("li").length, 1);
   assertEquals(el.querySelector("li").textContent, "2");
 });
+test("lists: detached keyed node is reclaimed by key, not recreated", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-key-reclaim"); let items=[{id:1},{id:2}]; let ref;
+  define(tag, el2 => { ref=el2; return () => html`<ul>${items.map(i => html`<li key=${i.id}>${i.id}</li>`)}</ul>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const ul = el.querySelector("ul");
+  const one = el.querySelectorAll("li")[0];
+  one.remove(); // external removal detaches the node (parentNode -> null)
+  assertEquals(ul.querySelectorAll("li").length, 1);
+  // Re-render identical items: the detached node must be put back in place
+  // by key (identity preserved), not replaced with a fresh element.
+  update(ref); await micro(); flush(); await delay(5);
+  const lis = ul.querySelectorAll("li");
+  assertEquals(lis.length, 2);
+  assert(lis[0] === one, "detached keyed node reclaimed by key (identity preserved)");
+});
+test("lists: removing items leaves no orphaned detached nodes", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-key-noorphan"); let items=[{id:1},{id:2},{id:3}]; let ref;
+  define(tag, el2 => { ref=el2; return () => html`<ul>${items.map(i => html`<li key=${i.id}>${i.id}</li>`)}</ul>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  items=[{id:1},{id:3}]; update(ref); await micro(); flush(); await delay(5);
+  const lis = [...el.querySelectorAll("li")];
+  assertEquals(lis.length, 2);
+  assertEquals(lis.map(n=>n.textContent).join(","), "1,3");
+  assertEquals(el.querySelectorAll("li").length, 2, "no stray nodes");
+});
 
 // ── define / props / isolation ─────────────────────────────────────
 test("define: props from attributes", async () => {
@@ -716,6 +743,42 @@ test("html.raw: nested structure is preserved", async () => {
   assertEquals(el.querySelector("li").textContent, "a");
 });
 
+test("html.raw: nesting a keyed fragment inside raw", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-raw-nest");
+  define(tag, () => () => html`<div>${html.raw`<p>a</p><p>b</p>`}${html.raw`<span>c</span>`}</div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.querySelectorAll("p").length, 2);
+  assertEquals(el.querySelectorAll("span").length, 1);
+});
+
+test("html.raw: does not rebuild DOM when structure is unchanged across updates", async () => {
+  setupDOM();
+  const origNS = document.createElementNS;
+  let created = 0;
+  document.createElementNS = function (ns, tag) {
+    if (String(tag).toLowerCase() !== "template") created++;
+    return origNS.call(document, ns, tag);
+  };
+  try {
+    const { define, html, update, flush } = await fresh();
+    const tag = uniqueTag("t-raw-norebuild");
+    let n = 1; let ref;
+    define(tag, el2 => { ref = el2; return () => html`<section>${html.raw`<b title="x">${n}</b>`}</section>`; });
+    const el = document.createElement(tag); document.body.appendChild(el); await delay();
+    const b = el.querySelector("b");
+    created = 0; // reset after mount
+    n = 2; update(ref); await micro(); flush(); await delay(5);
+    // One element is unavoidable: the <template> innerHTML parse scaffold inside
+    // materializeRaw. The rendered raw node must be REUSED, not rebuilt — under
+    // the pre-fix behavior this counted 2 (scaffold + a fresh rendered <b>).
+    assert(created === 1, `raw must reuse its DOM on a same-structure update (created ${created})`);
+    assertEquals(el.querySelector("b").textContent, "2");
+    assert(el.querySelector("b") === b, "raw element identity preserved across update");
+  } finally {
+    document.createElementNS = origNS;
+  }
+});
 test("html.raw: interpolation values are NOT escaped (trusted raw)", async () => {
   setupDOM(); const { define, html } = await fresh();
   const tag = uniqueTag("t-raw-trust");
@@ -919,4 +982,134 @@ test("vdom: stricter resolveBinding rejects arbitrary objects (fixed)", async ()
   const content = el.querySelector("div").innerHTML;
   // Should be escaped, not injected as raw HTML
   assert(content.includes("[object Object]") || content.includes("not a vnode"), "arbitrary object not treated as VNode");
+});
+
+// ── boolean attribute coercion ─────────────────────────────────────
+test("props: disabled 'false' string means not disabled", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-dis-false");
+  define(tag, () => () => html`<button disabled=${"false"}>x</button>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(el.querySelector("button").getAttribute("disabled") === null);
+  assert(el.querySelector("button").disabled === false);
+});
+test("props: disabled '0' / 'off' strings mean not disabled", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-dis-0");
+  define(tag, () => () => html`<button disabled=${"0"}></button><button disabled=${"off"}></button>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const [a, b] = el.querySelectorAll("button");
+  assert(a.getAttribute("disabled") === null);
+  assert(b.getAttribute("disabled") === null);
+});
+test("props: selected 'false' string means not selected", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-sel-false");
+  define(tag, () => () => html`<select><option selected=${"false"}>x</option></select>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(el.querySelector("option").getAttribute("selected") === null);
+  assert(el.querySelector("option").selected === false);
+});
+test("props: readonly 'false' string means not readonly", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-ro-false");
+  define(tag, () => () => html`<input readonly=${"false"}>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(el.querySelector("input").getAttribute("readonly") === null);
+});
+test("props: hidden 'false' string means not hidden", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-hidden-false");
+  define(tag, () => () => html`<div hidden=${"false"}>x</div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(el.querySelector("div").getAttribute("hidden") === null);
+});
+test("props: boolean toggles stay consistent (control)", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-boolctl"); let dis = true; let req = false; let ref;
+  define(tag, el2 => { ref = el2; return () => html`<button disabled=${dis} required=${req}>x</button>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(el.querySelector("button").getAttribute("disabled") !== null);
+  assert(el.querySelector("button").getAttribute("required") === null);
+  dis = false; req = true; update(ref); await micro(); flush(); await delay(5);
+  assert(el.querySelector("button").getAttribute("disabled") === null);
+  assert(el.querySelector("button").getAttribute("required") !== null);
+});
+test("props: checked 'false' string means unchecked (parity)", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-chk-false");
+  define(tag, () => () => html`<input type="checkbox" checked=${"false"}>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(el.querySelector("input").checked === false);
+});
+// ── binding order (values consumed in template source order) ───────
+test("order: event handler written before attribute binding", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-ev-first");
+  let clicked = false;
+  define(tag, () => () => html`<button onclick=${() => { clicked = true; }} data-v=${"hi"}>x</button>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const btn = el.querySelector("button");
+  assertEquals(btn.getAttribute("data-v"), "hi", "data-v must get its own value");
+  btn.click();
+  assert(clicked === true, "click must invoke the bound handler");
+});
+
+test("order: input oninput before value binding", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-in-first"); let v = "start"; let ref;
+  define(tag, el2 => { ref = el2; return () => html`<input oninput=${() => {}} value=${v}>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const inp = el.querySelector("input");
+  assertEquals(inp.value, "start", "value property must sync");
+  v = "next"; update(ref); await micro(); flush(); await delay(5);
+  assertEquals(inp.value, "next", "value updates after interleaved handler");
+});
+
+test("order: key binding written after another bound attr preserves identity", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-key-after");
+  let items = [{ id: 1, label: "a" }, { id: 2, label: "b" }]; let ref;
+  define(tag, el2 => { ref = el2; return () => html`<ul>${items.map(it => html`<li id=${it.id} key=${"k" + it.id}>${it.label}</li>`)}</ul>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.querySelectorAll("li").length, 2);
+  const oldSecond = el.querySelectorAll("li")[1];
+  assertEquals(oldSecond.getAttribute("id"), "2");
+  items = [{ id: 2, label: "b2" }, { id: 1, label: "a2" }];
+  update(ref); await micro(); flush(); await delay(5);
+  const lis = [...el.querySelectorAll("li")];
+  assertEquals(lis.length, 2);
+  assertEquals(lis[0].getAttribute("id"), "2");
+  assertEquals(lis[1].getAttribute("id"), "1");
+  assert(lis[0] === oldSecond, "keyed node must move, not be recreated");
+});
+
+test("order: keyed list with id after key (control, key first)", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-key-first");
+  let items = [{ id: 1, label: "a" }, { id: 2, label: "b" }]; let ref;
+  define(tag, el2 => { ref = el2; return () => html`<ul>${items.map(it => html`<li key=${it.id} id=${it.id}>${it.label}</li>`)}</ul>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  items = [{ id: 2, label: "b2" }, { id: 1, label: "a2" }];
+  update(ref); await micro(); flush(); await delay(5);
+  const lis = [...el.querySelectorAll("li")];
+  assertEquals(lis.map(n => n.getAttribute("id")).join(","), "2,1");
+});
+
+test("order: multiple attr markers after event binding", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-attr-after-evt");
+  define(tag, () => () => html`<a onclick=${() => {}} href="/${"users"}/${123}">go</a>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.querySelector("a").getAttribute("href"), "/users/123");
+});
+
+test("order: text interpolation after interleaved bindings stays aligned", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-text-aligned");
+  const who = "World"; const cls = "btn";
+  define(tag, () => () => html`<div onclick=${() => {}} class=${cls}>Hello ${who}</div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.querySelector("div").getAttribute("class"), "btn");
+  assertEquals(el.querySelector("div").textContent, "Hello World");
 });

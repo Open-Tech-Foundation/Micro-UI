@@ -69,3 +69,39 @@ test("svg jsdom: viewBox and class", async () => {
   assert.equal(svg.getAttribute("preserveAspectRatio"), "xMidYMid");
   assert.equal(el.querySelector("circle").getAttribute("class"), "a b");
 });
+
+test("svg jsdom: HTML <a> stays in HTML namespace (not SVG)", async () => {
+  const tag=uniqueTag("htm-a");
+  define(tag,()=>()=>html`<div><a href="#x">link</a></div>`);
+  const el=document.createElement(tag); document.body.appendChild(el); await tick(); flush();
+  const a=el.querySelector("a");
+  assert.equal(a.namespaceURI, "http://www.w3.org/1999/xhtml");
+  assert.equal(a.getAttribute("href"), "#x");
+});
+
+test("svg jsdom: HTML <title> stays in HTML namespace", async () => {
+  const tag=uniqueTag("htm-title");
+  define(tag,()=>()=>html`<div><title>t</title></div>`);
+  const el=document.createElement(tag); document.body.appendChild(el); await tick(); flush();
+  const t=el.querySelector("title");
+  assert.equal(t.namespaceURI, "http://www.w3.org/1999/xhtml");
+});
+
+test("svg jsdom: SVG <a> inside svg stays in SVG namespace", async () => {
+  const tag=uniqueTag("svg-a");
+  define(tag,()=>()=>html`<svg><a href="#y"><circle r="5"></circle></a></svg>`);
+  const el=document.createElement(tag); document.body.appendChild(el); await tick(); flush();
+  const a=el.querySelector("a");
+  assert.equal(a.namespaceURI, "http://www.w3.org/2000/svg");
+  const circle=el.querySelector("circle");
+  assert.equal(circle.namespaceURI, "http://www.w3.org/2000/svg");
+});
+
+test("svg jsdom: HTML siblings around svg keep HTML namespace", async () => {
+  const tag=uniqueTag("svg-mixed");
+  define(tag,()=>()=>html`<div><p>before</p><svg><circle r="5"></circle></svg><p>after</p></div>`);
+  const el=document.createElement(tag); document.body.appendChild(el); await tick(); flush();
+  assert.equal(el.querySelector("p").namespaceURI, "http://www.w3.org/1999/xhtml");
+  assert.equal(el.querySelector("svg").namespaceURI, "http://www.w3.org/2000/svg");
+  assert.equal(el.querySelectorAll("p")[1].namespaceURI, "http://www.w3.org/1999/xhtml");
+});
