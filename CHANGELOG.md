@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-28
+
 ### Added
 - **CSS Utils** — semantic, framework-free CSS utility layer (`packages/micro-ui/src/styles.css`):
   - Layout: `ui-container`, `ui-stack`, `ui-row`, `ui-grid`, `ui-wrap`, `ui-center`, `ui-between`
