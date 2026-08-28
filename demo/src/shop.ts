@@ -78,7 +78,7 @@ define("x-product-list", (_el) => {
               <div class="product-name">${p.name}</div>
               <div class="product-price">$${p.price.toFixed(2)}</div>
             </div>
-            <button class="btn-add" onclick=${() => addToCart(p)}>Add to Cart</button>
+            <button class="ui-btn ui-btn-primary" onclick=${() => addToCart(p)}>Add to Cart</button>
           </div>
         `,
         )}
@@ -113,11 +113,11 @@ define("x-cart", (el) => {
                     <span class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</span>
                   </div>
                   <div class="cart-item-qty">
-                    <button onclick=${() => updateQty(item.id, item.qty - 1)}>-</button>
+                    <button class="ui-btn ui-btn-secondary ui-btn-icon" onclick=${() => updateQty(item.id, item.qty - 1)}>-</button>
                     <span>${item.qty}</span>
-                    <button onclick=${() => updateQty(item.id, item.qty + 1)}>+</button>
+                    <button class="ui-btn ui-btn-secondary ui-btn-icon" onclick=${() => updateQty(item.id, item.qty + 1)}>+</button>
                   </div>
-                  <button class="cart-item-remove" onclick=${() => removeFromCart(item.id)}>\u00d7</button>
+                  <button class="ui-btn ui-btn-danger ui-btn-icon" onclick=${() => removeFromCart(item.id)}>\u00d7</button>
                 </li>
               `,
               )}
@@ -127,7 +127,7 @@ define("x-cart", (el) => {
                 <span>Total</span>
                 <span>$${cartTotal().toFixed(2)}</span>
               </div>
-              <button class="btn-checkout" onclick=${() => alert(`Checkout — $${cartTotal().toFixed(2)}`)}>Checkout</button>
+              <button class="ui-btn ui-btn-success" onclick=${() => alert(`Checkout — $${cartTotal().toFixed(2)}`)}>Checkout</button>
             </div>
           `
         }

@@ -8,7 +8,8 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./styles.css": "./dist/styles.css"
+    "./styles.css": "./dist/styles.css",
+    "./styles/*": "./dist/styles/*"
   },
   "files": [
     "dist",
@@ -31,5 +32,8 @@
   "devDependencies": {
     "@opentf/esrun-types": "latest",
     "jsdom": "^25.0.0"
-  }
+  },
+  "sideEffects": [
+    "*.css"
+  ]
 }

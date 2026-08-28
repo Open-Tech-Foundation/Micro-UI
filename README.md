@@ -308,13 +308,23 @@ A tiny, semantic, framework-free CSS utility and component layer for building **
 **No Tailwind. No Bootstrap. No build step required.**
 
 ```js
-import "@opentf/micro-ui/styles.css";
+import "@opentf/micro-ui/styles.css"; // full bundle (tokens + base + components)
+```
+
+Split imports — pay only for what you use:
+
+```js
+import "@opentf/micro-ui/styles/tokens.css";     // vars only
+import "@opentf/micro-ui/styles/base.css";        // reset + layout
+import "@opentf/micro-ui/styles/components.css"; // buttons, forms, cards...
 ```
 
 Or via CDN:
 
 ```html
 <link rel="stylesheet" href="https://unpkg.com/@opentf/micro-ui/dist/styles.css">
+<!-- or split -->
+<link rel="stylesheet" href="https://unpkg.com/@opentf/micro-ui/dist/styles/tokens.css">
 ```
 
 ## Class Reference
@@ -357,7 +367,14 @@ Override CSS custom properties for theming:
 }
 ```
 
-Dark mode via `data-theme="dark"` attribute.
+Dark mode — automatic via `@media (prefers-color-scheme: dark)` in tokens.
+
+Layers — all rules are in `@layer micro-ui.*` so your app CSS wins without `!important`:
+```css
+@layer micro-ui, app; /* app layer after micro-ui */
+```
+
+Opt-in CSS — `package.json` has `"sideEffects": ["*.css"]` so JS tree-shakes, import CSS only where needed.
 
 > **[Full CSS Documentation](./packages/micro-ui/docs/css-utils.md)**
 

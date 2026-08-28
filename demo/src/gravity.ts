@@ -276,10 +276,10 @@ define("x-gravity", (el) => {
 
       <div class="gravity-controls">
         <div class="btn-row">
-          <button class="${preset === "solar" ? "active" : ""}" onclick=${() => applyPreset("solar")}>Solar</button>
-          <button class="${preset === "orbit" ? "active" : ""}" onclick=${() => applyPreset("orbit")}>Orbits</button>
-          <button class="${preset === "binary" ? "active" : ""}" onclick=${() => applyPreset("binary")}>Binary</button>
-          <button class="${preset === "cluster" ? "active" : ""}" onclick=${() => applyPreset("cluster")}>Cluster</button>
+          <button class="ui-btn ui-btn-secondary ${preset === "solar" ? "is-active" : ""}" onclick=${() => applyPreset("solar")}>Solar</button>
+          <button class="ui-btn ui-btn-secondary ${preset === "orbit" ? "is-active" : ""}" onclick=${() => applyPreset("orbit")}>Orbits</button>
+          <button class="ui-btn ui-btn-secondary ${preset === "binary" ? "is-active" : ""}" onclick=${() => applyPreset("binary")}>Binary</button>
+          <button class="ui-btn ui-btn-secondary ${preset === "cluster" ? "is-active" : ""}" onclick=${() => applyPreset("cluster")}>Cluster</button>
         </div>
 
         <div class="gravity-row">
@@ -328,20 +328,20 @@ define("x-gravity", (el) => {
         </div>
 
         <div class="btn-row">
-          <button onclick=${() => {
+          <button class="ui-btn ui-btn-secondary" onclick=${() => {
             sim.paused = !sim.paused;
             update(el);
           }}>
             ${sim.paused ? "▶ Resume" : "⏸ Pause"}
           </button>
-          <button onclick=${() => {
+          <button class="ui-btn ui-btn-secondary" onclick=${() => {
             showTrails = !showTrails;
             update(el);
           }}>
             ${showTrails ? "Hide trails" : "Show trails"}
           </button>
-          <button onclick=${() => applyPreset(preset)}>↻ Reset</button>
-          <button onclick=${() => {
+          <button class="ui-btn ui-btn-secondary" onclick=${() => applyPreset(preset)}>↻ Reset</button>
+          <button class="ui-btn ui-btn-secondary" onclick=${() => {
             sim.bodies = [];
             update(el);
           }}>Clear</button>

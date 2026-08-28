@@ -12,15 +12,15 @@ define("x-counter", (el, props) => {
       <h3>Counter</h3>
       <p class="count">${count}</p>
       <div class="btn-row">
-        <button onclick=${() => {
+        <button class="ui-btn ui-btn-secondary" onclick=${() => {
           count--;
           update(el);
         }}>-1</button>
-        <button onclick=${() => {
+        <button class="ui-btn ui-btn-secondary" onclick=${() => {
           count = 0;
           update(el);
         }}>Reset</button>
-        <button onclick=${() => {
+        <button class="ui-btn ui-btn-secondary" onclick=${() => {
           count++;
           update(el);
         }}>+1</button>
@@ -71,21 +71,21 @@ define("x-color", (_el, _props) => {
     <div class="card">
       <h3>Color Picker</h3>
       <div class="btn-row">
-        <button onclick=${() => {
+        <button class="ui-btn ui-btn-secondary" onclick=${() => {
           color = "#ef4444";
           update(_el);
         }}>Red</button>
-        <button onclick=${() => {
+        <button class="ui-btn ui-btn-secondary" onclick=${() => {
           color = "#22c55e";
           update(_el);
         }}>Green</button>
-        <button onclick=${() => {
+        <button class="ui-btn ui-btn-secondary" onclick=${() => {
           color = "#3b82f6";
           update(_el);
         }}>Blue</button>
       </div>
       <div class="btn-row" style="margin-top:.5rem">
-        <button onclick=${() => {
+        <button class="ui-btn ui-btn-secondary" onclick=${() => {
           showPreview = !showPreview;
           update(_el);
         }}>
@@ -146,14 +146,14 @@ define("x-todos", (el, _props) => {
             if (e.key === "Enter") add();
           }}
         />
-        <button onclick=${add}>Add</button>
+        <button class="ui-btn ui-btn-primary" onclick=${add}>Add</button>
       </div>
       <ul class="todo-list">
         ${items.map(
           (item, i) => html`
           <li class="${item.done ? "done" : ""}">
             <span onclick=${() => toggle(i)}>${item.text}</span>
-            <button class="rm" onclick=${() => remove(i)}>×</button>
+            <button class="ui-btn ui-btn-danger ui-btn-icon" onclick=${() => remove(i)}>×</button>
           </li>
         `,
         )}
@@ -190,7 +190,7 @@ define("x-nested-child", (el, props) => {
   return () => html`
     <div class="child">
       <span>${props.name}'s count: <strong>${count}</strong></span>
-      <button onclick=${() => {
+      <button class="ui-btn ui-btn-secondary" onclick=${() => {
         count++;
         update(el);
       }}>+1</button>
@@ -232,39 +232,39 @@ define("x-app", (el) => {
         </button>
       </div>
       <nav class="nav">
-        <button class="${page === "demos" ? "active" : ""}" onclick=${() => {
+        <button class="ui-btn ${page === "demos" ? "is-active" : ""}" onclick=${() => {
           page = "demos";
           update(el);
         }}>Demos</button>
-        <button class="${page === "shop" ? "active" : ""}" onclick=${() => {
+        <button class="ui-btn ${page === "shop" ? "is-active" : ""}" onclick=${() => {
           page = "shop";
           update(el);
         }}>Shopping Cart</button>
-        <button class="${page === "form" ? "active" : ""}" onclick=${() => {
+        <button class="ui-btn ${page === "form" ? "is-active" : ""}" onclick=${() => {
           page = "form";
           update(el);
         }}>Form</button>
-        <button class="${page === "data" ? "active" : ""}" onclick=${() => {
+        <button class="ui-btn ${page === "data" ? "is-active" : ""}" onclick=${() => {
           page = "data";
           update(el);
         }}>Data</button>
-        <button class="${page === "gravity" ? "active" : ""}" onclick=${() => {
+        <button class="ui-btn ${page === "gravity" ? "is-active" : ""}" onclick=${() => {
           page = "gravity";
           update(el);
         }}>Gravity</button>
-        <button class="${page === "beats" ? "active" : ""}" onclick=${() => {
+        <button class="ui-btn ${page === "beats" ? "is-active" : ""}" onclick=${() => {
           page = "beats";
           update(el);
         }}>Beats</button>
-        <button class="${page === "notes" ? "active" : ""}" onclick=${() => {
+        <button class="ui-btn ${page === "notes" ? "is-active" : ""}" onclick=${() => {
           page = "notes";
           update(el);
         }}>Notes</button>
-        <button class="${page === "errors" ? "active" : ""}" onclick=${() => {
+        <button class="ui-btn ${page === "errors" ? "is-active" : ""}" onclick=${() => {
           page = "errors";
           update(el);
         }}>Errors</button>
-        <button class="${page === "css" ? "active" : ""}" onclick=${() => {
+        <button class="ui-btn ${page === "css" ? "is-active" : ""}" onclick=${() => {
           page = "css";
           update(el);
         }}>CSS Utils</button>

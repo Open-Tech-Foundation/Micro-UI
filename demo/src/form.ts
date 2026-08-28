@@ -17,6 +17,7 @@ define("x-field", (el, props) => {
     <div class="field">
       <label>${props.label}</label>
       <input
+        class="ui-input"
         type=${props.type || "text"}
         placeholder=${props.placeholder || ""}
         value=${store.get<string>("form", { path: props.path! }) ?? ""}
@@ -35,7 +36,7 @@ define("x-field", (el, props) => {
 define("x-checkbox", (el, props) => {
   onReady(() => store.subscribe("form", () => update(el)));
   return () => html`
-    <div class="field field-checkbox">
+    <div class="field ui-checkbox">
       <label>
         <input
           type="checkbox"
@@ -111,8 +112,8 @@ define("x-form-page", (el) => {
         <x-checkbox label="Subscribe to newsletter" path="newsletter"></x-checkbox>
 
         <div class="btn-row" style="margin-top:1rem">
-          <button class="btn-reset" onclick=${reset}>Reset</button>
-          <button class="btn-submit" onclick=${submit}>Submit</button>
+          <button class="ui-btn ui-btn-secondary" onclick=${reset}>Reset</button>
+          <button class="ui-btn ui-btn-success" onclick=${submit}>Submit</button>
         </div>
       </div>
 

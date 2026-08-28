@@ -13,7 +13,7 @@ dir = "demo"
 
 # ------------------------------------------------------------------ build
 [tasks.build]
-run = "esdev build --lib src --dts-bundle=src/index.ts && cp src/styles.css dist/styles.css && cp ../../README.md README.md"
+run = "esdev build --lib src --dts-bundle=src/index.ts && cp src/styles.css dist/styles.css && mkdir -p dist/styles && cp src/styles/* dist/styles/ && cp ../../README.md README.md"
 dir = "packages/micro-ui"
 
 # ------------------------------------------------------------------ typecheck / test

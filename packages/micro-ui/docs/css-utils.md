@@ -28,7 +28,26 @@ Micro-UI Utils turns that into:
 <button class="ui-btn ui-btn-primary">
   Save
 </button>
+
+## Installation
+
+```js
+// Full bundle
+import "@opentf/micro-ui/styles.css";
+
+// Or split — pay only for what you use (tokens ~3k, base ~7k)
+import "@opentf/micro-ui/styles/tokens.css";
+import "@opentf/micro-ui/styles/base.css";
+import "@opentf/micro-ui/styles/components.css";
 ```
+
+All rules are in `@layer micro-ui.*` so your app CSS wins without `!important`:
+```css
+@layer micro-ui, app;
+```
+Dark mode is automatic via `@media (prefers-color-scheme: dark)` in tokens.
+
+Package has `"sideEffects": ["*.css"]` — import CSS only where needed, JS still tree-shakes.
 
 The semantic class becomes the public API.
 

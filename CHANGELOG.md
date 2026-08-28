@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **CSS split imports** — `src/styles.css` now re-exports split partials: `import "@opentf/micro-ui/styles/tokens.css"` (tokens only), `import "@opentf/micro-ui/styles/base.css"` (reset+layout), `import "@opentf/micro-ui/styles/components.css"` (components). Full bundle still `import "@opentf/micro-ui/styles.css"`. `package.json` now `exports["./styles/*"]` → `dist/styles/*`.
+- **CSS layers** — all rules wrapped in `@layer micro-ui.tokens, micro-ui.base, micro-ui.components, micro-ui.utilities` so app CSS overrides without `!important` (just declare your own `@layer` after).
+- **Dark mode** — tokens now include `@media (prefers-color-scheme: dark)` overrides for `--ui-background/surface/text/border`.
+- **sideEffects** — `package.json` now `"sideEffects": ["*.css"]` so bundlers can tree-shake unused JS while keeping CSS opt-in.
+- **Demo refactored** — all demo components now use micro-ui's own utility/component classes (`ui-btn`, `ui-card`, `ui-input`, etc.) instead of manual CSS. Removed ~110 lines of redundant custom styles from `demo/styles/app.css`.
+
+### Added
+- **E2E CSS tests** — 69 tests validating token values, base resets, component styles, utilities, layers, responsive helpers, and dark mode in `test/jsdom/styles.e2e.test.mjs`.
+
 ## [0.3.0] - 2026-08-28
 
 ### Added

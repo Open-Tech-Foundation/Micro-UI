@@ -150,11 +150,13 @@ define("x-notes-page", (el) => {
             Body is escaped by default — try <code>&lt;script&gt;</code>.
           </p>
           <input
+            class="ui-input"
             placeholder="Title"
             value=${draft.title}
             oninput=${(e: InputEvent) => store.set("notesState", (e.target as HTMLInputElement).value, { path: "draft.title" })}
           />
           <textarea
+            class="ui-textarea"
             placeholder="Body — plain text, safe-escaped"
             rows="3"
             value=${draft.body}
@@ -162,6 +164,7 @@ define("x-notes-page", (el) => {
           ></textarea>
           <div class="notes-row">
             <select
+              class="ui-select"
               value=${draft.tag}
               onchange=${(e: Event) => store.set("notesState", (e.target as HTMLSelectElement).value as Note["tag"], { path: "draft.tag" })}
             >
@@ -170,19 +173,20 @@ define("x-notes-page", (el) => {
               <option value="idea">idea</option>
               <option value="todo">todo</option>
             </select>
-            <button onclick=${addNote} class="btn-add">Add note</button>
+            <button onclick=${addNote} class="ui-btn ui-btn-primary">Add note</button>
           </div>
         </div>
 
         <div class="card notes-controls">
           <div class="notes-row">
             <input
+              class="ui-input"
               placeholder="Search title or body…"
               value=${filter}
               oninput=${(e: InputEvent) => store.set("notesState", (e.target as HTMLInputElement).value, { path: "filter" })}
             />
             <button
-              class="btn-clear"
+              class="ui-btn ui-btn-ghost ui-btn-icon"
               onclick=${() => store.set("notesState", "", { path: "filter" })}
               title="Clear filter via store.set path"
             >✕</button>
@@ -198,7 +202,7 @@ define("x-notes-page", (el) => {
           </div>
           <div class="notes-meta">
             <span>${filtered.length} / ${items.length} notes${pinnedCount ? ` · ${pinnedCount} pinned` : ""}</span>
-            <button class="btn-clear" onclick=${clearAll}>Clear all</button>
+            <button class="ui-btn ui-btn-ghost" onclick=${clearAll}>Clear all</button>
           </div>
         </div>
 
@@ -217,10 +221,10 @@ define("x-notes-page", (el) => {
                   <div class="note-title">${n.title}</div>
                   <div class="note-body">${n.body}</div>
                   <div class="note-actions">
-                    <button class="btn-pin ${n.pinned ? "active" : ""}" onclick=${() => togglePin(n.id)} title="Pin">
+                    <button class="ui-btn ui-btn-ghost ${n.pinned ? "is-active" : ""}" onclick=${() => togglePin(n.id)} title="Pin">
                       ${n.pinned ? "★ Pinned" : "☆ Pin"}
                     </button>
-                    <button class="btn-del" onclick=${() => deleteNote(n.id)}>Delete</button>
+                    <button class="ui-btn ui-btn-danger" onclick=${() => deleteNote(n.id)}>Delete</button>
                   </div>
                 </div>`,
               )}

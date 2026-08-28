@@ -47,11 +47,11 @@ define("x-throws-on-update", (el) => {
         <h3>Throws on next update</h3>
         <p class="count">${n}</p>
         <div class="btn-row">
-          <button onclick=${() => {
+          <button class="ui-btn ui-btn-secondary" onclick=${() => {
             n++;
             update(el);
           }}>+1 (safe)</button>
-          <button class="danger" onclick=${() => el.dispatchEvent(new Event("arm"))}>
+          <button class="ui-btn ui-btn-danger" onclick=${() => el.dispatchEvent(new Event("arm"))}>
             Arm throw
           </button>
         </div>
@@ -93,11 +93,11 @@ define("x-breaks-after-3", (el) => {
         <h3>Breaks after 3</h3>
         <p class="count">${n}</p>
         <div class="btn-row">
-          <button onclick=${() => {
+          <button class="ui-btn ui-btn-secondary" onclick=${() => {
             n++;
             update(el);
           }}>+1</button>
-          <button class="danger" onclick=${() => el.dispatchEvent(new Event("recover"))}>
+          <button class="ui-btn ui-btn-danger" onclick=${() => el.dispatchEvent(new Event("recover"))}>
             Recover
           </button>
         </div>
@@ -150,7 +150,7 @@ define("x-throw-now", (el) => {
       <div class="card">
         <h3>One-shot throw</h3>
         <div class="btn-row">
-          <button class="danger" onclick=${() => el.dispatchEvent(new Event("prime"))}>
+          <button class="ui-btn ui-btn-danger" onclick=${() => el.dispatchEvent(new Event("prime"))}>
             Throw now
           </button>
         </div>
@@ -185,7 +185,7 @@ define("x-errors-page", (el) => {
         and pushes the failure here. The host page keeps running.
       </p>
       <div class="btn-row" style="margin-bottom:.75rem">
-        <button onclick=${clearLog} disabled=${errorLog.length === 0}>Clear log</button>
+        <button class="ui-btn ui-btn-ghost" onclick=${clearLog} disabled=${errorLog.length === 0}>Clear log</button>
         <span class="hint">${errorLog.length} entr${errorLog.length === 1 ? "y" : "ies"}</span>
       </div>
       ${

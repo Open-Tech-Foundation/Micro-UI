@@ -753,12 +753,12 @@ define("x-beats", (el) => {
           </div>
           <div class="beats-transport">
             <button
-              class="btn-play ${state.playing ? "playing" : ""}"
+              class="ui-btn ui-btn-primary ${state.playing ? "is-active" : ""}"
               onclick=${togglePlay}
             >
               ${state.playing ? "⏸ Pause" : "▶ Play"}
             </button>
-            <button class="btn-rnd" onclick=${randomize}>🎲 Random</button>
+            <button class="ui-btn ui-btn-ghost" onclick=${randomize}>🎲 Random</button>
           </div>
         </div>
 
@@ -798,10 +798,10 @@ define("x-beats", (el) => {
 
           <div class="preset-group">
             <span class="preset-label">Presets:</span>
-            <button onclick=${() => applyPreset("house")}>House</button>
-            <button onclick=${() => applyPreset("synthwave")}>Synthwave</button>
-            <button onclick=${() => applyPreset("trap")}>Trap</button>
-            <button onclick=${() => applyPreset("clear")}>Clear</button>
+            <button class="ui-btn ui-btn-ghost" onclick=${() => applyPreset("house")}>House</button>
+            <button class="ui-btn ui-btn-ghost" onclick=${() => applyPreset("synthwave")}>Synthwave</button>
+            <button class="ui-btn ui-btn-ghost" onclick=${() => applyPreset("trap")}>Trap</button>
+            <button class="ui-btn ui-btn-ghost" onclick=${() => applyPreset("clear")}>Clear</button>
           </div>
         </div>
 
@@ -831,14 +831,14 @@ define("x-beats", (el) => {
                 <span class="track-name" style="color: ${track.color}">${track.name}</span>
                 <div class="track-actions">
                   <button
-                    class="btn-mute ${track.muted ? "is-muted" : ""}"
+                    class="ui-btn ui-btn-ghost ui-btn-icon ${track.muted ? "is-active" : ""}"
                     title="${track.muted ? "Unmute track" : "Mute track"}"
                     onclick=${() => toggleMute(track.id)}
                   >
                     ${track.muted ? "🔇" : "🔊"}
                   </button>
                   <button
-                    class="btn-track-clear"
+                    class="ui-btn ui-btn-ghost ui-btn-icon"
                     title="Clear track pattern"
                     onclick=${() => clearTrack(track.id)}
                   >
