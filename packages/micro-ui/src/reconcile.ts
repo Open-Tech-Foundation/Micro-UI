@@ -26,15 +26,15 @@ export function reconcile(
   }
   if (old.type === "element") {
     const nxt = next as ElementVNode;
-    if (old.tag !== nxt.tag) {
+    if (old.tag !== nxt.tag || old.ns !== nxt.ns) {
       materializeNode(nxt);
       parent.replaceChild(nxt.dom!, old.dom!);
       return;
     }
     const dom = old.dom!;
     nxt.dom = dom;
-    patchAttrs(dom as HTMLElement, old.attrs, nxt.attrs);
-    patchEvents(dom as HTMLElement, old.events, nxt.events);
+    patchAttrs(dom as Element, old.attrs, nxt.attrs);
+    patchEvents(dom as Element, old.events, nxt.events);
     const inst = instances.get(dom as HTMLElement);
     if (inst?.props) {
       let changed = false;
@@ -95,7 +95,7 @@ function patchByIndex(
       materializeNode(n!);
       parent.appendChild(n!.dom!);
     } else if (!n) {
-      o.dom!.remove();
+      if (o.dom?.parentNode === parent) o.dom.remove();
     } else {
       reconcile(o, n, parent);
     }
@@ -156,7 +156,7 @@ function patchKeyed(
 }
 
 function patchAttrs(
-  el: HTMLElement,
+  el: Element,
   old: Record<string, unknown>,
   next: Record<string, unknown>,
 ): void {
@@ -165,7 +165,7 @@ function patchAttrs(
 }
 
 function patchEvents(
-  el: HTMLElement,
+  el: Element,
   old: Record<string, unknown>,
   next: Record<string, unknown>,
 ): void {

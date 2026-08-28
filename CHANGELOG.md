@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **SVG support** — inline SVG via `html\`<svg>...</svg>\`` now creates real `SVGElement`s (`namespaceURI === "http://www.w3.org/2000/svg"`). Covers: `src/ns.ts` (`SVG_NS`), `types.ts` (`ns` on `ElementDesc`/`ElementVNode`), `template.ts` (hybrid `namespaceURI` + inherited `parentNS`, `foreignObject` reset), `dom.ts`/`vdom.ts` (`createElementNS` via `createEl`, NS-aware `setProp` with `xlink:href` support), `reconcile.ts` (`tag+ns` identity), `raw.ts` (fixed `buildDesc` arity). Supports dynamic SVG attrs (`cx`, `viewBox`, `stroke-width`, `transform`, `class`), events on SVG, keyed lists inside `<svg>`, mixed HTML+SVG, `foreignObject`.
+- **SVG tests** — 8 new FakeDOM tests (`test/micro-ui.svg.test.mjs`) and 6 jsdom tests (`test/jsdom/svg.test.mjs`) for namespace, dynamic attrs, DOM identity, `foreignObject`, keyed reorder, events, `viewBox`/`class`.
+- **SVG demo** — `demo/src/svg.ts` (`x-svg-demo`/`x-svg-page`) with interactive circle (sliders + `viewBox`), keyed `circle` list, `path` sparkline, `foreignObject`, mixed HTML+SVG; wired into `demo/src/main.ts` and `x-app` nav.
+- **Test helper** — `test/helpers/dom.mjs` upgraded to NS-aware: `createElementNS`, `namespaceURI`, `setAttributeNS`/`removeAttributeNS`, NS stack in `innerHTML` parser (SVG + `foreignObject` reset).
+
 ### Fixed
 - **define.ts** — initial render of text-type VNode now correctly appends the text node instead of skipping it.
 - **reconcile.ts** — `patchByIndex` no longer eagerly materializes new nodes before `reconcile()` checks for DOM reuse, eliminating wasted DOM creation on indexed reconciliation.
 - **reconcile.ts** — `patchKeyed` now removes orphaned un-keyed old nodes that aren't matched as fallbacks, preventing DOM leaks when mixing keyed and un-keyed children.
 - **vdom.ts** — `resolveBinding` type check for VNode is more robust; requires `dom`, `children`, `value`, or `html` property in addition to `type`, preventing plain objects from being misidentified as VNodes.
 - **store.ts** — `set()` with path now guards against primitive entry values (previously could silently corrupt data when the stored value was a non-object primitive).
+- **reconcile.ts** — `patchByIndex` now guards `.remove()` with `parentNode` check to prevent `NotFoundError` when a node was already detached.
 - **README.md** — fixed typo: "Immuntably" → "Immutably".
 
 ### Added

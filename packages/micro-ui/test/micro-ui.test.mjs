@@ -898,3 +898,14 @@ test("update: after disconnect, pending update is skipped", async () => {
   update(ref); await micro(); flush(); await delay(5);
   assertEquals(renders, 1, "should not re-render after disconnect");
 });
+
+test("reconcile: unkeyed child removal guarded by parentNode (fix for line 98)", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-guarded-remove"); let items = ["a", "b", "c"]; let ref;
+  define(tag, el2 => { ref = el2; return () => html`<ul>${items.map(t => html`<li>${t}</li>`)}</ul>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.querySelectorAll("li").length, 3);
+  items = ["a"]; update(ref); await micro(); flush(); await delay(5);
+  assertEquals(el.querySelectorAll("li").length, 1);
+  assertEquals(el.querySelector("li").textContent, "a");
+});
