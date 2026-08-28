@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Tests** — expanded `test/micro-ui.test.mjs` (binding-order interleaving, boolean-prop coercion, keyed detached-node reclaim / no orphaned nodes, `html.raw` DOM reuse on same-structure updates, keyed fragment inside raw) and `test/jsdom/svg.test.mjs` (HTML `<a>`/`<title>` stay HTML, SVG `<a>` stays SVG, mixed HTML/SVG siblings).
 
 ### Fixed
+- **packaged README** — the build-copied `packages/micro-ui/README.md` now rewrites the docs link to `./docs/css-utils.md` and drops the unpublished screenshot line, so links/images resolve from the published package.
 - **styles** — automatic dark mode (`prefers-color-scheme: dark`) now re-scales the full token set (brand/status soft colors, `--ui-text-disabled`, shadows, focus ring) instead of only the neutral surfaces, matching the manual `data-theme="dark"` theme so components (alerts, badges, buttons) look correct in auto dark.
 - **demo** — the theme toggle now sets `data-theme="light"` explicitly when switching back, instead of removing the attribute, so "Light" works even on a system that prefers dark.
 - **docs** — README and `docs/css-utils.md` aligned on theming (automatic dark + explicit `data-theme` pins), spacing class ranges corrected, and `is-dragging` alias documented.

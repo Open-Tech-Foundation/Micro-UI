@@ -6,7 +6,6 @@
 
 A tiny runtime for AI-generated micro-apps
 
-![Micro-UI Screenshot](Screenshot.png)
 
 </div>
 
@@ -376,7 +375,7 @@ Layers — all rules are in `@layer micro-ui.*` so your app CSS wins without `!i
 
 Opt-in CSS — `package.json` has `"sideEffects": ["*.css"]` so JS tree-shakes, import CSS only where needed.
 
-> **[Full CSS Documentation](./packages/micro-ui/docs/css-utils.md)**
+> **[Full CSS Documentation](./docs/css-utils.md)**
 
 ---
 
