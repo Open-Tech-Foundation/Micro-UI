@@ -67,9 +67,22 @@ export function reconcile(
     if (inst?.props) {
       let changed = false;
       for (const k in nxt.attrs) {
-        if (inst.props[k] !== String(nxt.attrs[k])) changed = true;
-        inst.props[k] =
-          nxt.attrs[k] == null ? undefined! : String(nxt.attrs[k]);
+        const v = nxt.attrs[k];
+        // A nullish binding removes the attribute (see setProp), so the prop
+        // must be absent too. Comparing against String(v) while storing
+        // `undefined` made every pass report a change and re-render the child.
+        if (v == null) {
+          if (k in inst.props) {
+            delete inst.props[k];
+            changed = true;
+          }
+          continue;
+        }
+        const nextVal = String(v);
+        if (inst.props[k] !== nextVal) {
+          inst.props[k] = nextVal;
+          changed = true;
+        }
       }
       for (const k in inst.props) {
         if (!(k in nxt.attrs)) {
@@ -178,10 +191,15 @@ function patchKeyed(
     if (o && (o.dom?.parentNode === parent || o.dom?.parentNode === null)) {
       if (n.type === "element" || n.type === "fragment")
         correctVNodeNS(n, parentNS);
-      materializeNode(n, parentNS);
+      // No materializeNode() here: reconcile() reuses the matched node's DOM
+      // (or builds a replacement itself when tag/ns changed). Materializing
+      // first built a full subtree that was then thrown away every pass.
       reconcile(o, n, parent);
-      if (o.dom!.nextSibling !== nextSib) parent.insertBefore(o.dom!, nextSib);
-      nextSib = o.dom;
+      // reconcile() sets n.dom — to o.dom when reused, or to a fresh element
+      // when it had to replace. Placing o.dom would resurrect the replaced node.
+      const placed = n.dom ?? o.dom!;
+      if (placed.nextSibling !== nextSib) parent.insertBefore(placed, nextSib);
+      nextSib = placed;
       oldMap.delete(String(k));
     } else {
       const fallback = k == null ? oldCh[i] : undefined;
@@ -193,11 +211,11 @@ function patchKeyed(
         unmatchedUnkeyed.delete(fallback);
         if (n.type === "element" || n.type === "fragment")
           correctVNodeNS(n, parentNS);
-        materializeNode(n, parentNS);
         reconcile(fallback, n, parent);
-        if (fallback.dom!.nextSibling !== nextSib)
-          parent.insertBefore(fallback.dom!, nextSib);
-        nextSib = fallback.dom;
+        const placed = n.dom ?? fallback.dom!;
+        if (placed.nextSibling !== nextSib)
+          parent.insertBefore(placed, nextSib);
+        nextSib = placed;
       } else {
         if (n.type === "element" || n.type === "fragment")
           correctVNodeNS(n, parentNS);

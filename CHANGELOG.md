@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Keyed list patching no longer builds a DOM subtree per matched row and immediately discards it. `patchKeyed` called `materializeNode()` before `reconcile()`, which then reused the existing node — so updating one row of a 50-row list allocated 150 elements and threw all of them away. It now allocates none.
+- A keyed row whose tag changes is no longer resurrected. `patchKeyed` re-inserted the old node after `reconcile()` had already replaced it, leaving both in the tree.
+- Nested components no longer re-render on every parent update. The props-sync loop compared against `String(value)` while storing `undefined` for nullish attributes, so any child with a nullish bound attribute reported a prop change on every pass.
 - Clearing a bound attribute no longer re-adds it as the literal string `"undefined"`. `setProp` followed `removeAttribute()` with a property write of `undefined`, which any reflected non-nullable `DOMString` stringifies — so `html\`<img src=${url}>\`` with a null `url` produced `src="undefined"` and a spurious request. Affected `title`, `id`, `lang`, `src`, `alt`, `href`, `placeholder`, `name` and the `aria-*`/`role` path.
 - Text interpolations are no longer double-encoded. `${value}` was passed through an entity escaper *and* then inserted with `createTextNode`, so `${"Tom & Jerry"}` rendered the literal text `Tom &amp; Jerry` on screen. Text nodes are never parsed as markup, so the escaper added no safety — only corruption. Injected markup remains inert.
 
