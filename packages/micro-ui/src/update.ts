@@ -46,8 +46,10 @@ export function flush(): void {
       mountErrorUI(el, err);
       inst.errored = true;
       const handlers = errorHandlers.get(el);
-      if (handlers)
-        for (const h of handlers) safeCall(h, el, err as Error, "render");
+      if (handlers) {
+        const e = err instanceof Error ? err : new Error(String(err));
+        for (const h of handlers) safeCall(h, el, e, "render");
+      }
       continue;
     }
     setCurrentRendering(null);
@@ -57,8 +59,10 @@ export function flush(): void {
       mountErrorUI(el, err);
       inst.errored = true;
       const handlers = errorHandlers.get(el);
-      if (handlers)
-        for (const h of handlers) safeCall(h, el, err as Error, "reconcile");
+      if (handlers) {
+        const e = err instanceof Error ? err : new Error(String(err));
+        for (const h of handlers) safeCall(h, el, e, "reconcile");
+      }
       continue;
     }
     inst.tree = newTree;

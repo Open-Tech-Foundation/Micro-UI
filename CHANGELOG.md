@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deduplicated `createEl` (was identically defined in `dom.ts` and `vdom.ts`) — now exported once from `dom.ts` and imported in `vdom.ts`.
 - Extracted `resolveNS(tag, parentNS, domNS?)` helper into `ns.ts` to unify SVG/HTML namespace resolution logic previously repeated in `template.ts`, `dom.ts` (`correctVNodeNS`, `materializeNode`).
 - Extracted `XML_NS_MAP` constant in `dom.ts` to replace two identical inline `nsMap` definitions in `setProp`.
+- Removed all `as any` casts in `dom.ts` and `reconcile.ts` — replaced with proper type narrowing via VNode union type guards.
+- Removed dead `else if ((node as any).type === "raw")` branch in `materializeNode` (`VNode` does not include `RawVNode`).
+- `update.ts` now wraps non-`Error` thrown values in `new Error(String(err))` instead of blindly casting `err as Error`.
 
 ## [0.5.0] - 2026-08-29
 

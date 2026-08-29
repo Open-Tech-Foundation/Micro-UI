@@ -11,8 +11,8 @@ export function correctVNodeNS(node: VNode, parentNS: string | null): void {
     // First correct children recursively (so their dom is fixed before we move them)
     for (const c of node.children) correctVNodeNS(c, childParentNS);
     // If DOM already exists with wrong namespace, recreate it and re-append corrected children
-    if ((node as any).dom) {
-      const dom = (node as any).dom as Element;
+    if (node.dom) {
+      const dom = node.dom;
       const isDomSvg = dom.namespaceURI === SVG_NS;
       const shouldBeSvg = expected === SVG_NS;
       if (isDomSvg !== shouldBeSvg) {
@@ -23,14 +23,14 @@ export function correctVNodeNS(node: VNode, parentNS: string | null): void {
             newEl.addEventListener(e, node.events[e] as EventListener);
         }
         for (const c of node.children) {
-          if ((c as any).dom) newEl.appendChild((c as any).dom);
+          if (c.dom) newEl.appendChild(c.dom);
           else if (c.type === "text") {
-            const txt = document.createTextNode((c as any).value ?? "");
-            (c as any).dom = txt;
+            const txt = document.createTextNode(c.value);
+            c.dom = txt;
             newEl.appendChild(txt);
           }
         }
-        (node as any).dom = newEl;
+        node.dom = newEl;
       }
     }
   } else if (node.type === "fragment") {
@@ -214,7 +214,5 @@ export function materializeNode(
         correctVNodeNS(c, parentNS);
       materializeNode(c, parentNS);
     }
-  } else if ((node as any).type === "raw") {
-    // raw is handled elsewhere
   }
 }
