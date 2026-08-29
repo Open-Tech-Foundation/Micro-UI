@@ -64,14 +64,26 @@ function patchLists(
     const o = oldCh[0]!;
     const n = newCh[0]!;
     if (o.type === n.type) {
-      reconcile(o, n, parent);
-      if (n.dom && n.dom.parentNode !== parent) parent.appendChild(n.dom);
-      return;
+      // For elements, also check key/tag/ns — single-item fast-path must not
+      // reuse DOM when key changes (issue #4)
+      if (o.type === "element" && n.type === "element") {
+        if (o.key === n.key && o.tag === n.tag && o.ns === n.ns) {
+          reconcile(o, n, parent);
+          // re-insert if externally detached
+          if (o.dom && o.dom.parentNode !== parent) parent.appendChild(o.dom);
+          return;
+        }
+      } else {
+        // text / fragment with same type can be reconciled
+        reconcile(o, n, parent);
+        if ((o as any).dom && (o as any).dom.parentNode !== parent)
+          parent.appendChild((o as any).dom);
+        return;
+      }
     }
     materializeNode(n);
-    const oDom = o.dom;
-    if (oDom && oDom.parentNode === parent) {
-      parent.replaceChild(n.dom!, oDom);
+    if (o.dom?.parentNode === parent) {
+      parent.replaceChild(n.dom!, o.dom!);
     } else {
       parent.appendChild(n.dom!);
     }
