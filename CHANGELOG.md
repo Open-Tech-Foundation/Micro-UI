@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-29
+
 ### Added
 - **Minified output** — `build:lib:min` and `build:css:min` tasks produce minified JS (`dist/min/*.js`) and bundled minified CSS (`dist/styles.min.css`). Consumers can opt in via `import { html } from "@opentf/micro-ui/min"` and `import "@opentf/micro-ui/styles.min.css"`. Uses `lightningcss-cli` (Rust-based, devDependency only). CDN URLs now point to minified versions.
 - **Test coverage** — 34 new tests closing prior gaps:
