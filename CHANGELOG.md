@@ -7,13 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.8.0] - 2026-08-29
-
 ### Changed
 - Replaced 6× `as unknown as Record<string, unknown>` double-casts in `dom.ts` with `setElProp()` helper.
-- Replaced 6× `as EventListener` casts across `dom.ts`, `vdom.ts`, and `reconcile.ts` with `addListener()`/`removeListener()` helpers.
+- Replaced 5× `as EventListener` casts across `dom.ts`, `vdom.ts`, and `reconcile.ts` with `addListener()`/`removeListener()` helpers.
 - Extracted shared `splitPath()` helper in `store.ts` (was duplicated 3×).
-- Hoisted `getParentNS()` call out of `patchKeyed` loop body (was called 3× per iteration).
+- Hoisted `getParentNS()` call out of the `patchKeyed` loop body (one call per patch instead of one per iteration).
 
 ### Added
 - Unit tests for `setProp` (value, boolean, ARIA, generic, event listeners) in `test/micro-ui.setprop.test.mjs`.
