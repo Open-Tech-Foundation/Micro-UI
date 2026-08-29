@@ -140,6 +140,31 @@ test("svg: dynamic child inside foreignObject stays HTML after re-add", async ()
   assert(d.querySelector("span").namespaceURI === null || d.querySelector("span").namespaceURI === "http://www.w3.org/1999/xhtml");
 });
 
+test("svg: camelCase SVG elements (foreignObject/clipPath/linearGradient) live in SVG ns with HTML children", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("svg-case");
+  define(tag, () => () => html`<svg>
+    <defs>
+      <clipPath id="clip"><circle cx="50" cy="50" r="40"></circle></clipPath>
+      <linearGradient id="grad"><stop offset="0" stop-color="red"></stop></linearGradient>
+    </defs>
+    <g clip-path="url(#clip)">
+      <foreignObject id="fo" x="0" y="0" width="50" height="50"><div>hi</div></foreignObject>
+    </g>
+  </svg>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const cp = el.querySelector("clipPath") || el.querySelector("clippath");
+  const lg = el.querySelector("linearGradient") || el.querySelector("lineargradient");
+  const fo = el.querySelector("foreignObject") || el.querySelector("foreignobject");
+  assert(cp.namespaceURI === "http://www.w3.org/2000/svg");
+  assert(cp.querySelector("circle").namespaceURI === "http://www.w3.org/2000/svg");
+  assert(lg.namespaceURI === "http://www.w3.org/2000/svg");
+  assert(fo.namespaceURI === "http://www.w3.org/2000/svg");
+  const div = fo.querySelector("div");
+  assert(div.namespaceURI === null || div.namespaceURI === "http://www.w3.org/1999/xhtml");
+  assertEquals(div.textContent, "hi");
+});
+
 test("svg: swapping foreignObject child type keeps HTML namespace", async () => {
   setupDOM(); const { define, html, update, flush } = await fresh();
   const tag = uniqueTag("svg-fo-swap");

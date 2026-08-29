@@ -1,6 +1,6 @@
 import { correctVNodeNS, setProp } from "./dom.ts";
 import { escapeText } from "./escape.ts";
-import { SVG_NS } from "./ns.ts";
+import { SVG_NS, svgTagName } from "./ns.ts";
 import { materializeRaw } from "./raw.ts";
 import type {
   DescNode,
@@ -14,7 +14,7 @@ import type {
 
 function createEl(tag: string, ns: string | null): Element {
   return ns === SVG_NS
-    ? document.createElementNS(SVG_NS, tag)
+    ? document.createElementNS(SVG_NS, svgTagName(tag))
     : document.createElement(tag);
 }
 

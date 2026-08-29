@@ -34,7 +34,7 @@ test("svg jsdom: foreignObject html", async () => {
   const tag=uniqueTag("svg-fo");
   define(tag,()=>()=>html`<svg><foreignObject width="100"><div>hi</div></foreignObject></svg>`);
   const el=document.createElement(tag); document.body.appendChild(el); await tick(); flush();
-  const fo=el.querySelector("foreignobject");
+  const fo=el.querySelector("foreignobject") || el.querySelector("foreignObject");
   const div=el.querySelector("div");
   assert.equal(fo.namespaceURI, "http://www.w3.org/2000/svg");
   assert.equal(div.namespaceURI, "http://www.w3.org/1999/xhtml");
@@ -132,13 +132,37 @@ test("svg jsdom: dynamic child inside foreignObject stays HTML after re-add", as
   let show = true; let ref;
   define(tag, el2 => { ref = el2; return () => html`<svg><foreignObject>${show ? html`<div id="fochild"><span>hi</span></div>` : null}</foreignObject></svg>`; });
   const el = document.createElement(tag); document.body.appendChild(el); await tick(); flush();
-  assert.equal(el.querySelector("foreignobject").namespaceURI, "http://www.w3.org/2000/svg");
+  const fo = el.querySelector("foreignobject") || el.querySelector("foreignObject");
+  assert.equal(fo.namespaceURI, "http://www.w3.org/2000/svg");
   assert.equal(el.querySelector("#fochild").namespaceURI, "http://www.w3.org/1999/xhtml");
   show = false; update(ref); await tick(); flush();
   assert.equal(el.querySelector("#fochild"), null);
   show = true; update(ref); await tick(); flush();
   assert.equal(el.querySelector("#fochild").namespaceURI, "http://www.w3.org/1999/xhtml");
   assert.equal(el.querySelector("#fochild span").namespaceURI, "http://www.w3.org/1999/xhtml");
+});
+
+test("svg jsdom: camelCase SVG elements keep canonical tag name (foreignObject/clipPath/linearGradient)", async () => {
+  const tag=uniqueTag("svg-case");
+  define(tag, () => () => html`<svg>
+    <defs>
+      <clipPath id="clip"><circle cx="50" cy="50" r="40"></circle></clipPath>
+      <linearGradient id="grad"><stop offset="0" stop-color="red"></stop></linearGradient>
+    </defs>
+    <g clip-path="url(#clip)">
+      <foreignObject id="fo" x="0" y="0" width="50" height="50"><div>hi</div></foreignObject>
+    </g>
+  </svg>`);
+  const el=document.createElement(tag); document.body.appendChild(el); await tick(); flush();
+  const cp=el.querySelector("clipPath") || el.querySelector("clippath");
+  const lg=el.querySelector("linearGradient") || el.querySelector("lineargradient");
+  const fo=el.querySelector("foreignObject") || el.querySelector("foreignobject");
+  assert.equal(cp.namespaceURI, "http://www.w3.org/2000/svg");
+  assert.equal(cp.tagName, "clipPath");
+  assert.equal(lg.namespaceURI, "http://www.w3.org/2000/svg");
+  assert.equal(lg.tagName, "linearGradient");
+  assert.equal(fo.tagName, "foreignObject");
+  assert.equal(fo.querySelector("div").namespaceURI, "http://www.w3.org/1999/xhtml");
 });
 
 test("svg jsdom: swapping foreignObject child type keeps HTML namespace", async () => {

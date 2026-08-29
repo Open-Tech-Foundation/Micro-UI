@@ -1,4 +1,4 @@
-import { HTML_NS, SVG_NS } from "./ns.ts";
+import { HTML_NS, SVG_NS, svgTagName } from "./ns.ts";
 import type { VNode } from "./types.ts";
 
 export function correctVNodeNS(node: VNode, parentNS: string | null): void {
@@ -44,7 +44,7 @@ export function correctVNodeNS(node: VNode, parentNS: string | null): void {
 
 function createEl(tag: string, ns: string | null): Element {
   return ns === SVG_NS
-    ? document.createElementNS(SVG_NS, tag)
+    ? document.createElementNS(SVG_NS, svgTagName(tag))
     : document.createElement(tag);
 }
 
