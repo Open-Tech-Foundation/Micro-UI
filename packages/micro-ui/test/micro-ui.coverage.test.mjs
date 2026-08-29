@@ -7,23 +7,6 @@ async function fresh() { return await import(`../src/index.ts?${Date.now()}-${Ma
 const delay = (n=10) => new Promise(r => setTimeout(r, n));
 const micro = () => new Promise(r => queueMicrotask(r));
 
-// ── escapeText unit ────────────────────────────────────────────────
-test("escapeText: escapes & < > \" '", async () => {
-  const { escapeText } = await import(`../src/escape.ts?${Date.now()}-${Math.random()}`);
-  assertEquals(escapeText('&<>"\''), "&amp;&lt;&gt;&quot;&#39;");
-});
-test("escapeText: no escaping for plain text", async () => {
-  const { escapeText } = await import(`../src/escape.ts?${Date.now()}-${Math.random()}`);
-  assertEquals(escapeText("hello world"), "hello world");
-});
-test("escapeText: empty string stays empty", async () => {
-  const { escapeText } = await import(`../src/escape.ts?${Date.now()}-${Math.random()}`);
-  assertEquals(escapeText(""), "");
-});
-test("escapeText: already looks escaped gets double-escaped (no idempotence)", async () => {
-  const { escapeText } = await import(`../src/escape.ts?${Date.now()}-${Math.random()}`);
-  assertEquals(escapeText("&amp;"), "&amp;amp;");
-});
 
 // ── ns: resolveNS / svgTagName ─────────────────────────────────────
 test("ns: resolveNS for svg root", async () => {

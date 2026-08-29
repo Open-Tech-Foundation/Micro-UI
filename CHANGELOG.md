@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Text interpolations are no longer double-encoded. `${value}` was passed through an entity escaper *and* then inserted with `createTextNode`, so `${"Tom & Jerry"}` rendered the literal text `Tom &amp; Jerry` on screen. Text nodes are never parsed as markup, so the escaper added no safety — only corruption. Injected markup remains inert.
+
+### Removed
+- `src/escape.ts` — unused once `resolveBinding` stopped double-encoding. It was not part of the public API.
+
 ### Changed
 - Replaced 6× `as unknown as Record<string, unknown>` double-casts in `dom.ts` with `setElProp()` helper.
 - Replaced 5× `as EventListener` casts across `dom.ts`, `vdom.ts`, and `reconcile.ts` with `addListener()`/`removeListener()` helpers.

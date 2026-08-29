@@ -1,5 +1,4 @@
 import { addListener, correctVNodeNS, createEl, setProp } from "./dom.ts";
-import { escapeText } from "./escape.ts";
 import { materializeRaw } from "./raw.ts";
 import type {
   DescNode,
@@ -187,7 +186,10 @@ function resolveBinding(val: unknown, deferDOM: boolean): VNode {
   ) {
     return materializeRaw(val as RawVNode, deferDOM);
   }
-  const s = escapeText(String(val));
+  // Text is inserted via createTextNode / nodeValue, which never parses
+  // markup — that is the XSS boundary. Escaping here too would double-encode
+  // and render literal "&amp;" to the user.
+  const s = String(val);
   if (deferDOM) return { type: "text", value: s };
   return { type: "text", value: s, dom: document.createTextNode(s) };
 }

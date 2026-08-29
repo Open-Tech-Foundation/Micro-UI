@@ -19,7 +19,7 @@ A tiny runtime for AI-generated micro-apps
 * **Form-friendly** — inputs, video, canvas, focus, and scroll position all survive re-renders.
 * **Stable lists** — reorder, add, or remove items without losing element state.
 * **Dynamic attributes** — bind classes, styles, and props with simple template expressions.
-* **Secure by default** — user content is auto-escaped to prevent injection attacks.
+* **Secure by default** — interpolated content is inserted as text, never parsed as HTML.
 * **Fault tolerant** — one broken component won't crash the rest of your app.
 * **AI-ready** — minimal API surface that agents can generate without a toolchain.
 
@@ -161,7 +161,7 @@ define("x-greeting", (el, props) => {
 
 ### `html`
 
-Tagged template that produces a renderable tree. Supports text, attributes, events, keyed lists, conditionals, and nesting. Text is escaped by default.
+Tagged template that produces a renderable tree. Supports text, attributes, events, keyed lists, conditionals, and nesting. Text interpolations are inserted as text nodes, never parsed as markup.
 
 ```js
 html`<button onclick=${handler} class="btn ${active}">Click</button>`
@@ -264,23 +264,23 @@ store.del("form", { path: "name" });   // only removes "name", rest intact
 
 ## Security
 
-### HTML escaping by default
+### Text is never parsed as HTML
 
-All `${value}` text interpolations are escaped automatically. The five standard HTML-significant characters are converted to entities:
-
-| Character | Entity |
-|-----------|--------|
-| `&` | `&amp;` |
-| `<` | `&lt;` |
-| `>` | `&gt;` |
-| `"` | `&quot;` |
-| `'` | `&#39;` |
-
-This means user-supplied content is safe to render directly:
+Every `${value}` text interpolation is inserted as a DOM text node. No HTML
+parser runs on that path, so injected markup cannot become elements and
+scripts cannot execute:
 
 ```js
 const userInput = '<script>alert("xss")</script>';
 html`<p>${userInput}</p>` // renders as literal text, not markup
+```
+
+Values are displayed exactly as written — they are **not** entity-encoded, so
+`&`, `<`, `>`, `"` and `'` render as themselves:
+
+```js
+html`<p>${"Tom & Jerry"}</p>`   // shows: Tom & Jerry
+html`<p>${"5 < 10"}</p>`        // shows: 5 < 10
 ```
 
 ### Trusted HTML opt-in (`html.raw`)

@@ -167,12 +167,10 @@ test("jsdom: onReady cleanup runs on disconnectedCallback", async () => {
 
 // ── escaping (XSS defense) ─────────────────────────────────────────
 
-test("jsdom: interpolated text is HTML-escaped by default", async () => {
+const evilText = "<script>window.__pwned=1</script><b>hi</b>";
+test("jsdom: interpolated text is inserted as literal text, never markup", async () => {
   const tag = uniqueTag("x-escape");
-  define(tag, () => () => {
-    const evil = "<script>window.__pwned=1</script><b>hi</b>";
-    return html`<p>${evil}</p>`;
-  });
+  define(tag, () => () => html`<p>${evilText}</p>`);
   const el = document.createElement(tag);
   document.body.appendChild(el);
   await tick();
@@ -181,14 +179,16 @@ test("jsdom: interpolated text is HTML-escaped by default", async () => {
   assert.equal(p.querySelector("script"), null, "script tags must not be created");
   assert.equal(p.querySelector("b"), null, "injected markup must not be parsed");
   assert.equal(globalThis.window.__pwned, undefined, "script must not have executed");
-  // Stored Text node data is the entity-escaped form, which is exactly
-  // what the user sees (no <script> executes, the text is literal).
+  // The Text node holds the input verbatim. createTextNode never parses
+  // markup, so that IS the injection boundary — entity-encoding on top would
+  // only corrupt what the user sees.
   const tn = p.firstChild;
   assert.equal(tn.nodeType, 3);
-  assert.equal(tn.data, "&lt;script&gt;window.__pwned=1&lt;/script&gt;&lt;b&gt;hi&lt;/b&gt;");
+  assert.equal(tn.data, evilText);
+  assert.equal(p.textContent, evilText, "user sees the literal source text");
 });
 
-test("jsdom: ampersand, quotes, and angle brackets are escaped", async () => {
+test("jsdom: ampersand, quotes and angle brackets round-trip verbatim", async () => {
   const tag = uniqueTag("x-escape-chars");
   define(tag, () => () => html`<span>${`a & b <c> "d" 'e'`}</span>`);
   const el = document.createElement(tag);
@@ -198,9 +198,10 @@ test("jsdom: ampersand, quotes, and angle brackets are escaped", async () => {
   const span = el.querySelector("span");
   const tn = span.firstChild;
   assert.equal(tn.nodeType, 3);
-  // '&' is escaped to '&amp;' first, then re-serialized — but our Text
-  // node data is the raw post-escape string, no further encoding.
-  assert.equal(tn.data, "a &amp; b &lt;c&gt; &quot;d&quot; &#39;e&#39;");
+  // Verbatim — no entity encoding. A user typing "Tom & Jerry" must see
+  // "Tom & Jerry", not "Tom &amp; Jerry".
+  assert.equal(tn.data, `a & b <c> "d" 'e'`);
+  assert.equal(span.textContent, `a & b <c> "d" 'e'`);
 });
 
 test("jsdom: html.raw injects trusted markup unescaped", async () => {
@@ -218,7 +219,7 @@ test("jsdom: html.raw injects trusted markup unescaped", async () => {
   assert.equal(b.textContent, "bold");
 });
 
-test("jsdom: nested html`` text bindings are still escaped", async () => {
+test("jsdom: nested html`` text bindings stay literal text", async () => {
   const tag = uniqueTag("x-nested");
   define(tag, () => () => html`<div>${html`<span class="x">${"<b>nope</b>"}</span>`}</div>`);
   const el = document.createElement(tag);
@@ -228,11 +229,12 @@ test("jsdom: nested html`` text bindings are still escaped", async () => {
   const span = el.querySelector("span.x");
   assert.ok(span);
   // Nested html`` only trusts the static structure of the inner template.
-  // The `${"<b>nope</b>"}` inside it is a text binding and gets escaped.
+  // The `${"<b>nope</b>"}` inside it is a text binding: literal text, not markup.
   assert.equal(span.querySelector("b"), null);
   const tn = span.firstChild;
   assert.equal(tn.nodeType, 3);
-  assert.equal(tn.data, "&lt;b&gt;nope&lt;/b&gt;");
+  assert.equal(tn.data, "<b>nope</b>");
+  assert.equal(span.textContent, "<b>nope</b>");
 });
 
 test("jsdom: html.raw with null/undefined interpolation renders empty", async () => {
