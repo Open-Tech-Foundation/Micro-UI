@@ -1,4 +1,10 @@
-import { correctVNodeNS, materializeNode, setProp } from "./dom.ts";
+import {
+  addListener,
+  correctVNodeNS,
+  materializeNode,
+  removeListener,
+  setProp,
+} from "./dom.ts";
 import { HTML_NS, SVG_NS } from "./ns.ts";
 import { instances } from "./state.ts";
 import type { ElementVNode, FragmentVNode, TextVNode, VNode } from "./types.ts";
@@ -164,15 +170,15 @@ function patchKeyed(
     else unmatchedUnkeyed.add(o);
   }
   let nextSib: Node | null = null;
+  const parentNS = getParentNS(parent);
   for (let i = newCh.length - 1; i >= 0; i--) {
     const n = newCh[i]!;
     const k = getKey(n);
     const o = k != null ? oldMap.get(String(k)) : undefined;
     if (o && (o.dom?.parentNode === parent || o.dom?.parentNode === null)) {
-      const _pNS = getParentNS(parent);
       if (n.type === "element" || n.type === "fragment")
-        correctVNodeNS(n, _pNS);
-      materializeNode(n, _pNS);
+        correctVNodeNS(n, parentNS);
+      materializeNode(n, parentNS);
       reconcile(o, n, parent);
       if (o.dom!.nextSibling !== nextSib) parent.insertBefore(o.dom!, nextSib);
       nextSib = o.dom;
@@ -185,19 +191,17 @@ function patchKeyed(
         getKey(fallback) == null
       ) {
         unmatchedUnkeyed.delete(fallback);
-        const _pNS2 = getParentNS(parent);
         if (n.type === "element" || n.type === "fragment")
-          correctVNodeNS(n, _pNS2);
-        materializeNode(n, _pNS2);
+          correctVNodeNS(n, parentNS);
+        materializeNode(n, parentNS);
         reconcile(fallback, n, parent);
         if (fallback.dom!.nextSibling !== nextSib)
           parent.insertBefore(fallback.dom!, nextSib);
         nextSib = fallback.dom;
       } else {
-        const _pNS3 = getParentNS(parent);
         if (n.type === "element" || n.type === "fragment")
-          correctVNodeNS(n, _pNS3);
-        materializeNode(n, _pNS3);
+          correctVNodeNS(n, parentNS);
+        materializeNode(n, parentNS);
         parent.insertBefore(n.dom!, nextSib);
         nextSib = n.dom!;
       }
@@ -225,8 +229,7 @@ function patchEvents(
 ): void {
   for (const e in old)
     if (old[e] != null && (!(e in next) || next[e] !== old[e]))
-      el.removeEventListener(e, old[e] as EventListener);
+      removeListener(el, e, old[e]);
   for (const e in next)
-    if (next[e] != null && old[e] !== next[e])
-      el.addEventListener(e, next[e] as EventListener);
+    if (next[e] != null && old[e] !== next[e]) addListener(el, e, next[e]);
 }

@@ -7,20 +7,22 @@ interface StoreEntry<T = unknown> {
 
 const stores = new Map<string, StoreEntry>();
 
+function splitPath(path: string): string[] {
+  return path.split(".");
+}
+
 function getByPath(obj: unknown, path: string): unknown {
-  return path
-    .split(".")
-    .reduce<unknown>(
-      (o, k) =>
-        o != null && typeof o === "object"
-          ? (o as Record<string, unknown>)[k]
-          : undefined,
-      obj,
-    );
+  return splitPath(path).reduce<unknown>(
+    (o, k) =>
+      o != null && typeof o === "object"
+        ? (o as Record<string, unknown>)[k]
+        : undefined,
+    obj,
+  );
 }
 
 function setByPath<T>(obj: T, path: string, value: unknown): T {
-  const keys = path.split(".");
+  const keys = splitPath(path);
   const last = keys.pop()!;
   const result = { ...(obj as Record<string, unknown>) };
   let current = result;
@@ -33,7 +35,7 @@ function setByPath<T>(obj: T, path: string, value: unknown): T {
 }
 
 function deleteByPath<T>(obj: T, path: string): T {
-  const keys = path.split(".");
+  const keys = splitPath(path);
   const last = keys.pop()!;
   const result = { ...(obj as Record<string, unknown>) };
   let current = result;

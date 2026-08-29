@@ -19,8 +19,7 @@ export function correctVNodeNS(node: VNode, parentNS: string | null): void {
         const newEl = createEl(tag, expected);
         for (const k in node.attrs) setProp(newEl, k, node.attrs[k]);
         for (const e in node.events) {
-          if (node.events[e] != null)
-            newEl.addEventListener(e, node.events[e] as EventListener);
+          if (node.events[e] != null) addListener(newEl, e, node.events[e]);
         }
         for (const c of node.children) {
           if (c.dom) newEl.appendChild(c.dom);
@@ -44,6 +43,23 @@ export function createEl(tag: string, ns: string | null): Element {
     : document.createElement(tag);
 }
 
+export function addListener(el: Element, type: string, handler: unknown): void {
+  el.addEventListener(type, handler as EventListener);
+}
+
+export function removeListener(
+  el: Element,
+  type: string,
+  handler: unknown,
+): void {
+  el.removeEventListener(type, handler as EventListener);
+}
+
+function setElProp(el: Element, k: string, v: unknown): void {
+  try {
+    (el as unknown as Record<string, unknown>)[k] = v;
+  } catch {}
+}
 const XML_NS_MAP: Record<string, string> = {
   xlink: "http://www.w3.org/1999/xlink",
   xml: "http://www.w3.org/XML/1998/namespace",
@@ -92,7 +108,7 @@ export function setProp(el: Element, k: string, v: unknown): void {
       else if (k === "disabled") (el as HTMLInputElement).disabled = b;
       else if (k === "indeterminate")
         (el as HTMLInputElement).indeterminate = b;
-      else if (k in el) (el as unknown as Record<string, unknown>)[k] = b;
+      else if (k in el) setElProp(el, k, b);
       if (b) el.setAttribute(k, "");
       else el.removeAttribute(k);
       return;
@@ -105,8 +121,7 @@ export function setProp(el: Element, k: string, v: unknown): void {
       el.removeAttribute(k);
       if (!isSvg) {
         try {
-          if (k in el)
-            (el as unknown as Record<string, unknown>)[k] = undefined;
+          if (k in el) setElProp(el, k, undefined);
         } catch {}
       }
       return;
@@ -126,7 +141,7 @@ export function setProp(el: Element, k: string, v: unknown): void {
     el.setAttribute(k, strVal);
     if (!isSvg) {
       try {
-        if (k in el) (el as unknown as Record<string, unknown>)[k] = strVal;
+        if (k in el) setElProp(el, k, strVal);
       } catch {}
     }
     return;
@@ -142,14 +157,14 @@ export function setProp(el: Element, k: string, v: unknown): void {
     }
     if (!isSvg) {
       try {
-        if (k in el) (el as unknown as Record<string, unknown>)[k] = undefined;
+        if (k in el) setElProp(el, k, undefined);
       } catch {}
     }
   } else if (v === true) {
     el.setAttribute(k, "");
     if (!isSvg) {
       try {
-        if (k in el) (el as unknown as Record<string, unknown>)[k] = true;
+        if (k in el) setElProp(el, k, true);
       } catch {}
     }
   } else if (typeof v === "string") {
@@ -169,7 +184,7 @@ export function setProp(el: Element, k: string, v: unknown): void {
   } else {
     if (!isSvg) {
       try {
-        (el as unknown as Record<string, unknown>)[k] = v;
+        setElProp(el, k, v);
       } catch {}
     }
     if (typeof v === "number" || typeof v === "boolean") {
@@ -195,8 +210,7 @@ export function materializeNode(
     const el = createEl(node.tag, node.ns);
     for (const k in node.attrs) setProp(el, k, node.attrs[k]);
     for (const e in node.events) {
-      if (node.events[e] != null)
-        el.addEventListener(e, node.events[e] as EventListener);
+      if (node.events[e] != null) addListener(el, e, node.events[e]);
     }
     const childParentNS =
       node.ns === SVG_NS && node.tag === "foreignobject" ? HTML_NS : node.ns;
