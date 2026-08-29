@@ -33,6 +33,6 @@ export function materializeRaw(raw: RawVNode, deferDOM = false): VNode {
   const children = buildDesc(tmpl.content, [], HTML_NS);
   return {
     type: "fragment",
-    children: createNodes(children, [], { vi: 0 }, deferDOM),
+    children: createNodes(children, [], deferDOM),
   };
 }

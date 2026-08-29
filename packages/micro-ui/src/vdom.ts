@@ -25,18 +25,17 @@ export function createTree(
 ): VNode {
   return {
     type: "fragment",
-    children: createNodes(tpl.tree, values, { vi: 0 }, deferDOM),
+    children: createNodes(tpl.tree, values, deferDOM),
   };
 }
 
 export function createNodes(
   descs: DescNode[],
   values: unknown[],
-  state: { vi: number },
   deferDOM: boolean,
 ): VNode[] {
   const out: VNode[] = [];
-  for (const d of descs) pushNodes(cloneNode(d, values, state, deferDOM), out);
+  for (const d of descs) pushNodes(cloneNode(d, values, deferDOM), out);
   return out;
 }
 
@@ -48,38 +47,20 @@ function pushNodes(node: VNode, out: VNode[]): void {
   }
 }
 
-function take(
-  values: unknown[],
-  idx: number | undefined,
-  state: { vi: number },
-): unknown {
-  if (idx != null) return values[idx];
-  return values[state.vi++];
+function take(values: unknown[], idx: number): unknown {
+  return values[idx];
 }
 
-function interpolate(
-  parts: string[],
-  values: unknown[],
-  idx: number | undefined,
-  state: { vi: number },
-): string {
+function interpolate(parts: string[], values: unknown[], idx: number): string {
   let out = "";
   for (let i = 0; i < parts.length; i++) {
     out += parts[i];
-    if (i < parts.length - 1)
-      out += String(
-        take(values, idx != null ? idx + i : undefined, state) ?? "",
-      );
+    if (i < parts.length - 1) out += String(take(values, idx + i) ?? "");
   }
   return out;
 }
 
-function cloneNode(
-  d: DescNode,
-  values: unknown[],
-  state: { vi: number },
-  deferDOM: boolean,
-): VNode {
+function cloneNode(d: DescNode, values: unknown[], deferDOM: boolean): VNode {
   if (d.type === "text") {
     if (deferDOM) return { type: "text", value: d.value };
     return {
@@ -89,7 +70,7 @@ function cloneNode(
     };
   }
   if (d.type === "binding") {
-    return resolveBinding(take(values, d.idx, state), deferDOM);
+    return resolveBinding(take(values, d.idx!), deferDOM);
   }
   if (d.type === "element") {
     let resolvedKey: string | null | undefined =
@@ -98,10 +79,10 @@ function cloneNode(
     if (d.key && typeof d.key === "object" && d.key.binding) {
       const parts = d.key.parts!;
       if (parts.length === 2 && parts[0] === "" && parts[1] === "") {
-        const rv = take(values, d.key.idx, state) as string | undefined;
+        const rv = take(values, d.key.idx!) as string | undefined;
         if (rv != null) resolvedKey = String(rv);
       } else {
-        resolvedKey = interpolate(parts, values, d.key.idx, state);
+        resolvedKey = interpolate(parts, values, d.key.idx!);
       }
     }
 
@@ -111,9 +92,9 @@ function cloneNode(
       if (v && typeof v === "object" && v.binding) {
         const parts = v.parts!;
         if (parts.length === 2 && parts[0] === "" && parts[1] === "") {
-          attrs[k] = take(values, v.idx, state);
+          attrs[k] = take(values, v.idx!);
         } else {
-          attrs[k] = interpolate(parts, values, v.idx, state);
+          attrs[k] = interpolate(parts, values, v.idx!);
         }
       } else {
         attrs[k] = v;
@@ -124,13 +105,13 @@ function cloneNode(
     for (const e in d.events) {
       const h = d.events[e];
       if (h && typeof h === "object" && h.binding) {
-        events[e] = take(values, h.idx, state);
+        events[e] = take(values, h.idx!);
       } else {
         events[e] = h;
       }
     }
 
-    const children = createNodes(d.children, values, state, deferDOM);
+    const children = createNodes(d.children, values, deferDOM);
 
     if (deferDOM) {
       return {

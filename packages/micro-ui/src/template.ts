@@ -103,7 +103,6 @@ function buildElDesc(
           binding: true,
           parts,
           idx,
-          count: parts.length - 1,
         };
       } else {
         key = value;
@@ -117,7 +116,7 @@ function buildElDesc(
       const parts = value.split(MARKER);
       const idx = bindings.length;
       for (let i = 0; i < parts.length - 1; i++)
-        bindings.push({ type: "binding", binding: true, name: ev });
+        bindings.push({ type: "binding", binding: true });
       events[ev] = { binding: true, idx };
       continue;
     }
@@ -130,8 +129,8 @@ function buildElDesc(
       const parts = value.split(MARKER);
       const idx = bindings.length;
       for (let i = 0; i < parts.length - 1; i++)
-        bindings.push({ type: "binding", binding: true, name });
-      attrs[name] = { binding: true, parts, idx, count: parts.length - 1 };
+        bindings.push({ type: "binding", binding: true });
+      attrs[name] = { binding: true, parts, idx };
     } else {
       attrs[name] = value;
     }

@@ -1166,3 +1166,15 @@ test("order: text interpolation after interleaved bindings stays aligned", async
   assertEquals(el.querySelector("div").getAttribute("class"), "btn");
   assertEquals(el.querySelector("div").textContent, "Hello World");
 });
+
+test("order: key in first expression position does not misalign a later text binding", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-key-misalign");
+  const items = [{ id: 7, name: "seven" }];
+  define(tag, () => () => html`<ul>${items.map(it => html`<li key=${it.id}>${it.name}</li>`)}</ul>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  // The key binding (id=7) must not consume/shift the value slot of the text
+  // binding (name="seven"); both must read from their own explicit index.
+  assertEquals(el.querySelector("li").textContent, "seven");
+});
+

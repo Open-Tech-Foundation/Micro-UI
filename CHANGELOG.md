@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Single-child fast path in `patchLists` now checks key/tag/namespace before reusing DOM — single-item keyed lists where the key changes (e.g. `key=1` → `key=2`) are now correctly replaced instead of incorrectly reused. Also handles externally detached single children.
 
+### Changed
+- **vdom.ts** — removed the unused sequential binding-index counter (`state.vi`). Every binding carries an explicit value-slot `idx`, so the position-tracking fallback was dead, fragile code. If a future binding ever omits `idx`, it now fails loudly (empty value) instead of silently misaligning subsequent bindings.
+- **types.ts / template.ts** — dropped the unused `count` and `name` fields from binding descriptors.
+
 ## [0.4.0] - 2026-08-28
 
 ### Added
