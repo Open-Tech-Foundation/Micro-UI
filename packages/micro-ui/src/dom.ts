@@ -56,6 +56,44 @@ export function setProp(el: Element, k: string, v: unknown): void {
       return;
     }
   }
+  // ARIA attributes: always stringify booleans as "true"/"false" (not ""/removed)
+  // e.g. aria-hidden={true} -> "true", aria-hidden={false} -> "false"
+  if (k.startsWith("aria-") || k === "role") {
+    if (v == null) {
+      el.removeAttribute(k);
+      if (!isSvg) {
+        try {
+          if (k in el)
+            (el as unknown as Record<string, unknown>)[k] = undefined;
+        } catch {}
+      }
+      return;
+    }
+    // Stringify booleans/numbers for aria/role; keep strings as-is
+    const strVal = String(v);
+    if (k.includes(":") && isSvg) {
+      const [prefix] = k.split(":");
+      const nsMap: Record<string, string> = {
+        xlink: "http://www.w3.org/1999/xlink",
+        xml: "http://www.w3.org/XML/1998/namespace",
+      };
+      const ns = nsMap[prefix ?? ""];
+      if (ns) {
+        try {
+          el.setAttributeNS(ns, k, strVal);
+          return;
+        } catch {}
+      }
+    }
+    el.setAttribute(k, strVal);
+    if (!isSvg) {
+      try {
+        if (k in el) (el as unknown as Record<string, unknown>)[k] = strVal;
+      } catch {}
+    }
+    return;
+  }
+
   // SVG or generic path: attribute-only, handle namespaced attrs like xlink:href
   if (v == null || v === false) {
     el.removeAttribute(k);

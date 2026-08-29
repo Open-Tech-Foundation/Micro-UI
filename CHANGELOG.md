@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **dom.ts** — `aria-*` and `role` attributes now correctly stringify boolean values as `"true"`/`"false"` instead of empty string/removed. `html`<div aria-hidden=${true}>` now renders `aria-hidden="true"` and `aria-hidden=${false}` renders `aria-hidden="false"` (previously `aria-hidden=""` / removed), matching React and the ARIA spec. Dynamic toggling and numeric `aria-*` (e.g. `aria-valuenow`) also stringify correctly.
 - Single-child fast path in `patchLists` now checks key/tag/namespace before reusing DOM — single-item keyed lists where the key changes (e.g. `key=1` → `key=2`) are now correctly replaced instead of incorrectly reused. Also handles externally detached single children.
 - Whitespace-only text nodes (e.g. `html`<span> </span>``) are now preserved instead of being dropped entirely during template parsing, so intentional spacing inside inline elements and whitespace-only elements survives.
 - Re-entrant `update()` calls are now re-entrancy-safe: an element that calls `update()` on itself from within its own render no longer re-queues flushes, which previously caused cascading re-renders (and could spin forever). One `update()` now produces exactly one settled render.

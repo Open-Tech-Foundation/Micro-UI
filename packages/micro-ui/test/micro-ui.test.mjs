@@ -1228,3 +1228,103 @@ test("order: key in first expression position does not misalign a later text bin
   assertEquals(el.querySelector("li").textContent, "seven");
 });
 
+
+// ── aria attributes ────────────────────────────────────────────────
+test("aria: static aria attributes render", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-aria-static");
+  define(tag, () => () => html`<button aria-label="Close" aria-hidden="true" role="dialog">x</button>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const btn = el.querySelector("button");
+  assertEquals(btn.getAttribute("aria-label"), "Close");
+  assertEquals(btn.getAttribute("aria-hidden"), "true");
+  assertEquals(btn.getAttribute("role"), "dialog");
+});
+
+test("aria: dynamic string aria attributes", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-aria-dyn");
+  const label = "Close dialog";
+  define(tag, () => () => html`<button aria-label=${label} aria-expanded="false">x</button>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.querySelector("button").getAttribute("aria-label"), "Close dialog");
+  assertEquals(el.querySelector("button").getAttribute("aria-expanded"), "false");
+});
+
+test("aria: boolean true renders as 'true' not empty", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-aria-true");
+  define(tag, () => () => html`<div aria-hidden=${true} aria-expanded=${true} role=${"button"}></div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const div = el.querySelector("div");
+  assertEquals(div.getAttribute("aria-hidden"), "true");
+  assertEquals(div.getAttribute("aria-expanded"), "true");
+  assertEquals(div.getAttribute("role"), "button");
+});
+
+test("aria: boolean false renders as 'false' not removed", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-aria-false");
+  define(tag, () => () => html`<div aria-hidden=${false} aria-expanded=${false}></div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const div = el.querySelector("div");
+  assertEquals(div.getAttribute("aria-hidden"), "false");
+  assertEquals(div.getAttribute("aria-expanded"), "false");
+  assert(div.hasAttribute("aria-hidden"));
+});
+
+test("aria: boolean toggle via update", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-aria-toggle");
+  let hidden = true; let ref;
+  define(tag, el2 => { ref = el2; return () => html`<div aria-hidden=${hidden}></div>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.querySelector("div").getAttribute("aria-hidden"), "true");
+  hidden = false; update(ref); await micro(); flush(); await delay(5);
+  assertEquals(el.querySelector("div").getAttribute("aria-hidden"), "false");
+  hidden = true; update(ref); await micro(); flush(); await delay(5);
+  assertEquals(el.querySelector("div").getAttribute("aria-hidden"), "true");
+});
+
+test("aria: null/undefined removes aria attribute", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-aria-null");
+  let label = "hi"; let ref;
+  define(tag, el2 => { ref = el2; return () => html`<div aria-label=${label}></div>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.querySelector("div").getAttribute("aria-label"), "hi");
+  label = null; update(ref); await micro(); flush(); await delay(5);
+  assert(el.querySelector("div").getAttribute("aria-label") === null);
+  label = undefined; update(ref); await micro(); flush(); await delay(5);
+  assert(el.querySelector("div").getAttribute("aria-label") === null);
+});
+
+test("aria: numeric values stringify", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-aria-num");
+  define(tag, () => () => html`<div aria-valuenow=${42} aria-valuemin=${0}></div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.querySelector("div").getAttribute("aria-valuenow"), "42");
+  assertEquals(el.querySelector("div").getAttribute("aria-valuemin"), "0");
+});
+
+test("aria: multiple aria attrs together", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-aria-multi");
+  define(tag, () => () => html`<button aria-label=${"Menu"} aria-expanded=${"false"} aria-controls="menu1" role="button">x</button>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const btn = el.querySelector("button");
+  assertEquals(btn.getAttribute("aria-label"), "Menu");
+  assertEquals(btn.getAttribute("aria-expanded"), "false");
+  assertEquals(btn.getAttribute("aria-controls"), "menu1");
+  assertEquals(btn.getAttribute("role"), "button");
+});
+
+test("aria: role dynamic boolean stringifies", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-role-bool");
+  define(tag, () => () => html`<div role=${"dialog"} aria-modal=${true}></div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.querySelector("div").getAttribute("role"), "dialog");
+  assertEquals(el.querySelector("div").getAttribute("aria-modal"), "true");
+});

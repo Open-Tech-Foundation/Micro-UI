@@ -708,3 +708,60 @@ test("jsdom: re-entrant update during render does not cascade re-renders", async
   assert.equal(el.querySelector("p").textContent, "1");
 });
 
+
+test("jsdom: aria attributes stringify booleans correctly", async () => {
+  const tag = uniqueTag("x-aria-bool");
+  define(tag, (el) => {
+    let hidden = true;
+    el._flip = () => { hidden = !hidden; update(el); };
+    el._setNull = () => { hidden = null; update(el); };
+    return () => html`<div aria-hidden=${hidden} role="button" aria-label="test">content</div>`;
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+  let div = el.querySelector("div");
+  assert.equal(div.getAttribute("aria-hidden"), "true");
+  assert.equal(div.getAttribute("role"), "button");
+  assert.equal(div.getAttribute("aria-label"), "test");
+
+  el._flip();
+  await tick(); flush();
+  div = el.querySelector("div");
+  assert.equal(div.getAttribute("aria-hidden"), "false");
+
+  el._setNull();
+  await tick(); flush();
+  div = el.querySelector("div");
+  assert.equal(div.hasAttribute("aria-hidden"), false);
+});
+
+test("jsdom: aria-expanded toggle keeps correct string values", async () => {
+  const tag = uniqueTag("x-aria-toggle");
+  define(tag, (el) => {
+    let expanded = false;
+    el._toggle = () => { expanded = !expanded; update(el); };
+    return () => html`<button aria-expanded=${expanded ? "true" : "false"} aria-controls="panel">toggle</button><div id="panel" aria-hidden=${expanded ? "false" : "true"}>c</div>`;
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+  assert.equal(el.querySelector("button").getAttribute("aria-expanded"), "false");
+  assert.equal(el.querySelector("#panel").getAttribute("aria-hidden"), "true");
+  el._toggle();
+  await tick(); flush();
+  assert.equal(el.querySelector("button").getAttribute("aria-expanded"), "true");
+  assert.equal(el.querySelector("#panel").getAttribute("aria-hidden"), "false");
+});
+
+test("jsdom: aria boolean true/false via direct boolean binding", async () => {
+  const tag = uniqueTag("x-aria-direct");
+  define(tag, () => () => html`<div aria-hidden=${true} aria-expanded=${false} aria-valuenow=${42}></div>`);
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+  const div = el.querySelector("div");
+  assert.equal(div.getAttribute("aria-hidden"), "true");
+  assert.equal(div.getAttribute("aria-expanded"), "false");
+  assert.equal(div.getAttribute("aria-valuenow"), "42");
+});
