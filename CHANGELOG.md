@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-08-29
+
 ### Added
 - `ErrorPhase` gains `"ready"`, distinguishing a failure in an `onReady` callback from one in `setup`.
 - `mount(el, tag, { dev })` — opt in to developer diagnostics. With `dev` off (the default) a failing component renders `Something went wrong.` instead of the thrown error's message, which may carry a URL, a token or an internal path. The full error always reaches `console.error` and any `onError` handler regardless, so nothing is lost for debugging. Exports a `MountOptions` type.
