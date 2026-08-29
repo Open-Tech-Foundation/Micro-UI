@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Test coverage** — 34 new tests closing prior gaps:
+  - Unit tests for `escapeText` (`escape.ts`), `resolveNS`/`svgTagName` (`ns.ts`), and `buildTemplate`/`buildDesc` static paths (`template.ts`).
+  - Store: listener that throws still notifies other subscribers and does not break `set`/`del`; `subscribe`/`del`/`clear` subscription semantics including double-unsubscribe `false`; array-index path `"items.0.name"` and primitive-to-object path init.
+  - Lifecycle: `define` duplicate tag throws; post-mount `setAttribute` does not auto-update `inst.props` until `update()`; `onReady` cleanup that throws is contained and does not block other cleanups.
+  - Reconciler: `update()` re-entrancy guard (self-update in render queues exactly one flush), `flush` idempotence, and `update` on unknown/disconnected elements is a no-op.
+  - `html.raw` with empty string and trusted-HTML contract.
+  - jsdom real-DOM: SVG `foreignObject` HTML→SVG→HTML NS switching via `correctVNodeNS` recreation, and computed-style smoke for `.ui-btn` injection.
+
 ### Changed
 - Deduplicated `createEl` (was identically defined in `dom.ts` and `vdom.ts`) — now exported once from `dom.ts` and imported in `vdom.ts`.
 - Extracted `resolveNS(tag, parentNS, domNS?)` helper into `ns.ts` to unify SVG/HTML namespace resolution logic previously repeated in `template.ts`, `dom.ts` (`correctVNodeNS`, `materializeNode`).
