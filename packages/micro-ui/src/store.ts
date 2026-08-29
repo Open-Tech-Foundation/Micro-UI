@@ -47,7 +47,11 @@ function deleteByPath<T>(obj: T, path: string): T {
   return result as T;
 }
 
-function getEntry<T>(key: string): StoreEntry<T> {
+function getEntry<T>(key: string): StoreEntry<T> | undefined {
+  return stores.get(key) as StoreEntry<T> | undefined;
+}
+
+function ensureEntry<T>(key: string): StoreEntry<T> {
   let entry = stores.get(key) as StoreEntry<T> | undefined;
   if (!entry) {
     entry = { value: undefined as T, listeners: new Set() };
@@ -70,6 +74,7 @@ function get<T>(key: string): T | undefined;
 function get<T>(key: string, opts: { path: string }): T | undefined;
 function get<T>(key: string, opts?: { path?: string }): T | undefined {
   const entry = getEntry<T>(key);
+  if (!entry) return undefined;
   if (opts?.path != null) {
     return getByPath(entry.value, opts.path) as T;
   }
@@ -79,7 +84,7 @@ function get<T>(key: string, opts?: { path?: string }): T | undefined {
 function set<T>(key: string, value: T): void;
 function set<T>(key: string, value: T, opts: { path: string }): void;
 function set<T>(key: string, value: T, opts?: { path?: string }): void {
-  const entry = getEntry<T>(key);
+  const entry = ensureEntry<T>(key);
   if (opts?.path != null) {
     if (entry.value != null && typeof entry.value === "object") {
       entry.value = setByPath(entry.value, opts.path, value) as T;
@@ -95,7 +100,7 @@ function set<T>(key: string, value: T, opts?: { path?: string }): void {
 function del(key: string): void;
 function del(key: string, opts: { path: string }): void;
 function del(key: string, opts?: { path?: string }): void {
-  const entry = getEntry(key);
+  const entry = ensureEntry(key);
   if (opts?.path != null) {
     if (entry.value != null && typeof entry.value === "object") {
       entry.value = deleteByPath(entry.value, opts.path);
@@ -107,7 +112,7 @@ function del(key: string, opts?: { path?: string }): void {
 }
 
 function subscribe<T>(key: string, fn: Listener<T>): () => boolean {
-  const entry = getEntry<T>(key);
+  const entry = ensureEntry<T>(key);
   entry.listeners.add(fn);
   return () => entry.listeners.delete(fn);
 }

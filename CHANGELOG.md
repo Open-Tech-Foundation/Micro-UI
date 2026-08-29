@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Re-entrant `update()` calls are now re-entrancy-safe: an element that calls `update()` on itself from within its own render no longer re-queues flushes, which previously caused cascading re-renders (and could spin forever). One `update()` now produces exactly one settled render.
 - A static `on*` string attribute (e.g. `onclick="handler()"`) now throws an actionable error instead of silently no-oping in jsdom or crashing `addEventListener` in real browsers. Event handlers must be interpolated functions, e.g. `onclick="${() => {}}"`.
 - `patchKeyed` no longer treats a keyed node whose `dom` lives in a *different* parent as re-usable. Previously it would attempt to re-insert such a node, throwing `"The child can not be found in the parent"` and crashing the render. Such a node is now left alone and a fresh node is created instead (externally detached nodes — `parentNode === null` — are still re-attached).
+- `store.get()` is now side-effect free: reading a key that was never set no longer allocates a ghost entry in the internal store map (previously `getEntry` was called from `get`, leaking memory on every read of a missing key and letting reads repopulate a cleared store).
 
 
 ### Changed

@@ -721,6 +721,26 @@ test("store: set with path on undefined key initializes as object", async () => 
   assertEquals(store.get("new", { path: "x.y" }), "val");
 });
 
+test("store: get of missing key is read-only and returns undefined", async () => {
+  const { store } = await fresh();
+  store.clear();
+  // Reading a never-set key must not create/pollute an entry — plain and path overloads.
+  assertEquals(store.get("nope"), undefined);
+  assertEquals(store.get("nope", { path: "a.b" }), undefined);
+  // A subsequent set-with-path on a fresh key still initializes correctly
+  // (the prior read of a DIFFERENT key must not have corrupted state).
+  store.set("fresh", "v", { path: "x" });
+  assertEquals(store.get("fresh", { path: "x" }), "v");
+  // Reading a key that was never set or subscribed to, then clearing, then a
+  // fresh subscribe must behave normally (no ghost interference).
+  store.get("ghost");
+  store.clear();
+  let called = false;
+  store.subscribe("other", () => { called = true; });
+  store.set("other", 5);
+  assertEquals(called, true);
+});
+
 test("reconcile: mixed keyed and unkeyed children cleans up orphaned unkeyed nodes", async () => {
   setupDOM(); const { define, html, update, flush } = await fresh();
   const tag = uniqueTag("t-mixed-key"); let ref;
