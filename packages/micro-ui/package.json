@@ -11,11 +11,10 @@
     },
     "./min": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/min/index.js"
+      "default": "./dist/index.min.js"
     },
     "./styles.css": "./dist/styles.css",
-    "./styles.min.css": "./dist/styles.min.css",
-    "./styles/*": "./dist/styles/*"
+    "./styles.min.css": "./dist/styles.min.css"
   },
   "files": [
     "dist",

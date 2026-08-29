@@ -572,14 +572,6 @@ test("e2e: package.json has sideEffects for CSS", () => {
   assert.ok(pkg.sideEffects.includes("*.css"), "sideEffects must include *.css");
 });
 
-// ── exports: package.json has styles/* ────────────────────────────
-
-test("e2e: package.json exports styles/*", () => {
-  const pkg = JSON.parse(readFileSync(resolve(src, "../package.json"), "utf8"));
-  assert.ok(pkg.exports["./styles/*"], "must export ./styles/*");
-  assert.equal(pkg.exports["./styles/*"], "./dist/styles/*");
-});
-
 // ── exports: package.json has styles.css ───────────────────────────
 
 test("e2e: package.json exports styles.css", () => {
