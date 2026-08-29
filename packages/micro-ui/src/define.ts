@@ -10,11 +10,28 @@ import {
 import { instances, pending } from "./state.ts";
 import type { SetupFn, VNode } from "./types.ts";
 
+/**
+ * Elements whose teardown has been deferred by a `disconnectedCallback`.
+ *
+ * Re-parenting a node fires disconnect then connect synchronously, which is
+ * indistinguishable from a real removal at the moment disconnect runs. Teardown
+ * is therefore deferred by a microtask and cancelled if the element is back in
+ * the document by the time it runs — so drag-and-drop, tab reparenting and
+ * list virtualisation keep component state instead of silently resetting it.
+ */
+const teardownPending: WeakSet<HTMLElement> = new WeakSet<HTMLElement>();
+
 export function define(tag: string, setup: SetupFn): void {
   customElements.define(
     tag,
     class extends HTMLElement {
       connectedCallback() {
+        // A reconnect of a live instance is a move, not a fresh mount: cancel
+        // the deferred teardown and keep everything as it was.
+        if (teardownPending.has(this)) {
+          teardownPending.delete(this);
+          if (instances.has(this)) return;
+        }
         const props: Record<string, string> = {};
         for (const a of this.attributes) props[a.name] = a.value;
         const prevReady = pendingReady;
@@ -82,11 +99,37 @@ export function define(tag: string, setup: SetupFn): void {
         if (errs.length) errorHandlers.set(this, errs);
       }
       disconnectedCallback() {
-        const cbs = destroyCallbacks.get(this);
-        if (cbs) for (const cb of cbs) cb();
-        destroyCallbacks.delete(this);
-        instances.delete(this);
-        pending.delete(this);
+        teardownPending.add(this);
+        queueMicrotask(() => {
+          // Cancelled by connectedCallback, or the element is back in the
+          // document — either way this was a move.
+          if (!teardownPending.has(this) || this.isConnected) {
+            teardownPending.delete(this);
+            return;
+          }
+          teardownPending.delete(this);
+          const cbs = destroyCallbacks.get(this);
+          if (cbs)
+            for (const cb of cbs) {
+              // Isolated per callback: teardown now runs from a microtask, so
+              // a throw here would be an unhandled error rather than something
+              // the caller could catch — and one broken cleanup must not stop
+              // the rest of them from running.
+              try {
+                cb();
+              } catch (e) {
+                console.error(
+                  `[micro-ui] cleanup threw while disconnecting <${this.tagName.toLowerCase()}>:`,
+                  e && typeof e === "object" && "message" in e
+                    ? (e as Error).message
+                    : e,
+                );
+              }
+            }
+          destroyCallbacks.delete(this);
+          instances.delete(this);
+          pending.delete(this);
+        });
       }
     },
   );

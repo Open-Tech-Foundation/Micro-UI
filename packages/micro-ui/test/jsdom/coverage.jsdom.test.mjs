@@ -207,7 +207,7 @@ test("coverage jsdom: define props are snapshot at connect, not live", async () 
 });
 
 // ── onReady: cleanup that throws ─────
-test("coverage jsdom: onReady cleanup throwing propagates (gap: blocks later cleanups)", async () => {
+test("coverage jsdom: a throwing cleanup is isolated and later cleanups still run", async () => {
   const mod = await import(`../../src/index.ts?ready-throw-${Date.now()}-${Math.random()}`);
   const tag = uniqueTag("ready-throw");
   let secondCleaned = false;
@@ -219,8 +219,11 @@ test("coverage jsdom: onReady cleanup throwing propagates (gap: blocks later cle
   const el = document.createElement(tag); document.body.appendChild(el); await tick();
   let threw = false;
   try { el.remove(); await delay(); } catch (e) { threw = true; }
-  assert.equal(secondCleaned, false);
-  assert.equal(threw === true || threw === false, true);
+  // Teardown is deferred to a microtask so a move can cancel it, which means a
+  // throwing cleanup can no longer reach the caller — it is caught, logged, and
+  // the remaining cleanups still run.
+  assert.equal(threw, false, "the throw must not escape as an unhandled error");
+  assert.equal(secondCleaned, true, "one broken cleanup must not block the rest");
 });
 
 // ── update re-entrancy / flush idempotence ─────────────────────────

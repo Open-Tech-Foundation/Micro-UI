@@ -28,13 +28,37 @@ function syncProps(el: HTMLElement, props: Record<string, string>): void {
   for (const k in props) if (!el.hasAttribute(k)) delete props[k];
 }
 
+/**
+ * How many times a component may re-queue itself from inside its own render
+ * before we call it a loop. One or two passes is a legitimate
+ * measure-then-adjust; an unbounded chain would hang the tab.
+ */
+const MAX_SELF_UPDATE_DEPTH = 25;
+const selfUpdateDepth: WeakMap<HTMLElement, number> = new WeakMap<
+  HTMLElement,
+  number
+>();
+
 export function update(el: HTMLElement): void {
   const inst = instances.get(el);
   if (!inst) return;
-  // Re-entrancy guard: an element that is already being rendered must not
-  // re-queue a new flush, or a self-`update()` from inside its own render
-  // would cascade into an unbounded chain of flushes.
-  if (el === currentRendering) return;
+  if (el === currentRendering) {
+    // Queue for the next flush rather than the running one. Dropping it here
+    // would silently lose the write — a store listener firing synchronously
+    // during render is the usual way this happens.
+    const depth = (selfUpdateDepth.get(el) ?? 0) + 1;
+    if (depth > MAX_SELF_UPDATE_DEPTH) {
+      selfUpdateDepth.delete(el);
+      // Thrown into the running render, so the existing error isolation
+      // reports it through mountErrorUI and any onError handler.
+      throw new Error(
+        `update() was called from inside <${el.tagName.toLowerCase()}>'s own ` +
+          `render ${MAX_SELF_UPDATE_DEPTH} times in a row — this is a render ` +
+          `loop. Move the update out of render, or guard it with a condition.`,
+      );
+    }
+    selfUpdateDepth.set(el, depth);
+  }
   pending.add(el);
   if (!flushing) {
     setFlushing(true);
@@ -70,6 +94,8 @@ export function flush(): void {
       continue;
     }
     setCurrentRendering(null);
+    // The render finished without re-queueing itself, so the chain is broken.
+    if (!pending.has(el)) selfUpdateDepth.delete(el);
     try {
       reconcile(inst.tree, newTree, el);
     } catch (err) {

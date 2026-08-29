@@ -691,41 +691,40 @@ test("jsdom: conditional show/hide creates and discards DOM correctly", async ()
   assert.equal(el.querySelector("p"), p);
 });
 
-test("jsdom: re-entrant update during render does not cascade re-renders", async () => {
+test("jsdom: a self-update during render is bounded, never an unbounded cascade", async () => {
   // Issue #6: flush() clears the global `flushing` flag up front, so an
-  // `update()` called from within a render re-queues a fresh flush. Without a
-  // re-entrancy guard, a single external update triggers a cascade of repeated
-  // renders (unbounded without this test's hard cap below).
+  // `update()` from within a render re-queues a fresh flush. That update is now
+  // honoured rather than dropped — silently losing a write was worse — but a
+  // component that re-queues itself unconditionally is a render loop, so the
+  // chain is capped and reported through the normal error path instead of
+  // hanging the tab.
   const tag = uniqueTag("x-reentrant");
-  const cap = 100000;
   let renders = 0;
-  define(tag, (el) => () => {
-    renders++;
-    if (renders < cap) update(el); // self-update during render
-    return html`<p>${renders}</p>`;
+  let reported = null;
+  define(tag, (el) => {
+    onError((_e, err) => {
+      reported = err.message;
+    });
+    return () => {
+      renders++;
+      update(el); // unconditional self-update: a genuine loop
+      return html`<p>${renders}</p>`;
+    };
   });
 
   const el = document.createElement(tag);
   document.body.appendChild(el);
   await tick();
-  flush();
 
-  // Single external update should render the component exactly once and settle.
   renders = 0;
   update(el);
-  for (let i = 0; i < 200; i++) {
-    await tick();
-    flush();
-  }
-  assert.equal(
-    renders,
-    1,
-    `one update() must render once and settle, got ${renders} renders`,
-  );
-  assert.equal(el.querySelector("p").textContent, "1");
+  for (let i = 0; i < 200; i++) await tick();
+
+  assert.ok(renders > 1, "the deferred self-update runs at least once");
+  assert.ok(renders < 60, `the chain must terminate, got ${renders} renders`);
+  assert.match(reported ?? "", /render loop/, "and the loop is reported");
+  assert.ok(el.querySelector("[data-micro-ui-error]"));
 });
-
-
 test("jsdom: aria attributes stringify booleans correctly", async () => {
   const tag = uniqueTag("x-aria-bool");
   define(tag, (el) => {
