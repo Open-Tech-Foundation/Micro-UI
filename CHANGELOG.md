@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `mount(el, tag, { dev })` — opt in to developer diagnostics. With `dev` off (the default) a failing component renders `Something went wrong.` instead of the thrown error's message, which may carry a URL, a token or an internal path. The full error always reaches `console.error` and any `onError` handler regardless, so nothing is lost for debugging. Exports a `MountOptions` type.
+
 ### Fixed
+- The on-page error box no longer prints a thrown error's message by default. Because every component is its own boundary, that box renders wherever the failing component sits — potentially somewhere an end user is looking — with no development/production distinction to gate it.
 - Re-parenting an element no longer destroys its component. `disconnectedCallback` tore the instance down synchronously, but a move fires disconnect immediately followed by connect — so drag-and-drop, tab reparenting and list virtualisation silently reset state and ran cleanups. Teardown is now deferred by a microtask and cancelled if the element is back in the document, while a genuine removal still tears down as before.
 - A cleanup callback that throws is now isolated and logged instead of blocking the cleanups after it. Required by the deferred teardown above — a throw from a microtask would otherwise be an unhandled error with no caller to catch it.
 - `update()` called from inside a component's own render is deferred to the next flush instead of being silently dropped. A store listener firing synchronously during render was the usual way to lose a write. An unbroken chain of self-updates is capped at 25 and reported through `onError` and the error UI as a render loop, rather than dropped or left to hang the tab.
@@ -22,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Text interpolations are no longer double-encoded. `${value}` was passed through an entity escaper *and* then inserted with `createTextNode`, so `${"Tom & Jerry"}` rendered the literal text `Tom &amp; Jerry` on screen. Text nodes are never parsed as markup, so the escaper added no safety — only corruption. Injected markup remains inert.
 
 ### Documentation
+- README documents the error model explicitly: every component is its own boundary, errors do not travel up to a parent, and event-handler throws reach `window.onerror` rather than `onError`.
 - README documents the attribute/props model under `define`: `props` refreshes on every render, changing an attribute does not re-render on its own, and attributes bound from a parent template are updated by the parent's own re-render. External mutation is explicitly not observed — there is no `observedAttributes`/`attributeChangedCallback`, by design.
 
 ### Removed

@@ -19,6 +19,7 @@ export type {
   EventValue,
   FragmentVNode,
   InstanceRecord,
+  MountOptions,
   RawVNode,
   ReadyCallback,
   SetupFn,

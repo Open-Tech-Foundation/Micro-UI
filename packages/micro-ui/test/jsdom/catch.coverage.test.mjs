@@ -17,6 +17,13 @@ function delay(n = 5) {
   return new Promise((r) => setTimeout(r, n));
 }
 
+// These tests observe errors through the on-page box, which only carries the
+// real message when the app opted in. devMode is set through the public API.
+function enableDev(mod) {
+  mod.mount(document.createElement("div"), "x-dev-probe", { dev: true });
+}
+
+
 // ─────────────────────────────────────────────────────────────────
 // dom.ts — setElProp hostile element (try { el[k]=v } catch {})
 // ─────────────────────────────────────────────────────────────────
@@ -316,6 +323,7 @@ test("catch: error safeCall swallowing handler throw logs via console.error", as
 // ─────────────────────────────────────────────────────────────────
 test("catch: update render throws string wraps to Error and phase render", async () => {
   const mod = await import(`../../src/index.ts?update-render-str-${Date.now()}-${Math.random()}`);
+  enableDev(mod);
   const tag = uniqueTag("upd-r-str");
   const seen = [];
   mod.define(tag, (el) => {
@@ -343,6 +351,7 @@ test("catch: update render throws string wraps to Error and phase render", async
 
 test("catch: update render throws number and null wraps", async () => {
   const mod = await import(`../../src/index.ts?update-render-num-${Date.now()}-${Math.random()}`);
+  enableDev(mod);
   // number
   const tag1 = uniqueTag("upd-r-num");
   const seen1 = [];
@@ -381,6 +390,7 @@ test("catch: update render throws number and null wraps", async () => {
 
 test("catch: update render throws plain object wraps to [object Object]", async () => {
   const mod = await import(`../../src/index.ts?update-render-obj-${Date.now()}-${Math.random()}`);
+  enableDev(mod);
   const tag = uniqueTag("upd-r-obj");
   const seen = [];
   mod.define(tag, (el) => {
@@ -400,6 +410,7 @@ test("catch: update render throws plain object wraps to [object Object]", async 
 
 test("catch: update reconcile throws string wraps to Error phase reconcile", async () => {
   const mod = await import(`../../src/index.ts?update-reconcile-${Date.now()}-${Math.random()}`);
+  enableDev(mod);
   const tag = uniqueTag("upd-recon");
   const seen = [];
   let toggle = false;
@@ -429,6 +440,7 @@ test("catch: update reconcile throws string wraps to Error phase reconcile", asy
 
 test("catch: update reconcile throws number wraps", async () => {
   const mod = await import(`../../src/index.ts?update-reconcile-num-${Date.now()}-${Math.random()}`);
+  enableDev(mod);
   const tag = uniqueTag("upd-recon-num");
   const seen = [];
   let toggle = false;
@@ -456,6 +468,7 @@ test("catch: update reconcile throws number wraps", async () => {
 // ─────────────────────────────────────────────────────────────────
 test("catch: define setup throws Error mounts error UI and calls onError phase setup", async () => {
   const mod = await import(`../../src/index.ts?define-setup-err-${Date.now()}-${Math.random()}`);
+  enableDev(mod);
   const tag = uniqueTag("def-setup-err");
   let captured = null;
   mod.define(tag, (el) => {
@@ -474,6 +487,7 @@ test("catch: define setup throws Error mounts error UI and calls onError phase s
 
 test("catch: define setup throws string (non-Error) mounts error UI", async () => {
   const mod = await import(`../../src/index.ts?define-setup-str-${Date.now()}-${Math.random()}`);
+  enableDev(mod);
   const tag = uniqueTag("def-setup-str");
   let captured = null;
   mod.define(tag, (el) => {
@@ -492,6 +506,7 @@ test("catch: define setup throws string (non-Error) mounts error UI", async () =
 
 test("catch: define setup throws truthy non-Error values (number/object)", async () => {
   const mod = await import(`../../src/index.ts?define-setup-num-${Date.now()}-${Math.random()}`);
+  enableDev(mod);
   const tag = uniqueTag("def-setup-num");
   let cap = null;
   mod.define(tag, (el) => {
@@ -525,6 +540,7 @@ test("catch: define setup throws truthy non-Error values (number/object)", async
 
 test("catch: define render throws Error mounts error UI phase render", async () => {
   const mod = await import(`../../src/index.ts?define-render-err-${Date.now()}-${Math.random()}`);
+  enableDev(mod);
   const tag = uniqueTag("def-render-err");
   let captured = null;
   mod.define(tag, (el) => {
@@ -542,6 +558,7 @@ test("catch: define render throws Error mounts error UI phase render", async () 
 
 test("catch: define render throws string (non-Error) mounts error UI", async () => {
   const mod = await import(`../../src/index.ts?define-render-str-${Date.now()}-${Math.random()}`);
+  enableDev(mod);
   const tag = uniqueTag("def-render-str");
   let captured = null;
   const origErr = console.error;
@@ -568,6 +585,7 @@ test("catch: define render throws string (non-Error) mounts error UI", async () 
 
 test("catch: define render throws via html template static on* error", async () => {
   const mod = await import(`../../src/index.ts?define-render-static-${Date.now()}-${Math.random()}`);
+  enableDev(mod);
   const tag = uniqueTag("def-render-static");
   mod.define(tag, () => () => mod.html`<button onclick="evil()">x</button>`);
   const el = document.createElement(tag);
@@ -578,6 +596,7 @@ test("catch: define render throws via html template static on* error", async () 
 
 test("catch: define onError handler throwing during setup does not prevent error UI", async () => {
   const mod = await import(`../../src/index.ts?define-handler-throw-${Date.now()}-${Math.random()}`);
+  enableDev(mod);
   const tag = uniqueTag("def-handler-throw");
   const orig = console.error;
   let captured = null;
@@ -597,6 +616,7 @@ test("catch: define onError handler throwing during setup does not prevent error
 
 test("catch: define mountErrorUI hostile host still swallows", async () => {
   const mod = await import(`../../src/index.ts?define-hostile-${Date.now()}-${Math.random()}`);
+  enableDev(mod);
   const tag = uniqueTag("def-hostile");
   mod.define(tag, () => { throw new Error("hostile-boom"); });
   const el = document.createElement(tag);
@@ -613,6 +633,7 @@ test("catch: define mountErrorUI hostile host still swallows", async () => {
 // they all error on the first render, when the host is already empty. It only
 // matters when a component has rendered successfully and then throws.
 const errUI = await import(`../../src/index.ts?err-replace-${Date.now()}`);
+enableDev(errUI);
 
 test("mountErrorUI: a render error replaces the previous content", async () => {
   const tag = uniqueTag("t-err-replace");

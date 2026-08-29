@@ -73,6 +73,17 @@ export interface InstanceRecord {
   errored: boolean;
 }
 
+export interface MountOptions {
+  /**
+   * Show the underlying error message in the on-page error box.
+   *
+   * Off by default: a thrown error can carry a URL, a token or an internal
+   * path, and the box renders wherever the failing component sits. The full
+   * error always goes to the console and to any `onError` handler regardless.
+   */
+  dev?: boolean;
+}
+
 export type ErrorPhase = "setup" | "render" | "reconcile";
 export type ErrorHandler = (
   el: HTMLElement,

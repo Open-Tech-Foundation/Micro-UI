@@ -230,39 +230,34 @@ update(el);
 flush(); // DOM is now up to date
 ```
 
-### `mount(el, tag)`
+### `mount(el, tag, options?)`
 
-Clears a host element and appends a new Custom Element. Returns the child.
+Clears `el`, creates `<tag>` inside it, and returns the new element.
 
 ```js
 const app = mount(document.getElementById("app"), "x-app");
 ```
 
-### `onReady(cb)`
-
-Runs after initial render. Return a function for cleanup on disconnect. Call inside `setup`.
+`options.dev` turns on developer diagnostics for the whole app:
 
 ```js
-define("x-widget", (el) => {
-  onReady(() => {
-    return () => console.log("cleaned up");
-  });
-  return () => html`<p>Hello</p>`;
-});
+mount(document.getElementById("app"), "x-app", { dev: true });
 ```
 
-### `onError(handler)`
+With `dev` off — the default — a component that throws renders a neutral
+message rather than the error text:
 
-Registers a callback when `setup`, `render`, or `reconcile` throws. Call inside `setup`.
-
-```js
-define("x-widget", (el) => {
-  onError((target, err, phase) => {
-    console.error(`Error in ${phase}:`, err);
-  });
-  return () => html`<p>Hello</p>`;
-});
+```html
+<div data-micro-ui-error><pre>Something went wrong.</pre></div>
 ```
+
+A thrown error can carry a URL, a token or an internal path, and the error box
+renders wherever the failing component sits — which may be somewhere a user is
+looking. So the message is withheld from the page unless you ask for it.
+
+Nothing is lost either way: the full error always goes to `console.error`, and
+`onError` handlers always receive the real `Error` object. Turn `dev` on while
+developing to see the message in the page as well.
 
 ### `store.get(key)` / `store.set(key, value)`
 
@@ -353,7 +348,17 @@ html.raw`<b>${boldText}</b>` // parsed as real HTML
 
 ### Error isolation
 
-A throwing `setup`, `render`, or `reconcile` is caught and isolated per-component:
+Every component is its own boundary. A throwing `setup`, `render`, or
+`reconcile` is caught where it happens: that component is replaced with an
+error box and its own `onError` handlers run, while everything around it keeps
+working.
+
+Errors do **not** travel up. A parent cannot catch or render a fallback for a
+failing child — the child shows its own error box in place, and the parent's
+`onError` is not called. There is no ancestor error boundary.
+
+Errors thrown from event handlers are outside this: they are ordinary DOM
+event callbacks and reach `window.onerror`, not `onError`.
 
 - The failed element is replaced with a small inline error box (`<div data-micro-ui-error>`).
 - The instance is marked `errored` — further `update()` calls are no-ops.

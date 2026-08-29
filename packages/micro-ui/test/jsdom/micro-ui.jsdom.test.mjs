@@ -9,6 +9,10 @@ const { define, html, update, flush, mount, onReady, onError, store } =
   await import(`../../src/index.ts?jsdom-${Date.now()}`);
 
 let tagCounter = 0;
+// This suite observes errors through the on-page box, which only carries the
+// real message when the app opted in via mount(el, tag, { dev: true }).
+mount(document.createElement("div"), "x-dev-probe", { dev: true });
+
 function uniqueTag(prefix) {
   return `${prefix}-${++tagCounter}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 }
