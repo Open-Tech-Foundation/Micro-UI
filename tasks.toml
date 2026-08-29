@@ -16,7 +16,7 @@ dir = "demo"
 deps = ["build:types", "build:js", "build:js:min", "build:css", "build:css:min", "build:readme"]
 
 [tasks."build:types"]
-run = "esdev build --lib src --dts-bundle=src/index.ts && rm -f dist/dom.js dist/reconcile.js dist/vdom.js dist/template.js dist/define.js dist/update.js dist/store.js dist/html.js dist/mount.js dist/lifecycle.js dist/error.js dist/state.js dist/escape.js dist/raw.js dist/ns.js dist/types.js dist/index.js"
+run = "esdev build --lib src --dts-bundle=src/index.ts && rm -f dist/dom.js dist/reconcile.js dist/vdom.js dist/template.js dist/define.js dist/update.js dist/store.js dist/html.js dist/mount.js dist/lifecycle.js dist/error.js dist/state.js dist/raw.js dist/ns.js dist/types.js dist/index.js"
 dir = "packages/micro-ui"
 
 [tasks."build:js"]
@@ -44,12 +44,9 @@ dir = "packages/micro-ui"
 packages = ["packages/*"]
 run = "tsc --noEmit"
 
-# jsdom tests (bun, real DOM via jsdom)
+# The whole suite runs under bun against a real DOM via jsdom. There is only
+# one suite — the FakeDOM harness it used to share this task with is gone.
 [tasks.test]
-run = "bun test test/jsdom/*.test.mjs"
-dir = "packages/micro-ui"
-
-[tasks."test:jsdom"]
 run = "bun test test/jsdom/*.test.mjs"
 dir = "packages/micro-ui"
 
@@ -65,7 +62,7 @@ run = "biome check"
 
 # ------------------------------------------------------------------ ci
 [tasks.check]
-deps = ["typecheck", "lint", "fmt:check", "test", "test:jsdom"]
+deps = ["typecheck", "lint", "fmt:check", "test"]
 
 [tasks.ci]
 deps = ["check", "build"]

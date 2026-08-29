@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Text interpolations are no longer double-encoded. `${value}` was passed through an entity escaper *and* then inserted with `createTextNode`, so `${"Tom & Jerry"}` rendered the literal text `Tom &amp; Jerry` on screen. Text nodes are never parsed as markup, so the escaper added no safety — only corruption. Injected markup remains inert.
 
 ### Removed
+- Duplicate `test:jsdom` task. It ran the same command as `test`, and `check` depended on both, so CI ran the whole suite twice. There is one suite now that the FakeDOM harness is gone.
+- Stale `dist/escape.js` cleanup from `build:types`, left behind when `src/escape.ts` was removed.
 - `src/escape.ts` — unused once `resolveBinding` stopped double-encoding. It was not part of the public API.
 - FakeDOM test harness — removed `test/helpers/dom.mjs` and all `test/micro-ui.*.test.mjs` (FakeDOM) suites. All coverage is now provided by the jsdom suite under `test/jsdom/` (`bun test`). `tasks.toml` updated: `[tasks.test]` now runs `bun test test/jsdom/*.test.mjs` and `[tasks.test:e2e]` (esdev FakeDOM) is removed.
 
