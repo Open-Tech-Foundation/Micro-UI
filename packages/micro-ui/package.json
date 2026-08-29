@@ -7,10 +7,12 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./min": {
+    "./index.min.js": {
       "types": "./dist/index.d.ts",
+      "import": "./dist/index.min.js",
       "default": "./dist/index.min.js"
     },
     "./styles.css": "./dist/styles.css",

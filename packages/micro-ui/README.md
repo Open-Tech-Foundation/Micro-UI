@@ -52,7 +52,7 @@ import {
 
 ```html
 <script type="module">
-import { define, html, update } from "https://esm.sh/@opentf/micro-ui/min";
+import { define, html, update } from "https://esm.sh/@opentf/micro-ui/index.min.js";
 
 define("x-counter", (el, props) => {
   let count = Number(props.count || 0);
@@ -72,13 +72,13 @@ define("x-counter", (el, props) => {
 
 ```js
 // esm.sh
-import { define, html, update } from "https://esm.sh/@opentf/micro-ui/min";
+import { define, html, update } from "https://esm.sh/@opentf/micro-ui/index.min.js";
 
 // esm.run (via jsDelivr)
-import { define, html, update } from "https://esm.run/@opentf/micro-ui/min";
+import { define, html, update } from "https://esm.run/@opentf/micro-ui/index.min.js";
 
 // unpkg
-import { define, html, update } from "https://esm.unpkg.com/@opentf/micro-ui/min";
+import { define, html, update } from "https://esm.unpkg.com/@opentf/micro-ui/index.min.js";
 ```
 
 ## Usage
@@ -322,8 +322,6 @@ Or via CDN:
 
 ```html
 <link rel="stylesheet" href="https://unpkg.com/@opentf/micro-ui/dist/styles.min.css">
-<!-- or split -->
-<link rel="stylesheet" href="https://unpkg.com/@opentf/micro-ui/dist/styles/tokens.min.css">
 ```
 
 ## Class Reference
