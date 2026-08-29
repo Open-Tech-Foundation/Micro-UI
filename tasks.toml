@@ -13,14 +13,22 @@ dir = "demo"
 
 # ------------------------------------------------------------------ build
 [tasks.build]
-deps = ["build:lib", "build:css", "build:readme"]
+deps = ["build:lib", "build:lib:min", "build:css", "build:css:min", "build:readme"]
 
 [tasks."build:lib"]
 run = "esdev build --lib src --dts-bundle=src/index.ts"
 dir = "packages/micro-ui"
 
+[tasks."build:lib:min"]
+run = "esdev build --lib src --no-types --minify --out=dist/min"
+dir = "packages/micro-ui"
+
 [tasks."build:css"]
 run = "cp src/styles.css dist/styles.css && mkdir -p dist/styles && cp src/styles/* dist/styles/"
+dir = "packages/micro-ui"
+
+[tasks."build:css:min"]
+run = "npx lightningcss-cli --minify --bundle src/styles.css -o dist/styles.min.css && npx lightningcss-cli --minify src/styles/base.css -o dist/styles/base.min.css && npx lightningcss-cli --minify src/styles/tokens.css -o dist/styles/tokens.min.css && npx lightningcss-cli --minify src/styles/components.css -o dist/styles/components.min.css"
 dir = "packages/micro-ui"
 
 [tasks."build:readme"]

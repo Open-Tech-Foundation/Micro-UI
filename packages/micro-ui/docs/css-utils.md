@@ -83,7 +83,7 @@ The simplest way to use Micro-UI Utils is through a CDN:
 ```html
 <link
   rel="stylesheet"
-  href="https://unpkg.com/@opentf/micro-ui/dist/styles.css"
+  href="https://unpkg.com/@opentf/micro-ui/dist/styles.min.css"
 >
 ```
 
@@ -97,10 +97,10 @@ Then use the semantic classes:
 
 ### Local
 
-Download `styles.css` and include it directly:
+Download `styles.min.css` and include it directly:
 
 ```html
-<link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./styles.min.css">
 ```
 
 No package manager is required.
@@ -1118,7 +1118,7 @@ This keeps generated HTML compact, predictable, and easy to modify.
 
   <link
     rel="stylesheet"
-    href="./styles.css"
+    href="./styles.min.css"
   >
 
   <title>Micro App</title>

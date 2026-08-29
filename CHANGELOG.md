@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Minified output** — `build:lib:min` and `build:css:min` tasks produce minified JS (`dist/min/*.js`) and bundled minified CSS (`dist/styles.min.css`). Consumers can opt in via `import { html } from "@opentf/micro-ui/min"` and `import "@opentf/micro-ui/styles.min.css"`. Uses `lightningcss-cli` (Rust-based, devDependency only). CDN URLs now point to minified versions.
 - **Test coverage** — 34 new tests closing prior gaps:
   - Unit tests for `escapeText` (`escape.ts`), `resolveNS`/`svgTagName` (`ns.ts`), and `buildTemplate`/`buildDesc` static paths (`template.ts`).
   - Store: listener that throws still notifies other subscribers and does not break `set`/`del`; `subscribe`/`del`/`clear` subscription semantics including double-unsubscribe `false`; array-index path `"items.0.name"` and primitive-to-object path init.
