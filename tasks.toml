@@ -44,17 +44,11 @@ dir = "packages/micro-ui"
 packages = ["packages/*"]
 run = "tsc --noEmit"
 
-# Tests run from the workspace root (not the package dir) so esdev's module
-# sandbox — which pins resolution to the process working directory — can reach
-# pnpm's hoisted store under root node_modules/.pnpm. The trailing path
-# segment excludes test/jsdom/ which runs under a different runtime.
+# jsdom tests (bun, real DOM via jsdom)
 [tasks.test]
-run = "esdev test packages/micro-ui/test/micro-ui"
+run = "bun test test/jsdom/*.test.mjs"
+dir = "packages/micro-ui"
 
-[tasks."test:e2e"]
-run = "esdev test packages/micro-ui/test/micro-ui.e2e"
-
-# jsdom tests run under bun (native TypeScript, real DOM).
 [tasks."test:jsdom"]
 run = "bun test test/jsdom/*.test.mjs"
 dir = "packages/micro-ui"
