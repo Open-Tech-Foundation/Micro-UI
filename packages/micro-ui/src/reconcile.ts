@@ -11,7 +11,10 @@ function getParentNS(
   if (!el.namespaceURI) return null;
   // Children of a <foreignObject> must revert to HTML even though the
   // foreignObject element itself lives in the SVG namespace.
-  if (el.namespaceURI === SVG_NS && el.tagName.toLowerCase() === "foreignobject")
+  if (
+    el.namespaceURI === SVG_NS &&
+    el.tagName.toLowerCase() === "foreignobject"
+  )
     return HTML_NS;
   return el.namespaceURI;
 }
