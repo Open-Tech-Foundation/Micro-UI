@@ -68,15 +68,14 @@ define("x-counter", (el, props) => {
 <x-counter count="0"></x-counter>
 ```
 
-**CDN alternatives:**
+**CDN options:**
 
-```js
-// esm.sh
-import { define, html, update } from "https://esm.sh/@opentf/micro-ui?min";
-
-// unpkg
-import { define, html, update } from "https://unpkg.com/@opentf/micro-ui/dist/index.min.js";
-```
+| Use case | URL |
+|----------|-----|
+| npm / bundlers | `@opentf/micro-ui` |
+| esm.sh | `https://esm.sh/@opentf/micro-ui?min` |
+| unpkg | `https://unpkg.com/@opentf/micro-ui/dist/index.min.js` |
+| CSS | `https://unpkg.com/@opentf/micro-ui/dist/styles.min.css` |
 
 ## Usage
 
