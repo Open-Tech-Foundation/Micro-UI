@@ -141,7 +141,7 @@ function patchKeyed(
     const n = newCh[i]!;
     const k = getKey(n);
     const o = k != null ? oldMap.get(String(k)) : undefined;
-    if (o && (o.dom?.parentNode === parent || !!o.dom)) {
+    if (o && (o.dom?.parentNode === parent || o.dom?.parentNode === null)) {
       materializeNode(n);
       reconcile(o, n, parent);
       if (o.dom!.nextSibling !== nextSib) parent.insertBefore(o.dom!, nextSib);

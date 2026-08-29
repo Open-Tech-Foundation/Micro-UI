@@ -472,6 +472,53 @@ test("jsdom: keyed reorder reuses DOM — no superfluous createElement for match
   assert.equal(after.length, 3);
 });
 
+test("jsdom: keyed node moved to another parent is not stolen or crash on reorder", async () => {
+  // A keyed node whose DOM was manually moved to a different container must
+  // not be re-attached by patchKeyed (which previously called insertBefore on a
+  // node that wasn't a child of the list parent, throwing
+  // "The child can not be found in the parent", or stealing the node).
+  const tag = uniqueTag("x-keyed-moved");
+  let items = [
+    { id: "a", label: "Alpha" },
+    { id: "b", label: "Beta" },
+    { id: "c", label: "Gamma" },
+  ];
+  define(tag, (el) =>
+    () => html`<ul>${items.map((i) => html`<li key=${i.id}>${i.label}</li>`)}</ul>`,
+  );
+
+  const host = document.createElement("div");
+  document.body.appendChild(host);
+  const el = document.createElement(tag);
+  host.appendChild(el);
+  await tick();
+  flush();
+
+  const ul = el.querySelector("ul");
+  const liB = el.querySelectorAll("li")[1];
+  assert.equal(liB.parentNode, ul);
+
+  // User moves the "Beta" <li> into an entirely different container.
+  const elsewhere = document.createElement("div");
+  document.body.appendChild(elsewhere);
+  elsewhere.appendChild(liB);
+  assert.equal(liB.parentNode, elsewhere);
+
+  // Reorder the list so Beta must still be reconciled back into the ul.
+  items = [items[2], items[0], items[1]]; // c, a, b
+  update(el);
+  await tick();
+  flush();
+
+  assert.equal(el.querySelector("[data-micro-ui-error]"), null, "must not crash");
+  const labels = [...el.querySelectorAll("li")].map((n) => n.textContent);
+  assert.deepEqual(labels, ["Gamma", "Alpha", "Beta"], "list is correctly reordered");
+  // The moved node stays put in its new parent; the ul gets a fresh node.
+  assert.equal(liB.parentNode, elsewhere, "moved node is not stolen back");
+  assert.equal(elsewhere.childElementCount, 1);
+});
+
+
 test("jsdom: unkeyed list update reuses DOM nodes by position", async () => {
   const tag = uniqueTag("x-defer-unkeyed");
   let count = 3;
