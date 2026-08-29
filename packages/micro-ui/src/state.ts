@@ -19,3 +19,9 @@ export let deferDOM = false;
 export function setDeferDOM(v: boolean): void {
   deferDOM = v;
 }
+
+/** Element whose render is currently running, or null when idle. */
+export let currentRendering: HTMLElement | null = null;
+export function setCurrentRendering(v: HTMLElement | null): void {
+  currentRendering = v;
+}

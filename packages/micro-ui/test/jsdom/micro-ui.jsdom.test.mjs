@@ -605,3 +605,38 @@ test("jsdom: conditional show/hide creates and discards DOM correctly", async ()
   // Persistent element still reused
   assert.equal(el.querySelector("p"), p);
 });
+
+test("jsdom: re-entrant update during render does not cascade re-renders", async () => {
+  // Issue #6: flush() clears the global `flushing` flag up front, so an
+  // `update()` called from within a render re-queues a fresh flush. Without a
+  // re-entrancy guard, a single external update triggers a cascade of repeated
+  // renders (unbounded without this test's hard cap below).
+  const tag = uniqueTag("x-reentrant");
+  const cap = 100000;
+  let renders = 0;
+  define(tag, (el) => () => {
+    renders++;
+    if (renders < cap) update(el); // self-update during render
+    return html`<p>${renders}</p>`;
+  });
+
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+  flush();
+
+  // Single external update should render the component exactly once and settle.
+  renders = 0;
+  update(el);
+  for (let i = 0; i < 200; i++) {
+    await tick();
+    flush();
+  }
+  assert.equal(
+    renders,
+    1,
+    `one update() must render once and settle, got ${renders} renders`,
+  );
+  assert.equal(el.querySelector("p").textContent, "1");
+});
+

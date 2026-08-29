@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Single-child fast path in `patchLists` now checks key/tag/namespace before reusing DOM — single-item keyed lists where the key changes (e.g. `key=1` → `key=2`) are now correctly replaced instead of incorrectly reused. Also handles externally detached single children.
 - Whitespace-only text nodes (e.g. `html`<span> </span>``) are now preserved instead of being dropped entirely during template parsing, so intentional spacing inside inline elements and whitespace-only elements survives.
+- Re-entrant `update()` calls are now re-entrancy-safe: an element that calls `update()` on itself from within its own render no longer re-queues flushes, which previously caused cascading re-renders (and could spin forever). One `update()` now produces exactly one settled render.
 
 ### Changed
 - **vdom.ts** — removed the unused sequential binding-index counter (`state.vi`). Every binding carries an explicit value-slot `idx`, so the position-tracking fallback was dead, fragile code. If a future binding ever omits `idx`, it now fails loudly (empty value) instead of silently misaligning subsequent bindings.
