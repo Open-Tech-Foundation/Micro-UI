@@ -46,7 +46,7 @@ export function buildDesc(
             nodes.push({ type: "text", value: parts[j]! });
           }
         }
-      } else if (t?.trim()) {
+      } else {
         nodes.push({ type: "text", value: t });
       }
     }

@@ -752,6 +752,36 @@ test("define: text VNode from binding renders correctly", async () => {
   assertEquals(el.textContent, "just text");
 });
 
+test("text: whitespace-only text node is preserved, not dropped", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-ws-only");
+  define(tag, () => () => html`<span> </span>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const span = el.querySelector("span");
+  assert(span !== null);
+  assertEquals(span.textContent, " ", "intentional space inside inline element must be kept");
+  assertEquals(span.childNodes.length, 1, "a text node must exist, not be removed entirely");
+});
+
+test("text: whitespace-only div content is preserved", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-ws-div");
+  define(tag, () => () => html`<div>   </div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assertEquals(el.querySelector("div").textContent, "   ");
+});
+
+test("text: whitespace between inline siblings is preserved", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("t-ws-siblings");
+  define(tag, () => () => html`<span>a </span><span>b</span>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const spans = [...el.querySelectorAll("span")];
+  assertEquals(spans[0].textContent, "a ");
+  assertEquals(spans[1].textContent, "b");
+});
+
+
 // ── html.raw ───────────────────────────────────────────────────────
 
 test("html.raw: injects trusted HTML unescaped", async () => {
