@@ -121,8 +121,10 @@ function buildElDesc(
       continue;
     }
     if (isOnEvent && !value.includes(MARKER)) {
-      events[name.slice(2)] = value;
-      continue;
+      throw new Error(
+        `Static "${name}" attribute is not a valid event handler. ` +
+          `Use an interpolated function, e.g. ${name}="\${() => {}}" (or ${name}="\${fn}").`,
+      );
     }
 
     if (value.includes(MARKER)) {

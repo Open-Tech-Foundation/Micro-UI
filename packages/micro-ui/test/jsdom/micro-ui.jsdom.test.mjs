@@ -263,6 +263,27 @@ test("jsdom: initial render that throws mounts an error fallback", async () => {
   assert.ok(box.textContent.includes("kaboom-init"));
 });
 
+test("jsdom: static on* string attribute is rejected with actionable guidance", async () => {
+  // Issue #4: a static `onclick="handler()"` string is not an event handler in
+  // this library (use an interpolated function instead). It must fail loudly at
+  // template-eval time rather than silently no-op or crash addEventListener.
+  const tag = uniqueTag("x-static-on");
+  define(tag, () => () => html`<button onclick="boom()">go</button>`);
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+  flush();
+  const box = el.querySelector("[data-micro-ui-error]");
+  assert.ok(box, "static on* string should trigger the error fallback");
+  assert.ok(
+    box.textContent.includes("onclick") &&
+      box.textContent.includes("interpolated"),
+    "message should point the author to the interpolated-function form",
+  );
+  assert.ok(!box.textContent.includes("addEventListener"), "should not surface a DOM TypeError");
+});
+
+
 test("jsdom: update that throws does not poison sibling re-renders", async () => {
   const tagBad = uniqueTag("x-bad-update");
   define(tagBad, (el) => {
