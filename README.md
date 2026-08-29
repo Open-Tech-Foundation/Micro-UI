@@ -53,7 +53,7 @@ import {
 
 ```html
 <script type="module">
-import { define, html, update } from "https://esm.sh/@opentf/micro-ui/index.min.js";
+import { define, html, update } from "https://esm.sh/@opentf/micro-ui?min";
 
 define("x-counter", (el, props) => {
   let count = Number(props.count || 0);
@@ -73,13 +73,10 @@ define("x-counter", (el, props) => {
 
 ```js
 // esm.sh
-import { define, html, update } from "https://esm.sh/@opentf/micro-ui/index.min.js";
-
-// esm.run (via jsDelivr)
-import { define, html, update } from "https://esm.run/@opentf/micro-ui/index.min.js";
+import { define, html, update } from "https://esm.sh/@opentf/micro-ui?min";
 
 // unpkg
-import { define, html, update } from "https://esm.unpkg.com/@opentf/micro-ui/index.min.js";
+import { define, html, update } from "https://unpkg.com/@opentf/micro-ui/dist/index.min.js";
 ```
 
 ## Usage
