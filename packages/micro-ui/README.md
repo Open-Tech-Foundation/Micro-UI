@@ -35,17 +35,45 @@ yarn add @opentf/micro-ui
 bun add @opentf/micro-ui
 ```
 
+## Import
+
+### CDN
+
+#### jsDelivr
+
+```html
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@opentf/micro-ui/dist/styles.min.css">
+
+<script type="module">
+  import { define, html, update } from
+    "https://cdn.jsdelivr.net/npm/@opentf/micro-ui/dist/index.min.js";
+</script>
+```
+
+#### unpkg
+
+```html
+<link rel="stylesheet"
+      href="https://unpkg.com/@opentf/micro-ui/dist/styles.min.css">
+
+<script type="module">
+  import { define, html, update } from
+    "https://unpkg.com/@opentf/micro-ui/dist/index.min.js";
+</script>
+```
+
+#### esm.sh
+
 ```js
-import {
-  define,
-  html,
-  store,
-  update,
-  flush,
-  mount,
-  onReady,
-  onError,
-} from "@opentf/micro-ui";
+import { define, html, update } from
+  "https://esm.sh/@opentf/micro-ui?min";
+```
+
+### npm
+
+```js
+import { define, html, update } from "@opentf/micro-ui";
 ```
 
 ## Quick Start
@@ -67,15 +95,6 @@ define("x-counter", (el, props) => {
 
 <x-counter count="0"></x-counter>
 ```
-
-**CDN options:**
-
-| Use case | URL |
-|----------|-----|
-| npm / bundlers | `@opentf/micro-ui` |
-| esm.sh | `https://esm.sh/@opentf/micro-ui?min` |
-| unpkg | `https://unpkg.com/@opentf/micro-ui/dist/index.min.js` |
-| CSS | `https://unpkg.com/@opentf/micro-ui/dist/styles.min.css` |
 
 ## Usage
 
