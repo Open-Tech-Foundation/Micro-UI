@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed all `as any` casts in `dom.ts` and `reconcile.ts` — replaced with proper type narrowing via VNode union type guards.
 - Removed dead `else if ((node as any).type === "raw")` branch in `materializeNode` (`VNode` does not include `RawVNode`).
 - `update.ts` now wraps non-`Error` thrown values in `new Error(String(err))` instead of blindly casting `err as Error`.
+- Split monolithic build task into focused sub-tasks (`build:lib`, `build:css`, `build:readme`) with `deps` in `tasks.toml`.
 
 ## [0.5.0] - 2026-08-29
 

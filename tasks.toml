@@ -13,7 +13,18 @@ dir = "demo"
 
 # ------------------------------------------------------------------ build
 [tasks.build]
-run = "esdev build --lib src --dts-bundle=src/index.ts && cp src/styles.css dist/styles.css && mkdir -p dist/styles && cp src/styles/* dist/styles/ && cp ../../README.md README.md && sed -i 's#(./packages/micro-ui/docs/css-utils.md)#(./docs/css-utils.md)#; /Micro-UI Screenshot/d' README.md"
+deps = ["build:lib", "build:css", "build:readme"]
+
+[tasks."build:lib"]
+run = "esdev build --lib src --dts-bundle=src/index.ts"
+dir = "packages/micro-ui"
+
+[tasks."build:css"]
+run = "cp src/styles.css dist/styles.css && mkdir -p dist/styles && cp src/styles/* dist/styles/"
+dir = "packages/micro-ui"
+
+[tasks."build:readme"]
+run = "cp ../../README.md README.md && sed -i 's#(./packages/micro-ui/docs/css-utils.md)#(./docs/css-utils.md)#' README.md && sed -i '/Micro-UI Screenshot/d' README.md"
 dir = "packages/micro-ui"
 
 # ------------------------------------------------------------------ typecheck / test

@@ -98,8 +98,7 @@ function patchLists(
       } else {
         // text / fragment with same type can be reconciled
         reconcile(o, n, parent);
-        if (o.dom && o.dom.parentNode !== parent)
-          parent.appendChild(o.dom);
+        if (o.dom && o.dom.parentNode !== parent) parent.appendChild(o.dom);
         return;
       }
     }
