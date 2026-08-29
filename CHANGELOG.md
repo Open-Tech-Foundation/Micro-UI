@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `src/escape.ts` — unused once `resolveBinding` stopped double-encoding. It was not part of the public API.
 
 ### Changed
+- Corrected the "no virtual DOM" claim in the README and the package description. Micro-UI builds a virtual tree in `vdom.ts` and diffs it against the previous tree in `reconcile.ts`; it never reads the live DOM to decide what changed. The README now describes what is actually distinctive — templates parsed once and cached, no compiler, no signals, no scheduler — and adds a "How it works" section.
 - Replaced 6× `as unknown as Record<string, unknown>` double-casts in `dom.ts` with `setElProp()` helper.
 - Replaced 5× `as EventListener` casts across `dom.ts`, `vdom.ts`, and `reconcile.ts` with `addListener()`/`removeListener()` helpers.
 - Extracted shared `splitPath()` helper in `store.ts` (was duplicated 3×).

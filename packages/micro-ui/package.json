@@ -22,7 +22,7 @@
     "dist",
     "docs"
   ],
-  "description": "A tiny functional JavaScript UI library for AI agents to generate lightweight, interactive micro-apps. — no VDOM, no signals, no compiler",
+  "description": "A tiny functional JavaScript UI library for AI agents to generate lightweight, interactive micro-apps. — no compiler, no signals, no build step",
   "repository": {
     "type": "git",
     "url": "git@github.com:Open-Tech-Foundation/Micro-UI.git"

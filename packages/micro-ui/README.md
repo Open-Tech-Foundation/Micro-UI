@@ -13,7 +13,7 @@ A tiny runtime for AI-generated micro-apps
 
 ## Features
 
-* **Lightweight** — zero dependencies, no build step, no virtual DOM overhead.
+* **Lightweight** — zero dependencies, no build step, ~5 KB gzipped.
 * **Simple state management** — use plain variables or the built-in `store` for shared state.
 * **Smooth updates** — changes are batched and applied efficiently, no flicker or jank.
 * **Form-friendly** — inputs, video, canvas, focus, and scroll position all survive re-renders.
@@ -22,6 +22,17 @@ A tiny runtime for AI-generated micro-apps
 * **Secure by default** — interpolated content is inserted as text, never parsed as HTML.
 * **Fault tolerant** — one broken component won't crash the rest of your app.
 * **AI-ready** — minimal API surface that agents can generate without a toolchain.
+
+## How it works
+
+Micro-UI parses each `html` template **once** and caches the resulting static
+description on the template literal itself, so re-renders only re-evaluate the
+`${...}` bindings rather than rebuilding a description of the whole tree.
+
+Rendering produces a small virtual tree, which is diffed against the previous
+one and applied to the DOM. It is a virtual DOM, deliberately a minimal one:
+no compiler, no signals, no fiber or scheduler, and one reconciliation root
+per custom element rather than a single app-wide tree.
 
 ## Installation
 
