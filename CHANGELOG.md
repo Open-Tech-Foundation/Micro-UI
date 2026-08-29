@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Unit tests for `setProp` (value, boolean, ARIA, generic, event listeners) in `test/micro-ui.setprop.test.mjs`.
 - jsdom tests for `addListener`/`removeListener`, `setElProp`, and `setProp` real DOM behavior in `test/jsdom/dom-helpers.test.mjs`.
+- Migrated all FakeDOM tests to jsdom: ported `micro-ui.test.mjs` (136 tests), `micro-ui.coverage.test.mjs` (21 tests), `micro-ui.setprop.test.mjs` (24 tests), `micro-ui.svg.test.mjs` (13 tests), and `micro-ui.e2e.test.mjs` (5 tests) into `test/jsdom/` (`micro-ui.jsdom.test.mjs`, `coverage.jsdom.test.mjs`, `dom-helpers.test.mjs`, `svg.test.mjs`, `e2e.test.mjs`). FakeDOM suite now has full jsdom parity (344 jsdom tests). Real DOM provides accurate attribute/property reflection and namespace coverage that FakeDOM cannot observe.
 
 ## [0.8.0] - 2026-08-29
 

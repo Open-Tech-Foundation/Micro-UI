@@ -91,6 +91,26 @@ test("jsdom setProp: checked toggle on real checkbox", async () => {
   assert.equal(inp.checked, false);
 });
 
+test("jsdom setProp: selected boolean reflects .selected and attribute", async () => {
+  const tag = uniqueTag("x-sp-selected");
+  define(tag, () => () => html`<select><option selected=${true}>a</option></select>`);
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+  const opt = el.querySelector("option");
+  assert.equal(opt.selected, true);
+  assert.equal(opt.hasAttribute("selected"), true);
+});
+
+test("jsdom setProp: indeterminate boolean sets .indeterminate", async () => {
+  const tag = uniqueTag("x-sp-indeterminate");
+  define(tag, () => () => html`<input type="checkbox" indeterminate=${true}>`);
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+  assert.equal(el.querySelector("input").indeterminate, true);
+});
+
 // ── setProp: ARIA ─────────────────────────────────────────────────
 test("jsdom setProp: aria-hidden true/false on real DOM", async () => {
   const tag = uniqueTag("x-sp-aria-real");
@@ -106,6 +126,42 @@ test("jsdom setProp: aria-hidden true/false on real DOM", async () => {
   el._flip();
   await tick(); flush();
   assert.equal(el.querySelector("div").getAttribute("aria-hidden"), "false");
+});
+
+test("jsdom setProp: aria-hidden null removes attribute on update", async () => {
+  const tag = uniqueTag("x-sp-aria-null");
+  let val = true;
+  let ref;
+  define(tag, (el) => {
+    ref = el;
+    return () => html`<div aria-hidden=${val}>x</div>`;
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+  assert.equal(el.querySelector("div").getAttribute("aria-hidden"), "true");
+  val = null;
+  update(ref);
+  await tick(); flush();
+  assert.equal(el.querySelector("div").getAttribute("aria-hidden"), null);
+});
+
+test("jsdom setProp: role attribute is set", async () => {
+  const tag = uniqueTag("x-sp-role");
+  define(tag, () => () => html`<div role="button">x</div>`);
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+  assert.equal(el.querySelector("div").getAttribute("role"), "button");
+});
+
+test("jsdom setProp: aria numeric value stringifies", async () => {
+  const tag = uniqueTag("x-sp-aria-num");
+  define(tag, () => () => html`<div aria-valuenow=${42}>x</div>`);
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+  assert.equal(el.querySelector("div").getAttribute("aria-valuenow"), "42");
 });
 
 // ── setProp: generic attrs ────────────────────────────────────────
@@ -143,6 +199,33 @@ test("jsdom setProp: true on a non-boolean attr takes the generic branch", async
   document.body.appendChild(el);
   await tick(); flush();
   assert.equal(el.querySelector("div").getAttribute("data-flag"), "");
+});
+
+test("jsdom setProp: false removes generic attribute on update", async () => {
+  const tag = uniqueTag("x-sp-gen-false");
+  let t = "hi";
+  let ref;
+  define(tag, (el) => {
+    ref = el;
+    return () => html`<div title=${t}>x</div>`;
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+  assert.equal(el.querySelector("div").getAttribute("title"), "hi");
+  t = false;
+  update(ref);
+  await tick(); flush();
+  assert.equal(el.querySelector("div").getAttribute("title"), null);
+});
+
+test("jsdom setProp: number value stringifies in a generic attribute", async () => {
+  const tag = uniqueTag("x-sp-generic-num");
+  define(tag, () => () => html`<div data-count=${42}>x</div>`);
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+  assert.equal(el.querySelector("div").getAttribute("data-count"), "42");
 });
 
 // ── event listeners survive reconciliation ────────────────────────
@@ -207,6 +290,89 @@ test("jsdom setProp: removeListener detaches old handler on update", async () =>
   assert.deepEqual(calls, ["a", "b"]);
 });
 
+// ── keyed list reconciliation with hoisted getParentNS ───────────
+test("jsdom keyed list: reorder after hoisted getParentNS", async () => {
+  const tag = uniqueTag("x-keyed-hoist");
+  let items = [
+    { id: "a", label: "Alpha" },
+    { id: "b", label: "Beta" },
+    { id: "c", label: "Gamma" },
+  ];
+  let ref;
+  define(tag, (el) => {
+    ref = el;
+    return () => html`<ul>${items.map((i) => html`<li key=${i.id}>${i.label}</li>`)}</ul>`;
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+
+  const domA = el.querySelectorAll("li")[0];
+  const domB = el.querySelectorAll("li")[1];
+  const domC = el.querySelectorAll("li")[2];
+
+  // Reorder: c, a, b
+  items = [items[2], items[0], items[1]];
+  update(ref);
+  await tick(); flush();
+
+  const after = el.querySelectorAll("li");
+  assert.equal(after[0], domC);
+  assert.equal(after[1], domA);
+  assert.equal(after[2], domB);
+  assert.equal(after.length, 3);
+});
+
+test("jsdom keyed list: add + remove with hoisted getParentNS", async () => {
+  const tag = uniqueTag("x-keyed-addrem");
+  let items = [{ id: "a" }, { id: "b" }];
+  let ref;
+  define(tag, (el) => {
+    ref = el;
+    return () => html`<ul>${items.map((i) => html`<li key=${i.id}>${i.id}</li>`)}</ul>`;
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+  assert.equal(el.querySelectorAll("li").length, 2);
+
+  // Add c, remove a
+  items = [{ id: "b" }, { id: "c" }];
+  update(ref);
+  await tick(); flush();
+  assert.equal(el.querySelectorAll("li").length, 2);
+  assert.equal([...el.querySelectorAll("li")].map((n) => n.textContent).join(","), "b,c");
+});
+
+test("jsdom keyed list: mix keyed and unkeyed with hoisted getParentNS", async () => {
+  const tag = uniqueTag("x-keyed-mix");
+  let items = [
+    { id: 1, keyed: true },
+    { text: "x", keyed: false },
+    { id: 2, keyed: true },
+  ];
+  let ref;
+  define(tag, (el) => {
+    ref = el;
+    return () => html`<ul>${items.map((i) =>
+      i.keyed
+        ? html`<li key=${i.id}>${i.id}</li>`
+        : html`<li>${i.text}</li>`
+    )}</ul>`;
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+  assert.equal(el.querySelectorAll("li").length, 3);
+
+  // Remove the unkeyed item and one keyed
+  items = [{ id: 1, keyed: true }];
+  update(ref);
+  await tick(); flush();
+  assert.equal(el.querySelectorAll("li").length, 1);
+  assert.equal(el.querySelector("li").textContent, "1");
+});
+
 // ── store splitPath through public API ────────────────────────────
 test("jsdom store: deeply nested path set/get/delete", async () => {
   store.clear();
@@ -240,6 +406,78 @@ test("jsdom store: single segment path", async () => {
   assert.equal(store.get("flat", { path: "x" }), 1);
   store.set("flat", 2, { path: "x" });
   assert.equal(store.get("flat", { path: "x" }), 2);
+});
+
+// ── additional ports from micro-ui.setprop.test.mjs (complete coverage) ─────
+test("jsdom setProp: value property syncs .value and attribute (port)", async () => {
+  const tag = uniqueTag("x-sp-val-sync");
+  const mod = await import(`../../src/index.ts?sp-val-sync-${Date.now()}-${Math.random()}`);
+  let val = "hello"; let ref;
+  mod.define(tag, el2 => { ref = el2; return () => mod.html`<input value=${val}>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await tick(); mod.flush();
+  const inp = el.querySelector("input");
+  assert.equal(inp.value, "hello");
+  assert.equal(inp.getAttribute("value"), "hello");
+  val = "world"; mod.update(ref); await tick(); mod.flush();
+  assert.equal(inp.value, "world");
+  assert.equal(inp.getAttribute("value"), "world");
+});
+
+test("jsdom setProp: disabled true sets attribute and .disabled (port)", async () => {
+  const tag = uniqueTag("x-sp-dis-true");
+  const mod = await import(`../../src/index.ts?sp-dis-true-${Date.now()}-${Math.random()}`);
+  mod.define(tag, () => () => mod.html`<button disabled=${true}>x</button>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await tick(); mod.flush();
+  const btn = el.querySelector("button");
+  assert.equal(btn.hasAttribute("disabled"), true);
+  assert.equal(btn.disabled, true);
+});
+
+test("jsdom setProp: string value sets attribute (port)", async () => {
+  const tag = uniqueTag("x-sp-str-port");
+  const mod = await import(`../../src/index.ts?sp-str-${Date.now()}-${Math.random()}`);
+  mod.define(tag, () => () => mod.html`<div class="foo bar">x</div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await tick(); mod.flush();
+  assert.equal(el.querySelector("div").getAttribute("class"), "foo bar");
+});
+
+test("jsdom setProp: onclick handler fires after reconciliation (port)", async () => {
+  const mod = await import(`../../src/index.ts?sp-evt-${Date.now()}-${Math.random()}`);
+  const tag = uniqueTag("x-sp-evt-port");
+  let count = 0;
+  mod.define(tag, el2 => () => mod.html`<button onclick=${() => { count++; mod.update(el2); }}>${count}</button>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await tick(); mod.flush();
+  el.querySelector("button").click(); await tick(); mod.flush();
+  assert.equal(el.querySelector("button").textContent, "1");
+  el.querySelector("button").click(); await tick(); mod.flush();
+  assert.equal(el.querySelector("button").textContent, "2");
+});
+
+test("jsdom store: splitPath works for deeply nested get/set/delete (port)", async () => {
+  const { store } = await import(`../../src/index.ts?sp-split-${Date.now()}-${Math.random()}`);
+  store.clear();
+  store.set("deep", { a: { b: { c: 1 } } });
+  assert.equal(store.get("deep", { path: "a.b.c" }), 1);
+  store.set("deep", 99, { path: "a.b.c" });
+  assert.equal(store.get("deep", { path: "a.b.c" }), 99);
+  store.del("deep", { path: "a.b.c" });
+  assert.equal(store.get("deep", { path: "a.b.c" }), undefined);
+});
+
+test("jsdom store: splitPath with single segment (port)", async () => {
+  const { store } = await import(`../../src/index.ts?sp-single-${Date.now()}-${Math.random()}`);
+  store.clear();
+  store.set("flat", { x: 1 });
+  assert.equal(store.get("flat", { path: "x" }), 1);
+  store.set("flat", 2, { path: "x" });
+  assert.equal(store.get("flat", { path: "x" }), 2);
+});
+
+test("jsdom store: splitPath with empty string path (port)", async () => {
+  const { store } = await import(`../../src/index.ts?sp-empty-${Date.now()}-${Math.random()}`);
+  store.clear();
+  store.set("e", { "": "found", a: 1 });
+  assert.equal(store.get("e", { path: "" }), "found");
 });
 
 // ── setElProp through integration ─────────────────────────────────

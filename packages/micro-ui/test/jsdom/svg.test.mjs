@@ -174,3 +174,92 @@ test("svg jsdom: swapping foreignObject child type keeps HTML namespace", async 
   kind = "div"; update(ref); await tick(); flush();
   assert.equal(el.querySelector("#fc").namespaceURI, "http://www.w3.org/1999/xhtml");
 });
+
+// ── additional ports from micro-ui.svg.test.mjs (complete coverage) ─────
+test("svg jsdom: static svg and children are in SVG namespace (port)", async () => {
+  const mod = await import(`../../src/index.ts?svg-static-${Date.now()}-${Math.random()}`);
+  const tag = uniqueTag("svg-static");
+  mod.define(tag, () => () => mod.html`<svg width="100" height="100"><circle cx="50" cy="50" r="10" fill="red"></circle></svg>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await tick(); mod.flush();
+  const svg = el.querySelector("svg");
+  const circle = el.querySelector("circle");
+  assert.equal(svg.namespaceURI, "http://www.w3.org/2000/svg");
+  assert.equal(circle.namespaceURI, "http://www.w3.org/2000/svg");
+  assert.equal(svg.getAttribute("width"), "100");
+  assert.equal(circle.getAttribute("fill"), "red");
+});
+
+test("svg jsdom: nested g/rect inherit SVG NS (port)", async () => {
+  const mod = await import(`../../src/index.ts?svg-g-${Date.now()}-${Math.random()}`);
+  const tag = uniqueTag("svg-g");
+  mod.define(tag, () => () => mod.html`<svg><g><circle r="5"></circle><rect width="10"></rect></g></svg>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await tick(); mod.flush();
+  assert.equal(el.querySelector("g").namespaceURI, "http://www.w3.org/2000/svg");
+  assert.equal(el.querySelector("rect").namespaceURI, "http://www.w3.org/2000/svg");
+});
+
+test("svg jsdom: foreignObject child is SVG, inner div is HTML (port)", async () => {
+  const mod = await import(`../../src/index.ts?svg-fo-port-${Date.now()}-${Math.random()}`);
+  const tag = uniqueTag("svg-fo-port");
+  mod.define(tag, () => () => mod.html`<svg><foreignObject width="100"><div>hi</div></foreignObject></svg>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await tick(); mod.flush();
+  const fo = el.querySelector("foreignobject") || el.querySelector("foreignObject");
+  const div = el.querySelector("div");
+  assert.equal(fo.namespaceURI, "http://www.w3.org/2000/svg");
+  assert.equal(div.namespaceURI, "http://www.w3.org/1999/xhtml");
+  assert.equal(div.textContent, "hi");
+});
+
+test("svg jsdom: dynamic attrs patch and preserve DOM identity (port)", async () => {
+  const mod = await import(`../../src/index.ts?svg-dyn-port-${Date.now()}-${Math.random()}`);
+  const tag = uniqueTag("svg-dyn-port");
+  let cx="10", fill="red"; let ref;
+  mod.define(tag, el2=>{ref=el2; return ()=> mod.html`<svg><circle cx=${cx} fill=${fill} r="10"></circle></svg>`});
+  const el = document.createElement(tag); document.body.appendChild(el); await tick(); mod.flush();
+  const old = el.querySelector("circle");
+  assert.equal(old.getAttribute("cx"), "10");
+  cx="55"; fill="blue"; mod.update(ref); await tick(); mod.flush();
+  const cur = el.querySelector("circle");
+  assert.equal(cur, old);
+  assert.equal(cur.getAttribute("cx"), "55");
+  assert.equal(cur.getAttribute("fill"), "blue");
+  assert.equal(cur.namespaceURI, "http://www.w3.org/2000/svg");
+});
+
+test("svg jsdom: events on circle and g (port)", async () => {
+  const mod = await import(`../../src/index.ts?svg-evt2-${Date.now()}-${Math.random()}`);
+  const tag = uniqueTag("svg-evt2");
+  let clicked=false; let gClicked=false;
+  mod.define(tag, () => () => mod.html`<svg><g onclick=${()=>gClicked=true}><circle onclick=${()=>clicked=true} r="10"></circle></g></svg>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await tick(); mod.flush();
+  el.querySelector("circle").dispatchEvent(new Event("click", { bubbles: true }));
+  assert.equal(clicked, true);
+  // g event also test
+  const tag2 = uniqueTag("svg-evt-g");
+  let g2=false;
+  mod.define(tag2, () => () => mod.html`<svg><g onclick=${()=>g2=true}><rect width="10" height="10"></rect></g></svg>`);
+  const el2 = document.createElement(tag2); document.body.appendChild(el2); await tick(); mod.flush();
+  el2.querySelector("g").dispatchEvent(new Event("click", { bubbles: true }));
+  assert.equal(g2, true);
+});
+
+test("svg jsdom: mixed HTML+SVG namespaces (port)", async () => {
+  const mod = await import(`../../src/index.ts?svg-mix-${Date.now()}-${Math.random()}`);
+  const tag = uniqueTag("svg-mix-port");
+  mod.define(tag, ()=>()=> mod.html`<div><h1>t</h1><svg><circle r="5"></circle></svg><p>after</p></div>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await tick(); mod.flush();
+  assert.equal(el.querySelector("div").namespaceURI, "http://www.w3.org/1999/xhtml");
+  assert.equal(el.querySelector("svg").namespaceURI, "http://www.w3.org/2000/svg");
+  assert.equal(el.querySelector("p").namespaceURI, "http://www.w3.org/1999/xhtml");
+});
+
+test("svg jsdom: xlink:href and viewBox preserve case (port)", async () => {
+  const mod = await import(`../../src/index.ts?svg-xlink-${Date.now()}-${Math.random()}`);
+  const tag = uniqueTag("svg-xlink");
+  mod.define(tag, ()=>()=> mod.html`<svg viewBox="0 0 100 100"><use href="#a"></use><use xlink:href="#b"></use></svg>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await tick(); mod.flush();
+  const uses=[...el.querySelectorAll("use")];
+  assert.equal(uses[0].getAttribute("href"), "#a");
+  assert.equal(uses[1].getAttribute("xlink:href"), "#b");
+  assert.equal(el.querySelector("svg").getAttribute("viewBox"), "0 0 100 100");
+});
