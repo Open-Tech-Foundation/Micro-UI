@@ -28,7 +28,7 @@ run = "esdev build src/index.ts --out=dist/index.min.js --minify"
 dir = "packages/micro-ui"
 
 [tasks."build:css"]
-run = "cp src/styles.css dist/styles.css"
+run = "lightningcss --bundle src/styles.css -o dist/styles.css"
 dir = "packages/micro-ui"
 
 [tasks."build:css:min"]
