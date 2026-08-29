@@ -1,6 +1,6 @@
 export const MARKER = "\ue000";
 
-import { HTML_NS, SVG_NS } from "./ns.ts";
+import { HTML_NS, resolveNS, SVG_NS } from "./ns.ts";
 import type {
   AttrValue,
   BindingDesc,
@@ -61,20 +61,7 @@ function buildElDesc(
 ): ElementDesc {
   const tag = el.tagName.toLowerCase();
   // Hybrid NS detection: trust DOM namespaceURI when present, otherwise inherit.
-  let ns: string | null;
-  const domNS = (el as Element).namespaceURI;
-  if (domNS === SVG_NS) {
-    ns = SVG_NS;
-  } else if (tag === "svg") {
-    ns = SVG_NS;
-  } else if (tag === "foreignobject") {
-    // foreignObject itself is SVG, but its children revert to HTML (handled below)
-    ns = SVG_NS;
-  } else if (parentNS === SVG_NS) {
-    ns = SVG_NS;
-  } else {
-    ns = HTML_NS;
-  }
+  const ns = resolveNS(tag, parentNS, (el as Element).namespaceURI);
 
   // For children, determine what NS they inherit:
   let childParentNS: string | null;

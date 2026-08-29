@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Deduplicated `createEl` (was identically defined in `dom.ts` and `vdom.ts`) — now exported once from `dom.ts` and imported in `vdom.ts`.
+- Extracted `resolveNS(tag, parentNS, domNS?)` helper into `ns.ts` to unify SVG/HTML namespace resolution logic previously repeated in `template.ts`, `dom.ts` (`correctVNodeNS`, `materializeNode`).
+- Extracted `XML_NS_MAP` constant in `dom.ts` to replace two identical inline `nsMap` definitions in `setProp`.
+
 ## [0.5.0] - 2026-08-29
 
 ### Fixed

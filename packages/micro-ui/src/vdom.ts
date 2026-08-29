@@ -1,6 +1,5 @@
-import { correctVNodeNS, setProp } from "./dom.ts";
+import { correctVNodeNS, createEl, setProp } from "./dom.ts";
 import { escapeText } from "./escape.ts";
-import { SVG_NS, svgTagName } from "./ns.ts";
 import { materializeRaw } from "./raw.ts";
 import type {
   DescNode,
@@ -11,12 +10,6 @@ import type {
   TextVNode,
   VNode,
 } from "./types.ts";
-
-function createEl(tag: string, ns: string | null): Element {
-  return ns === SVG_NS
-    ? document.createElementNS(SVG_NS, svgTagName(tag))
-    : document.createElement(tag);
-}
 
 export function createTree(
   tpl: TemplateCache,

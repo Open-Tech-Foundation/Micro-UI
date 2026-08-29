@@ -49,3 +49,15 @@ const SVG_TAG_CANONICAL: Record<string, string> = {
 export function svgTagName(tag: string): string {
   return SVG_TAG_CANONICAL[tag] ?? tag;
 }
+
+export function resolveNS(
+  tag: string,
+  parentNS: string | null,
+  domNS?: string | null,
+): string | null {
+  if (domNS === SVG_NS) return SVG_NS;
+  if (tag === "svg") return SVG_NS;
+  if (tag === "foreignobject") return SVG_NS;
+  if (parentNS === SVG_NS) return SVG_NS;
+  return HTML_NS;
+}

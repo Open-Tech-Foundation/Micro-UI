@@ -1,14 +1,10 @@
-import { HTML_NS, SVG_NS, svgTagName } from "./ns.ts";
+import { HTML_NS, resolveNS, SVG_NS, svgTagName } from "./ns.ts";
 import type { VNode } from "./types.ts";
 
 export function correctVNodeNS(node: VNode, parentNS: string | null): void {
   if (node.type === "element") {
     const tag = node.tag;
-    let expected: string | null;
-    if (tag === "svg") expected = SVG_NS;
-    else if (tag === "foreignobject") expected = SVG_NS;
-    else if (parentNS === SVG_NS) expected = SVG_NS;
-    else expected = HTML_NS;
+    const expected = resolveNS(tag, parentNS);
     node.ns = expected;
     const childParentNS =
       expected === SVG_NS && tag === "foreignobject" ? HTML_NS : expected;
@@ -42,11 +38,16 @@ export function correctVNodeNS(node: VNode, parentNS: string | null): void {
   }
 }
 
-function createEl(tag: string, ns: string | null): Element {
+export function createEl(tag: string, ns: string | null): Element {
   return ns === SVG_NS
     ? document.createElementNS(SVG_NS, svgTagName(tag))
     : document.createElement(tag);
 }
+
+const XML_NS_MAP: Record<string, string> = {
+  xlink: "http://www.w3.org/1999/xlink",
+  xml: "http://www.w3.org/XML/1998/namespace",
+};
 
 const BOOLEAN_PROPS = new Set([
   "checked",
@@ -114,11 +115,7 @@ export function setProp(el: Element, k: string, v: unknown): void {
     const strVal = String(v);
     if (k.includes(":") && isSvg) {
       const [prefix] = k.split(":");
-      const nsMap: Record<string, string> = {
-        xlink: "http://www.w3.org/1999/xlink",
-        xml: "http://www.w3.org/XML/1998/namespace",
-      };
-      const ns = nsMap[prefix ?? ""];
+      const ns = XML_NS_MAP[prefix ?? ""];
       if (ns) {
         try {
           el.setAttributeNS(ns, k, strVal);
@@ -160,11 +157,7 @@ export function setProp(el: Element, k: string, v: unknown): void {
       // For SVG namespaced attributes, use setAttributeNS if possible
       // xlink:href and xml:space etc.
       const [prefix] = k.split(":");
-      const nsMap: Record<string, string> = {
-        xlink: "http://www.w3.org/1999/xlink",
-        xml: "http://www.w3.org/XML/1998/namespace",
-      };
-      const ns = nsMap[prefix ?? ""];
+      const ns = XML_NS_MAP[prefix ?? ""];
       if (ns) {
         try {
           el.setAttributeNS(ns, k, v);
@@ -197,12 +190,7 @@ export function materializeNode(
   } else if (node.type === "element") {
     // Correct this node's ns based on parentNS if needed (for fragments inserted into SVG)
     if (parentNS !== null) {
-      let expected: string | null;
-      if (node.tag === "svg") expected = SVG_NS;
-      else if (node.tag === "foreignobject") expected = SVG_NS;
-      else if (parentNS === SVG_NS) expected = SVG_NS;
-      else expected = HTML_NS;
-      node.ns = expected;
+      node.ns = resolveNS(node.tag, parentNS);
     }
     const el = createEl(node.tag, node.ns);
     for (const k in node.attrs) setProp(el, k, node.attrs[k]);
