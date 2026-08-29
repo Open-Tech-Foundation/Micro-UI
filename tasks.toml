@@ -28,7 +28,7 @@ run = "cp src/styles.css dist/styles.css && mkdir -p dist/styles && cp src/style
 dir = "packages/micro-ui"
 
 [tasks."build:css:min"]
-run = "npx lightningcss-cli --minify --bundle src/styles.css -o dist/styles.min.css && npx lightningcss-cli --minify src/styles/base.css -o dist/styles/base.min.css && npx lightningcss-cli --minify src/styles/tokens.css -o dist/styles/tokens.min.css && npx lightningcss-cli --minify src/styles/components.css -o dist/styles/components.min.css"
+run = "lightningcss --minify --bundle src/styles.css -o dist/styles.min.css && lightningcss --minify src/styles/base.css -o dist/styles/base.min.css && lightningcss --minify src/styles/tokens.css -o dist/styles/tokens.min.css && lightningcss --minify src/styles/components.css -o dist/styles/components.min.css"
 dir = "packages/micro-ui"
 
 [tasks."build:readme"]
