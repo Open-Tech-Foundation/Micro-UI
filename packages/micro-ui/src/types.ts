@@ -84,7 +84,7 @@ export interface MountOptions {
   dev?: boolean;
 }
 
-export type ErrorPhase = "setup" | "render" | "reconcile";
+export type ErrorPhase = "setup" | "ready" | "render" | "reconcile";
 export type ErrorHandler = (
   el: HTMLElement,
   err: Error,

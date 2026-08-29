@@ -8,9 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `ErrorPhase` gains `"ready"`, distinguishing a failure in an `onReady` callback from one in `setup`.
 - `mount(el, tag, { dev })` — opt in to developer diagnostics. With `dev` off (the default) a failing component renders `Something went wrong.` instead of the thrown error's message, which may carry a URL, a token or an internal path. The full error always reaches `console.error` and any `onError` handler regardless, so nothing is lost for debugging. Exports a `MountOptions` type.
 
 ### Fixed
+- A throwing `onReady` callback no longer corrupts the component. The drain loop was unguarded and `errorHandlers.set()` was the line after it, so one throw escaped `connectedCallback` uncaught, skipped every remaining callback, left the component permanently without its own `onError` handlers, and lost the cleanups those callbacks would have registered — silently, with the component still mounted. Each callback is now isolated and reported through `onError` with the new `"ready"` phase; the rendered UI is left alone, since the component itself rendered fine.
 - The on-page error box no longer prints a thrown error's message by default. Because every component is its own boundary, that box renders wherever the failing component sits — potentially somewhere an end user is looking — with no development/production distinction to gate it.
 - Re-parenting an element no longer destroys its component. `disconnectedCallback` tore the instance down synchronously, but a move fires disconnect immediately followed by connect — so drag-and-drop, tab reparenting and list virtualisation silently reset state and ran cleanups. Teardown is now deferred by a microtask and cancelled if the element is back in the document, while a genuine removal still tears down as before.
 - A cleanup callback that throws is now isolated and logged instead of blocking the cleanups after it. Required by the deferred teardown above — a throw from a microtask would otherwise be an unhandled error with no caller to catch it.

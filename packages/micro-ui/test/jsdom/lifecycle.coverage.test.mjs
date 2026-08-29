@@ -525,7 +525,7 @@ test("lifecycle: onError handler throwing is swallowed via safeCall (console.err
   }
 });
 
-test("lifecycle: onReady callback throwing aborts subsequent cleanups (covers loop throw path)", async () => {
+test("lifecycle: onReady callback throwing no longer aborts the drain", async () => {
   const mod = await import(`../../src/index.ts?lc-ready-throw-loop-${Date.now()}-${Math.random()}`);
   const tag = uniqueTag("lc-ready-throw-loop");
   let secondCalled = false;
@@ -542,14 +542,13 @@ test("lifecycle: onReady callback throwing aborts subsequent cleanups (covers lo
   } catch (e) {
     threw = true;
   }
-  // current impl has no try/catch around cb() drain, so throw propagates and second onReady never runs
-  // error is uncaught; secondCalled stays false if loop aborted
-  assert.equal(secondCalled, false);
-  // cleanup should be that behavior; if implementation later wraps, secondCalled would be true - accept either but document:
-  assert.ok(threw === true || threw === false);
+  // Each callback is isolated: the throw is reported, the drain continues, and
+  // nothing escapes connectedCallback.
+  assert.equal(threw, false, "the throw must not escape as an unhandled error");
+  assert.equal(secondCalled, true, "one broken callback must not skip the rest");
+  assert.ok(el.querySelector("div"), "and the rendered UI is left alone");
   el.remove();
 });
-
 test("lifecycle: destroyCallbacks WeakMap basic get/set/delete", async () => {
   const lc = await import(`../../src/lifecycle.ts?lc-destroy-map-${Date.now()}-${Math.random()}`);
   const el = document.createElement("div");
@@ -584,4 +583,140 @@ test("lifecycle: second define re-entrancy does not leak pending (define inside 
   await tick();
   assert.ok(el2.querySelector("span") !== null);
   el1.remove(); el2.remove();
+});
+
+// ── a throwing onReady must not corrupt the component ──────────────
+// The onReady loop ran unguarded, and errorHandlers.set() was the line after
+// it. One throw therefore skipped the remaining callbacks, left the component
+// permanently without its own onError handlers, and lost every cleanup that
+// had not been registered yet — silently, with the component still mounted.
+const rdy = await import(`../../src/index.ts?onready-isolation-${Date.now()}`);
+
+test("onReady: a throwing callback does not skip the ones after it", async () => {
+  const tag = uniqueTag("ready-iso");
+  let second = false;
+  rdy.define(tag, () => {
+    rdy.onReady(() => {
+      throw new Error("ready-boom");
+    });
+    rdy.onReady(() => {
+      second = true;
+    });
+    return () => rdy.html`<i>ok</i>`;
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+
+  assert.equal(second, true, "later onReady callbacks must still run");
+  assert.equal(el.querySelector("i")?.textContent, "ok", "the UI is untouched");
+});
+
+test("onReady: a throwing callback is reported through onError as phase 'ready'", async () => {
+  const tag = uniqueTag("ready-report");
+  let seen = null;
+  rdy.define(tag, () => {
+    rdy.onError((_el, err, phase) => {
+      seen = { message: err.message, phase };
+    });
+    rdy.onReady(() => {
+      throw new Error("ready-boom");
+    });
+    return () => rdy.html`<i>ok</i>`;
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+
+  assert.deepEqual(seen, { message: "ready-boom", phase: "ready" });
+});
+
+test("onReady: a throwing callback does not cost the component its error handlers", async () => {
+  const tag = uniqueTag("ready-handlers");
+  const seen = [];
+  let ref;
+  let boom = false;
+  rdy.define(tag, (host) => {
+    ref = host;
+    rdy.onError((_el, err, phase) => seen.push(phase));
+    rdy.onReady(() => {
+      throw new Error("ready-boom");
+    });
+    return () => {
+      if (boom) throw new Error("render-boom");
+      return rdy.html`<i>ok</i>`;
+    };
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+  assert.deepEqual(seen, ["ready"]);
+
+  boom = true;
+  rdy.update(ref);
+  await tick();
+  assert.deepEqual(seen, ["ready", "render"], "handlers survived the onReady throw");
+});
+
+test("onReady: a throwing callback does not cost the component its cleanups", async () => {
+  const tag = uniqueTag("ready-cleanups");
+  let cleaned = false;
+  rdy.define(tag, () => {
+    rdy.onReady(() => {
+      throw new Error("ready-boom");
+    });
+    rdy.onReady(() => () => {
+      cleaned = true;
+    });
+    return () => rdy.html`<i>ok</i>`;
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+
+  el.remove();
+  await tick();
+  await delay();
+  assert.equal(cleaned, true, "the later cleanup was registered and ran");
+});
+
+test("onReady: a cleanup registered before the throw still runs", async () => {
+  const tag = uniqueTag("ready-cleanup-first");
+  let cleaned = false;
+  rdy.define(tag, () => {
+    rdy.onReady(() => () => {
+      cleaned = true;
+    });
+    rdy.onReady(() => {
+      throw new Error("ready-boom");
+    });
+    return () => rdy.html`<i>ok</i>`;
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+
+  el.remove();
+  await tick();
+  await delay();
+  assert.equal(cleaned, true);
+});
+
+test("onReady: the throw does not escape connectedCallback", async () => {
+  const tag = uniqueTag("ready-escape");
+  rdy.define(tag, () => {
+    rdy.onReady(() => {
+      throw new Error("ready-boom");
+    });
+    return () => rdy.html`<i>ok</i>`;
+  });
+  const el = document.createElement(tag);
+  let threw = false;
+  try {
+    document.body.appendChild(el);
+    await tick();
+  } catch {
+    threw = true;
+  }
+  assert.equal(threw, false);
 });

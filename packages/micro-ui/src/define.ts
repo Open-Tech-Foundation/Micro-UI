@@ -85,18 +85,35 @@ export function define(tag: string, setup: SetupFn): void {
           return;
         }
 
+        // Registered before the onReady loop runs: a callback throwing used to
+        // abort the loop before this line, leaving the component permanently
+        // without its own error handlers.
+        if (errs.length) errorHandlers.set(this, errs);
+
         for (const cb of cbs) {
-          const cleanup = cb();
-          if (typeof cleanup === "function") {
-            let list = destroyCallbacks.get(this);
-            if (!list) {
-              list = [];
-              destroyCallbacks.set(this, list);
+          // Isolated per callback — one failing onReady must not skip the
+          // others, and must not cost the component its cleanups.
+          try {
+            const cleanup = cb();
+            if (typeof cleanup === "function") {
+              let list = destroyCallbacks.get(this);
+              if (!list) {
+                list = [];
+                destroyCallbacks.set(this, list);
+              }
+              list.push(cleanup);
             }
-            list.push(cleanup);
+          } catch (e) {
+            const err = e instanceof Error ? e : new Error(String(e));
+            console.error(
+              `[micro-ui] onReady threw on <${this.tagName.toLowerCase()}>:`,
+              err.message,
+            );
+            // The component rendered fine; onReady is a side-effect hook, so
+            // the working UI stays and the failure is reported instead.
+            for (const h of errs) safeCall(h, this, err, "ready");
           }
         }
-        if (errs.length) errorHandlers.set(this, errs);
       }
       disconnectedCallback() {
         teardownPending.add(this);

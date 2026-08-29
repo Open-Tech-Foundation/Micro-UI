@@ -360,6 +360,10 @@ failing child — the child shows its own error box in place, and the parent's
 Errors thrown from event handlers are outside this: they are ordinary DOM
 event callbacks and reach `window.onerror`, not `onError`.
 
+A throwing `onReady` callback is isolated too: the remaining callbacks still
+run, the rendered UI is left alone (the component itself rendered fine), and
+the failure is reported to `onError` with phase `"ready"`.
+
 - The failed element is replaced with a small inline error box (`<div data-micro-ui-error>`).
 - The instance is marked `errored` — further `update()` calls are no-ops.
 - The host page and all sibling components continue running normally.
