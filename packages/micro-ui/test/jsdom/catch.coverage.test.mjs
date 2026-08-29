@@ -607,3 +607,72 @@ test("catch: define mountErrorUI hostile host still swallows", async () => {
   // after mountErrorUI swallows, it still set errored true without crashing
   assert.ok(true);
 });
+
+// ── mountErrorUI replaces content, it does not append to it ────────
+// The `el.textContent = ""` in mountErrorUI is invisible to every other test:
+// they all error on the first render, when the host is already empty. It only
+// matters when a component has rendered successfully and then throws.
+const errUI = await import(`../../src/index.ts?err-replace-${Date.now()}`);
+
+test("mountErrorUI: a render error replaces the previous content", async () => {
+  const tag = uniqueTag("t-err-replace");
+  let boom = false;
+  let ref;
+  errUI.define(tag, (host) => {
+    ref = host;
+    return () => {
+      if (boom) throw new Error("kaboom");
+      return errUI.html`<p>real content</p>`;
+    };
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+  assert.equal(el.querySelector("p").textContent, "real content");
+
+  boom = true;
+  errUI.update(ref);
+  await tick();
+
+  assert.equal(el.querySelector("p"), null, "stale content must be gone");
+  assert.equal(el.children.length, 1, "error box must not be appended below it");
+  assert.equal(el.children[0].getAttribute("data-micro-ui-error"), "");
+  assert.equal(el.textContent, "kaboom");
+});
+
+test("mountErrorUI: a second error replaces the first error box", async () => {
+  const tag = uniqueTag("t-err-twice");
+  let n = 0;
+  let ref;
+  errUI.define(tag, (host) => {
+    ref = host;
+    return () => {
+      n++;
+      if (n === 1) return errUI.html`<p>ok</p>`;
+      throw new Error(`fail ${n}`);
+    };
+  });
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+
+  errUI.update(ref);
+  await tick();
+  assert.equal(el.querySelectorAll("[data-micro-ui-error]").length, 1);
+  assert.equal(el.textContent, "fail 2");
+});
+
+test("mountErrorUI: a setup error replaces pre-existing light DOM", async () => {
+  const tag = uniqueTag("t-err-setup");
+  errUI.define(tag, () => {
+    throw new Error("setup failed");
+  });
+  const el = document.createElement(tag);
+  el.innerHTML = "<span>server-rendered placeholder</span>";
+  document.body.appendChild(el);
+  await tick();
+
+  assert.equal(el.querySelector("span"), null, "placeholder must be cleared");
+  assert.equal(el.children.length, 1);
+  assert.equal(el.textContent, "setup failed");
+});

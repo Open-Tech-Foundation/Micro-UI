@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hoisted `getParentNS()` call out of the `patchKeyed` loop body (one call per patch instead of one per iteration).
 
 ### Added
+- Tests for four branches that mutation testing showed no test could detect the removal of: `mountErrorUI` clearing the host before mounting the error box (previously only ever exercised on an already-empty host), the `domNS === SVG_NS` and `tag === "foreignobject"` branches of `resolveNS` (both masked in integration by the `parentNS === SVG_NS` branch below them), and `resolveBinding` accepting a bare element vnode as a value (`html` always returns a fragment, so the text/element branches were never reached by a whole template).
 - Unit tests for `setProp` (value, boolean, ARIA, generic, event listeners) in `test/micro-ui.setprop.test.mjs`.
 - jsdom tests for `addListener`/`removeListener`, `setElProp`, and `setProp` real DOM behavior in `test/jsdom/dom-helpers.test.mjs`.
 - Migrated all FakeDOM tests to jsdom: ported `micro-ui.test.mjs` (136 tests), `micro-ui.coverage.test.mjs` (21 tests), `micro-ui.setprop.test.mjs` (24 tests), `micro-ui.svg.test.mjs` (13 tests), and `micro-ui.e2e.test.mjs` (5 tests) into `test/jsdom/` (`micro-ui.jsdom.test.mjs`, `coverage.jsdom.test.mjs`, `dom-helpers.test.mjs`, `svg.test.mjs`, `e2e.test.mjs`). FakeDOM suite now has full jsdom parity (344 jsdom tests). Real DOM provides accurate attribute/property reflection and namespace coverage that FakeDOM cannot observe.

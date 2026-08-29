@@ -263,3 +263,46 @@ test("svg jsdom: xlink:href and viewBox preserve case (port)", async () => {
   assert.equal(uses[1].getAttribute("xlink:href"), "#b");
   assert.equal(el.querySelector("svg").getAttribute("viewBox"), "0 0 100 100");
 });
+
+// ── resolveNS contract ─────────────────────────────────────────────
+// Two branches of resolveNS are masked in integration: `parentNS === SVG_NS`
+// below them already returns SVG for every case the parser produces, so both
+// could be deleted without a single integration test failing. Pin them here
+// against the pure function so the contract is held on its own.
+const { resolveNS, svgTagName, SVG_NS, HTML_NS } = await import(
+  `../../src/ns.ts?ns-contract-${Date.now()}`
+);
+
+test("resolveNS: an element parsed into the SVG namespace stays in it", () => {
+  // domNS wins even when neither the tag nor the parent implies SVG.
+  assert.equal(resolveNS("circle", HTML_NS, SVG_NS), SVG_NS);
+  assert.equal(resolveNS("a", HTML_NS, SVG_NS), SVG_NS, "SVG <a> is not HTML <a>");
+  assert.equal(resolveNS("title", null, SVG_NS), SVG_NS, "SVG <title> is not HTML <title>");
+});
+
+test("resolveNS: foreignObject is SVG even with no SVG parent", () => {
+  // Reached when a fragment containing foreignObject is corrected against a
+  // non-SVG parent — the tag alone has to carry the namespace.
+  assert.equal(resolveNS("foreignobject", HTML_NS), SVG_NS);
+  assert.equal(resolveNS("foreignobject", null, null), SVG_NS);
+});
+
+test("resolveNS: <svg> opens the namespace, plain HTML stays HTML", () => {
+  assert.equal(resolveNS("svg", HTML_NS), SVG_NS);
+  assert.equal(resolveNS("div", HTML_NS), HTML_NS);
+  assert.equal(resolveNS("div", null, null), HTML_NS);
+});
+
+test("resolveNS: children inherit an SVG parent", () => {
+  assert.equal(resolveNS("circle", SVG_NS), SVG_NS);
+  assert.equal(resolveNS("div", SVG_NS), SVG_NS, "correctVNodeNS re-homes these later");
+});
+
+test("svgTagName: canonicalises camelCase SVG tags, passes others through", () => {
+  assert.equal(svgTagName("foreignobject"), "foreignObject");
+  assert.equal(svgTagName("lineargradient"), "linearGradient");
+  assert.equal(svgTagName("clippath"), "clipPath");
+  assert.equal(svgTagName("fegaussianblur"), "feGaussianBlur");
+  assert.equal(svgTagName("circle"), "circle");
+  assert.equal(svgTagName("div"), "div");
+});

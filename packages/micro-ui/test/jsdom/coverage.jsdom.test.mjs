@@ -295,3 +295,67 @@ test("coverage jsdom: props aria-hidden numeric zero stringifies to '0'", async 
   const el = document.createElement(tag); document.body.appendChild(el); await tick();
   assert.equal(el.querySelector("div").getAttribute("aria-hidden"), "0");
 });
+
+// ── resolveBinding accepts every VNode shape, not just fragments ───
+// html`` always returns a fragment, so the text/element/raw branches of
+// resolveBinding are never reached by a whole template. They are reached when
+// a caller passes an individual node — e.g. a child plucked off a tree. Without
+// the element branch such a value falls through to String(val) and renders the
+// literal text "[object Object]".
+test("coverage jsdom: an element vnode passed as a value renders as an element", async () => {
+  const tag = uniqueTag("cov-vnode-el");
+  const node = html`<b class="picked">bold</b>`.children[0];
+  assert.equal(node.type, "element", "precondition: this is a bare element vnode");
+
+  define(tag, () => () => html`<p>${node}</p>`);
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+  flush();
+
+  const b = el.querySelector("p > b.picked");
+  assert.ok(b, "must be a real <b> element, not stringified");
+  assert.equal(b.textContent, "bold");
+  assert.equal(el.textContent.includes("[object Object]"), false);
+});
+
+test("coverage jsdom: a text vnode passed as a value renders as text", async () => {
+  const tag = uniqueTag("cov-vnode-text");
+  const node = html`plain`.children[0];
+  assert.equal(node.type, "text");
+
+  define(tag, () => () => html`<p>${node}</p>`);
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+  flush();
+
+  assert.equal(el.querySelector("p").textContent, "plain");
+  assert.equal(el.textContent.includes("[object Object]"), false);
+});
+
+test("coverage jsdom: a fragment vnode passed as a value is spliced in", async () => {
+  const tag = uniqueTag("cov-vnode-frag");
+  const node = html`<i>one</i><i>two</i>`;
+  assert.equal(node.type, "fragment");
+
+  define(tag, () => () => html`<p>${node}</p>`);
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+  flush();
+
+  assert.equal(el.querySelectorAll("p > i").length, 2);
+  assert.equal(el.querySelector("p").textContent, "onetwo");
+});
+
+test("coverage jsdom: a plain object still stringifies, it is not treated as a vnode", async () => {
+  const tag = uniqueTag("cov-vnode-plain");
+  define(tag, () => () => html`<p>${{ type: "element" }}</p>`);
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick();
+  flush();
+  // type: "element" without a string tag must not be mistaken for a vnode.
+  assert.equal(el.querySelector("p").textContent, "[object Object]");
+});
