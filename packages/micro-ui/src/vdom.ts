@@ -1,4 +1,4 @@
-import { setProp } from "./dom.ts";
+import { correctVNodeNS, setProp } from "./dom.ts";
 import { escapeText } from "./escape.ts";
 import { SVG_NS } from "./ns.ts";
 import { materializeRaw } from "./raw.ts";
@@ -112,6 +112,16 @@ function cloneNode(d: DescNode, values: unknown[], deferDOM: boolean): VNode {
     }
 
     const children = createNodes(d.children, values, deferDOM);
+    // Correct NS for children that may be fragments inserted into SVG (e.g. html`<g>` inside <svg>)
+    // The stored ns for fragment children was parsed as HTML, but inside SVG they must be SVG.
+    const childParentNS =
+      d.ns === "http://www.w3.org/2000/svg" && d.tag === "foreignobject"
+        ? null
+        : d.ns;
+    for (const c of children) {
+      if (c.type === "element" || c.type === "fragment")
+        correctVNodeNS(c, childParentNS);
+    }
 
     if (deferDOM) {
       return {

@@ -100,3 +100,55 @@ test("svg: xlink:href and viewBox preserve case", async () => {
   // xlink:href is stored lowercased in FakeDOM but still retrievable
   assert(uses[1].getAttribute("xlink:href")==="#b" || uses[1].getAttribute("xlink:href")==="#b");
 });
+
+test("svg: dynamic fragment inside svg gets SVG namespace (g/line via html)", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("svg-dyn-frag");
+  let show = true; let ref;
+  define(tag, el2 => { ref = el2; return () => html`<svg width="100" height="100"><g id="static"><circle r="5"></circle></g>${show ? html`<g id="dyn"><line x1="0" y1="0" x2="10" y2="10"></line></g>` : null}</svg>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(el.querySelector("#dyn").namespaceURI === "http://www.w3.org/2000/svg");
+  assert(el.querySelector("line").namespaceURI === "http://www.w3.org/2000/svg");
+  show = false; update(ref); await micro(); flush(); await delay(5);
+  assert(el.querySelector("#dyn") === null);
+  show = true; update(ref); await micro(); flush(); await delay(5);
+  assert(el.querySelector("#dyn").namespaceURI === "http://www.w3.org/2000/svg");
+  assert(el.querySelector("line").namespaceURI === "http://www.w3.org/2000/svg");
+});
+
+test("svg: keyed circles via html fragments inside svg are SVG", async () => {
+  setupDOM(); const { define, html } = await fresh();
+  const tag = uniqueTag("svg-keyed-frag");
+  define(tag, () => () => html`<svg>${[1,2].map(id => html`<circle key=${id} id=${"k"+id} r="5"></circle>`)}</svg>`);
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(el.querySelector("#k1").namespaceURI === "http://www.w3.org/2000/svg");
+  assert(el.querySelector("#k2").namespaceURI === "http://www.w3.org/2000/svg");
+});
+
+test("svg: dynamic child inside foreignObject stays HTML after re-add", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("svg-fo-dyn");
+  let show = true; let ref;
+  define(tag, el2 => { ref = el2; return () => html`<svg><foreignObject>${show ? html`<div id="fochild"><span>hi</span></div>` : null}</foreignObject></svg>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(el.querySelector("#fochild").namespaceURI === null || el.querySelector("#fochild").namespaceURI === "http://www.w3.org/1999/xhtml");
+  show = false; update(ref); await micro(); flush(); await delay(5);
+  assert(el.querySelector("#fochild") === null);
+  show = true; update(ref); await micro(); flush(); await delay(5);
+  const d = el.querySelector("#fochild");
+  assert(d.namespaceURI === null || d.namespaceURI === "http://www.w3.org/1999/xhtml", "re-added foreignObject child stays HTML");
+  assert(d.querySelector("span").namespaceURI === null || d.querySelector("span").namespaceURI === "http://www.w3.org/1999/xhtml");
+});
+
+test("svg: swapping foreignObject child type keeps HTML namespace", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("svg-fo-swap");
+  let kind = "p"; let ref;
+  define(tag, el2 => { ref = el2; return () => html`<svg><foreignObject>${kind === "p" ? html`<p id="fc">a</p>` : html`<div id="fc">b</div>`}</foreignObject></svg>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  assert(el.querySelector("#fc").namespaceURI === null || el.querySelector("#fc").namespaceURI === "http://www.w3.org/1999/xhtml");
+  kind = "div"; update(ref); await micro(); flush(); await delay(5);
+  const d = el.querySelector("#fc");
+  assert(d.namespaceURI === null || d.namespaceURI === "http://www.w3.org/1999/xhtml", "swapped foreignObject child stays HTML");
+  assertEquals(d.tagName.toLowerCase(), "div");
+});

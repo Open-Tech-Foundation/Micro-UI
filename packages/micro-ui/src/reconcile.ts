@@ -1,7 +1,20 @@
-import { materializeNode, setProp } from "./dom.ts";
+import { correctVNodeNS, materializeNode, setProp } from "./dom.ts";
+import { HTML_NS, SVG_NS } from "./ns.ts";
 import { instances } from "./state.ts";
 import type { ElementVNode, FragmentVNode, TextVNode, VNode } from "./types.ts";
 import { update } from "./update.ts";
+
+function getParentNS(
+  parent: HTMLElement | Element | DocumentFragment,
+): string | null {
+  const el = parent as Element;
+  if (!el.namespaceURI) return null;
+  // Children of a <foreignObject> must revert to HTML even though the
+  // foreignObject element itself lives in the SVG namespace.
+  if (el.namespaceURI === SVG_NS && el.tagName.toLowerCase() === "foreignobject")
+    return HTML_NS;
+  return el.namespaceURI;
+}
 
 export function reconcile(
   old: VNode,
@@ -9,7 +22,10 @@ export function reconcile(
   parent: HTMLElement | Element | DocumentFragment,
 ): void {
   if (old.type !== next.type) {
-    materializeNode(next);
+    const parentNS = getParentNS(parent);
+    if (next.type === "element" || next.type === "fragment")
+      correctVNodeNS(next, parentNS);
+    materializeNode(next, parentNS);
     parent.replaceChild(next.dom!, old.dom!);
     return;
   }
@@ -27,7 +43,10 @@ export function reconcile(
   if (old.type === "element") {
     const nxt = next as ElementVNode;
     if (old.tag !== nxt.tag || old.ns !== nxt.ns) {
-      materializeNode(nxt);
+      const parentNS = getParentNS(parent);
+      if (nxt.type === "element" || nxt.type === "fragment")
+        correctVNodeNS(nxt, parentNS);
+      materializeNode(nxt, parentNS);
       parent.replaceChild(nxt.dom!, old.dom!);
       return;
     }
@@ -81,7 +100,10 @@ function patchLists(
         return;
       }
     }
-    materializeNode(n);
+    const parentNS2 = getParentNS(parent);
+    if (n.type === "element" || n.type === "fragment")
+      correctVNodeNS(n, parentNS2);
+    materializeNode(n, parentNS2);
     if (o.dom?.parentNode === parent) {
       parent.replaceChild(n.dom!, o.dom!);
     } else {
@@ -105,12 +127,15 @@ function patchByIndex(
   newCh: VNode[],
   parent: HTMLElement | Element | DocumentFragment,
 ): void {
+  const parentNS = getParentNS(parent);
   const len = Math.max(oldCh.length, newCh.length);
   for (let i = 0; i < len; i++) {
     const o = oldCh[i];
     const n = newCh[i];
     if (!o) {
-      materializeNode(n!);
+      if (n!.type === "element" || n!.type === "fragment")
+        correctVNodeNS(n!, parentNS);
+      materializeNode(n!, parentNS);
       parent.appendChild(n!.dom!);
     } else if (!n) {
       if (o.dom?.parentNode === parent) o.dom.remove();
@@ -142,7 +167,10 @@ function patchKeyed(
     const k = getKey(n);
     const o = k != null ? oldMap.get(String(k)) : undefined;
     if (o && (o.dom?.parentNode === parent || o.dom?.parentNode === null)) {
-      materializeNode(n);
+      const _pNS = getParentNS(parent);
+      if (n.type === "element" || n.type === "fragment")
+        correctVNodeNS(n, _pNS);
+      materializeNode(n, _pNS);
       reconcile(o, n, parent);
       if (o.dom!.nextSibling !== nextSib) parent.insertBefore(o.dom!, nextSib);
       nextSib = o.dom;
@@ -155,13 +183,19 @@ function patchKeyed(
         getKey(fallback) == null
       ) {
         unmatchedUnkeyed.delete(fallback);
-        materializeNode(n);
+        const _pNS2 = getParentNS(parent);
+        if (n.type === "element" || n.type === "fragment")
+          correctVNodeNS(n, _pNS2);
+        materializeNode(n, _pNS2);
         reconcile(fallback, n, parent);
         if (fallback.dom!.nextSibling !== nextSib)
           parent.insertBefore(fallback.dom!, nextSib);
         nextSib = fallback.dom;
       } else {
-        materializeNode(n);
+        const _pNS3 = getParentNS(parent);
+        if (n.type === "element" || n.type === "fragment")
+          correctVNodeNS(n, _pNS3);
+        materializeNode(n, _pNS3);
         parent.insertBefore(n.dom!, nextSib);
         nextSib = n.dom!;
       }

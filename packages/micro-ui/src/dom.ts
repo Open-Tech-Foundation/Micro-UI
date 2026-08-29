@@ -1,5 +1,46 @@
-import { SVG_NS } from "./ns.ts";
+import { HTML_NS, SVG_NS } from "./ns.ts";
 import type { VNode } from "./types.ts";
+
+export function correctVNodeNS(node: VNode, parentNS: string | null): void {
+  if (node.type === "element") {
+    const tag = node.tag;
+    let expected: string | null;
+    if (tag === "svg") expected = SVG_NS;
+    else if (tag === "foreignobject") expected = SVG_NS;
+    else if (parentNS === SVG_NS) expected = SVG_NS;
+    else expected = HTML_NS;
+    node.ns = expected;
+    const childParentNS =
+      expected === SVG_NS && tag === "foreignobject" ? HTML_NS : expected;
+    // First correct children recursively (so their dom is fixed before we move them)
+    for (const c of node.children) correctVNodeNS(c, childParentNS);
+    // If DOM already exists with wrong namespace, recreate it and re-append corrected children
+    if ((node as any).dom) {
+      const dom = (node as any).dom as Element;
+      const isDomSvg = dom.namespaceURI === SVG_NS;
+      const shouldBeSvg = expected === SVG_NS;
+      if (isDomSvg !== shouldBeSvg) {
+        const newEl = createEl(tag, expected);
+        for (const k in node.attrs) setProp(newEl, k, node.attrs[k]);
+        for (const e in node.events) {
+          if (node.events[e] != null)
+            newEl.addEventListener(e, node.events[e] as EventListener);
+        }
+        for (const c of node.children) {
+          if ((c as any).dom) newEl.appendChild((c as any).dom);
+          else if (c.type === "text") {
+            const txt = document.createTextNode((c as any).value ?? "");
+            (c as any).dom = txt;
+            newEl.appendChild(txt);
+          }
+        }
+        (node as any).dom = newEl;
+      }
+    }
+  } else if (node.type === "fragment") {
+    for (const c of node.children) correctVNodeNS(c, parentNS);
+  }
+}
 
 function createEl(tag: string, ns: string | null): Element {
   return ns === SVG_NS
@@ -146,23 +187,46 @@ export function setProp(el: Element, k: string, v: unknown): void {
   }
 }
 
-export function materializeNode(node: VNode): void {
+export function materializeNode(
+  node: VNode,
+  parentNS: string | null = null,
+): void {
   if (node.dom) return;
   if (node.type === "text") {
     node.dom = document.createTextNode(node.value);
   } else if (node.type === "element") {
+    // Correct this node's ns based on parentNS if needed (for fragments inserted into SVG)
+    if (parentNS !== null) {
+      let expected: string | null;
+      if (node.tag === "svg") expected = SVG_NS;
+      else if (node.tag === "foreignobject") expected = SVG_NS;
+      else if (parentNS === SVG_NS) expected = SVG_NS;
+      else expected = HTML_NS;
+      node.ns = expected;
+    }
     const el = createEl(node.tag, node.ns);
     for (const k in node.attrs) setProp(el, k, node.attrs[k]);
     for (const e in node.events) {
       if (node.events[e] != null)
         el.addEventListener(e, node.events[e] as EventListener);
     }
+    const childParentNS =
+      node.ns === SVG_NS && node.tag === "foreignobject" ? HTML_NS : node.ns;
     for (const c of node.children) {
-      materializeNode(c);
+      // Correct child NS before materializing
+      if (c.type === "element" || c.type === "fragment")
+        correctVNodeNS(c, childParentNS);
+      materializeNode(c, childParentNS);
       el.appendChild(c.dom!);
     }
     node.dom = el;
   } else if (node.type === "fragment") {
-    for (const c of node.children) materializeNode(c);
+    for (const c of node.children) {
+      if (c.type === "element" || c.type === "fragment")
+        correctVNodeNS(c, parentNS);
+      materializeNode(c, parentNS);
+    }
+  } else if ((node as any).type === "raw") {
+    // raw is handled elsewhere
   }
 }
