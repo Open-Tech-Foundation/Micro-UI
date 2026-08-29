@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- `update(el)` now re-reads the host's attributes into `props` before rendering. `props` was snapshotted in `connectedCallback` and only ever refreshed by a parent's reconcile pass, so an attribute changed from outside the library stayed invisible even to an explicit `update()` — the one escape hatch the library documents for everything else. The props object is mutated in place, since the render closure captured it.
 - `store.set(key, value, { path })` no longer turns arrays into objects. Every container was spread into an object literal, so `{ items: [1,2,3] }` became `{ items: { "0":1, "1":2, "2":3 } }` and the next `.map()` in a render threw. Arrays are now cloned as arrays at every level, including the top-level value.
 - `store.del(key, { path })` on an array index now splices the element out instead of leaving a sparse hole with the length unchanged.
 - `store.clear()` no longer silently orphans subscribers. `subscribe()` closes over the store entry, so clearing the map left every listener attached to an entry that no later `set()` would ever notify. `clear()` now resets values, notifies subscribers, and drops only entries nobody is subscribed to.
@@ -16,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nested components no longer re-render on every parent update. The props-sync loop compared against `String(value)` while storing `undefined` for nullish attributes, so any child with a nullish bound attribute reported a prop change on every pass.
 - Clearing a bound attribute no longer re-adds it as the literal string `"undefined"`. `setProp` followed `removeAttribute()` with a property write of `undefined`, which any reflected non-nullable `DOMString` stringifies — so `html\`<img src=${url}>\`` with a null `url` produced `src="undefined"` and a spurious request. Affected `title`, `id`, `lang`, `src`, `alt`, `href`, `placeholder`, `name` and the `aria-*`/`role` path.
 - Text interpolations are no longer double-encoded. `${value}` was passed through an entity escaper *and* then inserted with `createTextNode`, so `${"Tom & Jerry"}` rendered the literal text `Tom &amp; Jerry` on screen. Text nodes are never parsed as markup, so the escaper added no safety — only corruption. Injected markup remains inert.
+
+### Documentation
+- README documents the attribute/props model under `define`: `props` refreshes on every render, changing an attribute does not re-render on its own, and attributes bound from a parent template are updated by the parent's own re-render. External mutation is explicitly not observed — there is no `observedAttributes`/`attributeChangedCallback`, by design.
 
 ### Removed
 - Duplicate `test:jsdom` task. It ran the same command as `test`, and `check` depended on both, so CI ran the whole suite twice. There is one suite now that the FakeDOM harness is gone.

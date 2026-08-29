@@ -171,6 +171,37 @@ define("x-greeting", (el, props) => {
 });
 ```
 
+#### Attributes and `props`
+
+`props` holds the element's attributes as strings. It is the same object for the
+lifetime of the component, and it is refreshed from the DOM on every render — so
+read it inside the render function to always see current values:
+
+```js
+define("x-greeting", (el, props) => {
+  const initial = props.name;                        // captured once, never updates
+  return () => html`<h2>Hello, ${props.name}</h2>`;  // read per render, always current
+});
+```
+
+Micro-UI has no automatic reactivity. Changing an attribute does not re-render,
+exactly like changing a variable or a store value does not. Call `update(el)`:
+
+```js
+el.setAttribute("name", "Ada");
+update(el);                       // now it re-renders, with name = "Ada"
+```
+
+There is no `observedAttributes` or `attributeChangedCallback` — an attribute
+changed from outside is picked up by the next `update()`, not observed as it
+happens. Attributes bound from a parent template are the exception: the parent's
+own re-render already patches and updates the child for you.
+
+```js
+define("x-parent", () => () => html`<x-child label=${label}></x-child>`);
+// updating the parent updates x-child too — no explicit update(child) needed
+```
+
 ### `html`
 
 Tagged template that produces a renderable tree. Supports text, attributes, events, keyed lists, conditionals, and nesting. Text interpolations are inserted as text nodes, never parsed as markup.

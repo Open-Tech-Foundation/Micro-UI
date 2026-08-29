@@ -12,6 +12,22 @@ import {
 } from "./state.ts";
 import type { VNode } from "./types.ts";
 
+/**
+ * Re-read the host's attributes into the props object handed to `setup`.
+ *
+ * Attributes are snapshotted once in `connectedCallback`, so without this an
+ * attribute changed from outside the library — a router, a host framework,
+ * plain `setAttribute` — would stay invisible even to an explicit `update()`.
+ * Micro-UI never re-renders on its own; this is what makes "change it, then
+ * call update()" hold for attributes the way it already holds for variables.
+ *
+ * Mutates in place: the render closure captured this exact object.
+ */
+function syncProps(el: HTMLElement, props: Record<string, string>): void {
+  for (const a of el.attributes) props[a.name] = a.value;
+  for (const k in props) if (!el.hasAttribute(k)) delete props[k];
+}
+
 export function update(el: HTMLElement): void {
   const inst = instances.get(el);
   if (!inst) return;
@@ -35,6 +51,7 @@ export function flush(): void {
     if (!inst) continue;
     if (inst.errored) continue;
     let newTree: VNode;
+    syncProps(el, inst.props);
     setCurrentRendering(el);
     try {
       setDeferDOM(true);
