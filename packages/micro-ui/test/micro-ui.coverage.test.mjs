@@ -73,13 +73,16 @@ test("store: double unsubscribe returns false", async () => {
   assertEquals(unsub(), true);
   assertEquals(unsub(), false);
 });
-test("store: clear removes listeners", async () => {
+test("store: clear resets values and keeps subscriptions live", async () => {
   const { store } = await fresh();
-  let called = false;
-  store.subscribe("clear-l", () => { called = true; });
+  const seen = [];
+  store.subscribe("clear-l", v => { seen.push(v); });
+  store.set("clear-l", 1);
   store.clear();
+  assertEquals(store.get("clear-l"), undefined);
   store.set("clear-l", 99);
-  assertEquals(called, false);
+  // 1 from the set, undefined from the clear, 99 from the set after clear.
+  assertEquals(seen.join(","), "1,,99");
 });
 test("store: path with array index", async () => {
   const { store } = await fresh();
@@ -88,6 +91,10 @@ test("store: path with array index", async () => {
   store.set("arr", "changed", { path: "items.0.name" });
   assertEquals(store.get("arr", { path: "items.0.name" }), "changed");
   assertEquals(store.get("arr", { path: "items.1.name" }), "b");
+  // Reading back through a path succeeds even when the array has been turned
+  // into {0:..,1:..}; the container kind is what actually matters to render.
+  assert(Array.isArray(store.get("arr").items), "items must stay an array");
+  assertEquals(store.get("arr").items.length, 2);
 });
 test("store: set with path on primitive initializes object", async () => {
   const { store } = await fresh();

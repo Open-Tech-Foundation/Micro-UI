@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- `store.set(key, value, { path })` no longer turns arrays into objects. Every container was spread into an object literal, so `{ items: [1,2,3] }` became `{ items: { "0":1, "1":2, "2":3 } }` and the next `.map()` in a render threw. Arrays are now cloned as arrays at every level, including the top-level value.
+- `store.del(key, { path })` on an array index now splices the element out instead of leaving a sparse hole with the length unchanged.
+- `store.clear()` no longer silently orphans subscribers. `subscribe()` closes over the store entry, so clearing the map left every listener attached to an entry that no later `set()` would ever notify. `clear()` now resets values, notifies subscribers, and drops only entries nobody is subscribed to.
 - Keyed list patching no longer builds a DOM subtree per matched row and immediately discards it. `patchKeyed` called `materializeNode()` before `reconcile()`, which then reused the existing node — so updating one row of a 50-row list allocated 150 elements and threw all of them away. It now allocates none.
 - A keyed row whose tag changes is no longer resurrected. `patchKeyed` re-inserted the old node after `reconcile()` had already replaced it, leaving both in the tree.
 - Nested components no longer re-render on every parent update. The props-sync loop compared against `String(value)` while storing `undefined` for nullish attributes, so any child with a nullish bound attribute reported a prop change on every pass.

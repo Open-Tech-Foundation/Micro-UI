@@ -275,3 +275,73 @@ test("regression: a child still re-renders when its attributes do change", async
   assert.equal(renders, 2, "a real attribute change must still propagate");
   assert.equal(el.querySelector("x-reg-sync-child").textContent, "two");
 });
+
+// ── store path writes must preserve arrays ─────────────────────────────────
+// setByPath/deleteByPath spread every container into an object literal, so
+// [1,2,3] became {0:1,1:2,2:3} and the next `.map()` in a render threw.
+const { store } = await import(`../../src/index.ts?regressions-store-${Date.now()}`);
+
+test("regression: writing through an array path keeps it an array", () => {
+  store.clear();
+  store.set("s1", { list: [1, 2, 3] });
+  store.set("s1", 9, { path: "list.0" });
+  const v = store.get("s1");
+  assert.ok(Array.isArray(v.list), "list must still be an array");
+  assert.deepEqual(v.list, [9, 2, 3]);
+});
+
+test("regression: a top-level array value survives a path write", () => {
+  store.clear();
+  store.set("s2", [{ n: 1 }, { n: 2 }]);
+  store.set("s2", 42, { path: "1.n" });
+  const v = store.get("s2");
+  assert.ok(Array.isArray(v));
+  assert.deepEqual(v, [{ n: 1 }, { n: 42 }]);
+});
+
+test("regression: nested arrays survive a deep path write", () => {
+  store.clear();
+  store.set("s3", { a: { b: [{ c: 1 }] } });
+  store.set("s3", 2, { path: "a.b.0.c" });
+  assert.ok(Array.isArray(store.get("s3").a.b));
+  assert.equal(store.get("s3").a.b[0].c, 2);
+});
+
+test("regression: deleting an array index splices instead of leaving a hole", () => {
+  store.clear();
+  store.set("s4", { list: ["a", "b", "c"] });
+  store.del("s4", { path: "list.1" });
+  const list = store.get("s4").list;
+  assert.ok(Array.isArray(list));
+  assert.deepEqual(list, ["a", "c"]);
+  assert.equal(list.length, 2, "no sparse hole left behind");
+});
+
+test("regression: path writes are still immutable at every level", () => {
+  store.clear();
+  const original = { list: [1, 2, 3] };
+  store.set("s5", original);
+  store.set("s5", 9, { path: "list.0" });
+  assert.deepEqual(original.list, [1, 2, 3], "the caller's array is untouched");
+});
+
+// ── clear() must not orphan live subscriptions ─────────────────────────────
+test("regression: subscribers still fire after store.clear()", () => {
+  store.clear();
+  const seen = [];
+  const off = store.subscribe("s6", (v) => seen.push(v));
+  store.set("s6", 1);
+  store.clear();
+  store.set("s6", 2);
+  assert.deepEqual(seen, [1, undefined, 2], "clear notifies, then stays live");
+  off();
+  store.set("s6", 3);
+  assert.equal(seen.length, 3, "unsubscribe still works");
+});
+
+test("regression: clear() drops entries that nobody is subscribed to", () => {
+  store.clear();
+  store.set("s7", "value");
+  store.clear();
+  assert.equal(store.get("s7"), undefined);
+});

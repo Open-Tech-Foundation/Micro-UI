@@ -235,12 +235,21 @@ store.set("counter", 1);
 
 ### `store.set(key, value, { path })`
 
-Set a nested value by dot-separated path. Immutably clones the object tree along the path.
+Set a nested value by dot-separated path. Immutably clones the object tree along the path — the value you passed in is never mutated.
 
 ```js
 store.set("form", { name: "", email: "" });
 store.set("form", "Ada", { path: "name" });
 store.get("form", { path: "name" }); // "Ada"
+```
+
+Arrays are cloned as arrays, so numeric segments address list items and the
+container stays a list:
+
+```js
+store.set("todos", { items: ["a", "b", "c"] });
+store.set("todos", "z", { path: "items.0" });
+store.get("todos").items;          // ["z", "b", "c"] — still an array
 ```
 
 ### `store.subscribe(key, fn)`
@@ -261,7 +270,14 @@ Delete a store key (resets to `undefined`) or remove a nested key from an object
 ```js
 store.del("counter");                   // full key deleted
 store.del("form", { path: "name" });   // only removes "name", rest intact
+store.del("todos", { path: "items.1" }); // splices index 1 out of the array
 ```
+
+### `store.clear()`
+
+Reset every key to `undefined` and notify all subscribers. Existing
+subscriptions stay live — a component subscribed before `clear()` still
+receives later `set()` calls for its key.
 
 ## Security
 

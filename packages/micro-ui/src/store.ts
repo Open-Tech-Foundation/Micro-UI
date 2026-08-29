@@ -11,6 +11,18 @@ function splitPath(path: string): string[] {
   return path.split(".");
 }
 
+/**
+ * Shallow-copy a container while preserving its kind. Spreading an array into
+ * an object literal turns [1,2,3] into {0:1,1:2,2:3}, which silently breaks
+ * every `.map()` in the next render.
+ */
+function cloneContainer(v: unknown): Record<string, unknown> {
+  if (Array.isArray(v)) return [...v] as unknown as Record<string, unknown>;
+  if (v != null && typeof v === "object")
+    return { ...(v as object) } as Record<string, unknown>;
+  return {};
+}
+
 function getByPath(obj: unknown, path: string): unknown {
   return splitPath(path).reduce<unknown>(
     (o, k) =>
@@ -24,10 +36,10 @@ function getByPath(obj: unknown, path: string): unknown {
 function setByPath<T>(obj: T, path: string, value: unknown): T {
   const keys = splitPath(path);
   const last = keys.pop()!;
-  const result = { ...(obj as Record<string, unknown>) };
+  const result = cloneContainer(obj);
   let current = result;
   for (const k of keys) {
-    current[k] = { ...(current[k] as Record<string, unknown>) };
+    current[k] = cloneContainer(current[k]);
     current = current[k] as Record<string, unknown>;
   }
   current[last] = value;
@@ -37,15 +49,22 @@ function setByPath<T>(obj: T, path: string, value: unknown): T {
 function deleteByPath<T>(obj: T, path: string): T {
   const keys = splitPath(path);
   const last = keys.pop()!;
-  const result = { ...(obj as Record<string, unknown>) };
+  const result = cloneContainer(obj);
   let current = result;
   for (const k of keys) {
     if (current[k] == null || typeof current[k] !== "object")
       return result as T;
-    current[k] = { ...(current[k] as Record<string, unknown>) };
+    current[k] = cloneContainer(current[k]);
     current = current[k] as Record<string, unknown>;
   }
-  delete current[last];
+  if (Array.isArray(current)) {
+    // `delete arr[i]` would leave a hole and keep length unchanged; removing
+    // an index from a list means splicing it out.
+    const i = Number(last);
+    if (Number.isInteger(i) && i >= 0) (current as unknown[]).splice(i, 1);
+  } else {
+    delete current[last];
+  }
   return result as T;
 }
 
@@ -120,7 +139,14 @@ function subscribe<T>(key: string, fn: Listener<T>): () => boolean {
 }
 
 function clear(): void {
-  stores.clear();
+  // Entries must survive if anyone is still subscribed: `subscribe` closes over
+  // the StoreEntry, so dropping it here would leave listeners attached to an
+  // orphan that no later set() ever notifies.
+  for (const [key, entry] of stores) {
+    entry.value = undefined;
+    notify(entry);
+    if (entry.listeners.size === 0) stores.delete(key);
+  }
 }
 
 export const store: {

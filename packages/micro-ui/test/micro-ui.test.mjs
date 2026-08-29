@@ -699,13 +699,14 @@ test("store: clear removes all entries", async () => {
   assertEquals(store.get("b"), undefined);
 });
 
-test("store: clear resets listeners", async () => {
+test("store: clear does not orphan subscribers", async () => {
   const { store } = await fresh();
   let called = false;
   store.subscribe("x", () => { called = true; });
   store.clear();
+  called = false;
   store.set("x", 1);
-  assertEquals(called, false);
+  assertEquals(called, true);
 });
 
 test("store: set with path on primitive key initializes as object", async () => {
