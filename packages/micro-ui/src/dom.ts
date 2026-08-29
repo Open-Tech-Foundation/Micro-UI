@@ -118,12 +118,10 @@ export function setProp(el: Element, k: string, v: unknown): void {
   // e.g. aria-hidden={true} -> "true", aria-hidden={false} -> "false"
   if (k.startsWith("aria-") || k === "role") {
     if (v == null) {
+      // removeAttribute already resets the reflected property. Writing
+      // `undefined` would re-create the attribute as the string "undefined"
+      // for any non-nullable reflected DOMString (title, src, href, ...).
       el.removeAttribute(k);
-      if (!isSvg) {
-        try {
-          if (k in el) setElProp(el, k, undefined);
-        } catch {}
-      }
       return;
     }
     // Stringify booleans/numbers for aria/role; keep strings as-is
@@ -139,11 +137,7 @@ export function setProp(el: Element, k: string, v: unknown): void {
       }
     }
     el.setAttribute(k, strVal);
-    if (!isSvg) {
-      try {
-        if (k in el) setElProp(el, k, strVal);
-      } catch {}
-    }
+    if (!isSvg && k in el) setElProp(el, k, strVal);
     return;
   }
 
@@ -155,18 +149,9 @@ export function setProp(el: Element, k: string, v: unknown): void {
         el.removeAttributeNS(null, k);
       } catch {}
     }
-    if (!isSvg) {
-      try {
-        if (k in el) setElProp(el, k, undefined);
-      } catch {}
-    }
   } else if (v === true) {
     el.setAttribute(k, "");
-    if (!isSvg) {
-      try {
-        if (k in el) setElProp(el, k, true);
-      } catch {}
-    }
+    if (!isSvg && k in el) setElProp(el, k, true);
   } else if (typeof v === "string") {
     if (k.includes(":") && isSvg) {
       // For SVG namespaced attributes, use setAttributeNS if possible
@@ -182,11 +167,7 @@ export function setProp(el: Element, k: string, v: unknown): void {
     }
     el.setAttribute(k, v);
   } else {
-    if (!isSvg) {
-      try {
-        setElProp(el, k, v);
-      } catch {}
-    }
+    if (!isSvg) setElProp(el, k, v);
     if (typeof v === "number" || typeof v === "boolean") {
       el.setAttribute(k, String(v));
     } else if (isSvg && v != null) {

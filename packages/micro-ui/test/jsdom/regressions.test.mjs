@@ -59,3 +59,56 @@ test("regression: interpolated markup is still inert (not parsed)", async () => 
   assert.equal(globalThis.__pwned, undefined, "must not execute");
   assert.equal(el.querySelector("p").textContent, payload, "shown verbatim");
 });
+
+// ── clearing an attribute must not re-add it as the string "undefined" ──────
+// setProp used to follow removeAttribute() with a property write of
+// `undefined`. Reflected non-nullable DOMString properties stringify that,
+// re-creating the attribute that was just removed. Only a real DOM shows
+// this — the fake DOM in test/helpers/dom.mjs does not reflect properties.
+async function clearsCleanly(name, initial, render, sel, attr) {
+  test(`regression: clearing ${name} removes it, not "undefined"`, async () => {
+    const box = { v: initial };
+    let ref;
+    const el = await mount((host) => {
+      ref = host;
+      return () => render(box.v);
+    });
+    const node = el.querySelector(sel);
+    assert.equal(node.getAttribute(attr), initial);
+
+    box.v = null;
+    update(ref);
+    await tick();
+    assert.equal(
+      node.getAttribute(attr),
+      null,
+      `${attr} must be absent, not the string "undefined"`,
+    );
+    assert.equal(node.hasAttribute(attr), false);
+  });
+}
+
+clearsCleanly("div[title]", "hi", (v) => html`<div title=${v}>x</div>`, "div", "title");
+clearsCleanly("div[id]", "one", (v) => html`<div id=${v}>x</div>`, "div", "id");
+clearsCleanly("div[lang]", "en", (v) => html`<div lang=${v}>x</div>`, "div", "lang");
+clearsCleanly("img[src]", "/a.png", (v) => html`<img src=${v}>`, "img", "src");
+clearsCleanly("img[alt]", "pic", (v) => html`<img alt=${v}>`, "img", "alt");
+clearsCleanly("a[href]", "/x", (v) => html`<a href=${v}>l</a>`, "a", "href");
+clearsCleanly("input[placeholder]", "type here", (v) => html`<input placeholder=${v}>`, "input", "placeholder");
+clearsCleanly("input[name]", "field", (v) => html`<input name=${v}>`, "input", "name");
+clearsCleanly("div[aria-hidden]", "true", (v) => html`<div aria-hidden=${v}>x</div>`, "div", "aria-hidden");
+
+test("regression: a cleared img[src] issues no request for '/undefined'", async () => {
+  const box = { v: "/a.png" };
+  let ref;
+  const el = await mount((host) => {
+    ref = host;
+    return () => html`<img src=${box.v}>`;
+  });
+  box.v = null;
+  update(ref);
+  await tick();
+  const img = el.querySelector("img");
+  assert.equal(img.getAttribute("src"), null);
+  assert.notEqual(img.getAttribute("src"), "undefined");
+});

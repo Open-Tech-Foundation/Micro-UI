@@ -125,13 +125,24 @@ test("jsdom setProp: null removes class attribute", async () => {
   assert.equal(el.querySelector("div").getAttribute("class"), null);
 });
 
-test("jsdom setProp: true sets empty string for hidden", async () => {
+test("jsdom setProp: true sets hidden via the BOOLEAN_PROPS path", async () => {
   const tag = uniqueTag("x-sp-hidden");
   define(tag, () => () => html`<div hidden=${true}>x</div>`);
   const el = document.createElement(tag);
   document.body.appendChild(el);
   await tick(); flush();
-  assert.equal(el.querySelector("div").hasAttribute("hidden"), true);
+  const div = el.querySelector("div");
+  assert.equal(div.hasAttribute("hidden"), true);
+  assert.equal(div.hidden, true, "boolean prop must reflect to the property");
+});
+
+test("jsdom setProp: true on a non-boolean attr takes the generic branch", async () => {
+  const tag = uniqueTag("x-sp-generic-true");
+  define(tag, () => () => html`<div data-flag=${true}>x</div>`);
+  const el = document.createElement(tag);
+  document.body.appendChild(el);
+  await tick(); flush();
+  assert.equal(el.querySelector("div").getAttribute("data-flag"), "");
 });
 
 // ── event listeners survive reconciliation ────────────────────────
@@ -232,13 +243,16 @@ test("jsdom store: single segment path", async () => {
 });
 
 // ── setElProp through integration ─────────────────────────────────
-test("jsdom setProp: setElProp sets custom property on element", async () => {
+test("jsdom setProp: non-primitive value is written as a property, not an attribute", async () => {
   const tag = uniqueTag("x-sp-elprop");
-  define(tag, () => () => html`<div data-custom=${"val"}>x</div>`);
+  // A string value takes the plain setAttribute branch and never reaches
+  // setElProp; an object is what actually exercises it.
+  const payload = { a: 1 };
+  define(tag, () => () => html`<div data-obj=${payload}>x</div>`);
   const el = document.createElement(tag);
   document.body.appendChild(el);
   await tick(); flush();
   const div = el.querySelector("div");
-  // setElProp should have set it as a JS property (even if browser ignores it)
-  assert.equal(div.getAttribute("data-custom"), "val");
+  assert.equal(div["data-obj"], payload, "setElProp writes the raw value");
+  assert.equal(div.getAttribute("data-obj"), null, "objects do not stringify to an attribute");
 });

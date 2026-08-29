@@ -145,9 +145,11 @@ test("setProp: false removes generic attribute", async () => {
 test("setProp: true sets empty string attribute", async () => {
   setupDOM(); const { define, html } = await fresh();
   const tag = uniqueTag("t-setprop-gen-true");
-  define(tag, () => () => html`<div hidden=${true}>x</div>`);
+  // NOT `hidden` — that is in BOOLEAN_PROPS and returns early, so it never
+  // reaches the generic `v === true` branch this test is named for.
+  define(tag, () => () => html`<div data-flag=${true}>x</div>`);
   const el = document.createElement(tag); document.body.appendChild(el); await delay();
-  assertEquals(el.querySelector("div").getAttribute("hidden"), "");
+  assertEquals(el.querySelector("div").getAttribute("data-flag"), "");
 });
 
 test("setProp: string value sets attribute", async () => {
