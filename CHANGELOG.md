@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **reconcile.ts** — the single-child fast path in `patchLists` now re-inserts a child that was externally detached (its `parentNode` no longer matches the parent) after reusing its DOM, instead of leaving the DOM and virtual tree desynced. Applies to keyed and unkeyed single-child lists and type changes. Previously only the multi-child keyed path handled detached nodes.
+
 ## [0.4.0] - 2026-08-28
 
 ### Added

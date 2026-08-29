@@ -279,6 +279,59 @@ test("lists: removing items leaves no orphaned detached nodes", async () => {
   assertEquals(lis.map(n=>n.textContent).join(","), "1,3");
   assertEquals(el.querySelectorAll("li").length, 2, "no stray nodes");
 });
+test("lists: detached single unkeyed child is reinserted, not lost", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-key-single-unk"); let items=["a"]; let ref;
+  define(tag, el2 => { ref=el2; return () => html`<ul>${items.map(t => html`<li>${t}</li>`)}</ul>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const ul = el.querySelector("ul");
+  const li = el.querySelector("li");
+  li.remove(); // external removal detaches the only child
+  assertEquals(ul.querySelectorAll("li").length, 0);
+  update(ref); await micro(); flush(); await delay(5);
+  const lis = ul.querySelectorAll("li");
+  assertEquals(lis.length, 1);
+  assert(lis[0] === li, "single unkeyed child reused, not recreated");
+  assertEquals(li.textContent, "a");
+});
+test("lists: detached single keyed child is reinserted, not lost", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-key-single-ky"); let items=[{id:1,t:"x"}]; let ref;
+  define(tag, el2 => { ref=el2; return () => html`<ul>${items.map(i => html`<li key=${i.id}>${i.t}</li>`)}</ul>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const ul = el.querySelector("ul");
+  const li = el.querySelector("li");
+  li.remove();
+  assertEquals(ul.querySelectorAll("li").length, 0);
+  update(ref); await micro(); flush(); await delay(5);
+  const lis = ul.querySelectorAll("li");
+  assertEquals(lis.length, 1);
+  assert(lis[0] === li, "single keyed child reused, not recreated");
+  assertEquals(li.textContent, "x");
+});
+test("lists: detached single child type change reinserts new node", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-key-single-type"); let showEl=true; let ref;
+  define(tag, el2 => { ref=el2; return () => html`<ul>${showEl ? html`<li>a</li>` : "text"}</ul>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const ul = el.querySelector("ul");
+  ul.querySelector("li").remove();
+  showEl=false; update(ref); await micro(); flush(); await delay(5);
+  assertEquals(ul.querySelectorAll("li").length, 0);
+  assertEquals(ul.textContent, "text");
+});
+test("lists: single-child still patches in place normally (guard)", async () => {
+  setupDOM(); const { define, html, update, flush } = await fresh();
+  const tag = uniqueTag("t-key-single-guard"); let items=["a"]; let ref;
+  define(tag, el2 => { ref=el2; return () => html`<ul>${items.map(t => html`<li>${t}</li>`)}</ul>`; });
+  const el = document.createElement(tag); document.body.appendChild(el); await delay();
+  const li = el.querySelector("li");
+  items=["b"]; update(ref); await micro(); flush(); await delay(5);
+  const lis = el.querySelectorAll("li");
+  assertEquals(lis.length, 1);
+  assert(lis[0] === li, "attached single child updated in place, identity preserved");
+  assertEquals(lis[0].textContent, "b");
+});
 
 // ── define / props / isolation ─────────────────────────────────────
 test("define: props from attributes", async () => {

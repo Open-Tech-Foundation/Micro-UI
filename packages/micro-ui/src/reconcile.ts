@@ -65,10 +65,16 @@ function patchLists(
     const n = newCh[0]!;
     if (o.type === n.type) {
       reconcile(o, n, parent);
+      if (n.dom && n.dom.parentNode !== parent) parent.appendChild(n.dom);
       return;
     }
     materializeNode(n);
-    parent.replaceChild(n.dom!, o.dom!);
+    const oDom = o.dom;
+    if (oDom && oDom.parentNode === parent) {
+      parent.replaceChild(n.dom!, oDom);
+    } else {
+      parent.appendChild(n.dom!);
+    }
     return;
   }
 
