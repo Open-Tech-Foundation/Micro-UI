@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Split demo** — `demo/src/split.ts` (`x-split-page`): a shared-expense settler, wired into `main.ts` and the `x-app` nav. Money is integer cents from parse to display, splits distribute the remainder so $10.00 between three is 3.34/3.33/3.33 with the odd cent rotating by expense id rather than always landing on the same person, and settling up is a greedy largest-debt-to-largest-credit pass that clears every balance in at most `people - 1` transfers. The composer keeps its draft in a closure variable and validates before it touches the store; the roster refuses to delete someone still named on a receipt; state persists to `localStorage` through a single `store.subscribe`, so no mutation site has to remember to save. Each expense is an `x-split-row` fed the expense as an object property and its delete as a callback property — the row shows its own render count, which stays put when a *different* expense is added or removed.
+- `demo/src/split-math.ts` and `demo/src/split-math.test.ts` — the domain logic lives apart from the components with no DOM in it, under 17 tests run by `esdev test`: parsing rejects `1.2.3`/`12.345`/`-5` and survives the `Number("11.07") * 100 = 1106.9999999999998` case, every split of 1–200 cents between 1–7 people sums back to the original, net balances sum to zero, a payer who is not a participant is owed the whole amount, a deleted person's share is dropped rather than charged to a ghost, and settling clears every balance in no more than `people - 1` transfers.
+
+### Fixed
+- **demo** — the nav no longer clips its last buttons. `.nav` was a non-wrapping flex row, so past about ten pages the row overflowed the 820px shell and the ends were cut off; it wraps now.
+
 ### Documentation
 - README's "What This Is Not" no longer reads as a list of things the library cannot do. It said "no forms layer, no data fetching", which lands as "forms and fetching are unsupported" — while the Features list advertises the library as form-friendly and the Styles section ships `ui-field`, `ui-input`, `ui-textarea`, `ui-select`, `ui-checkbox`, `ui-radio` and `ui-switch`. Forms are gone from the section entirely, since they are a supported capability and not a limit. What remains names the substitute rather than the gap: no router because one root per element means islands mount into whatever already routes, and no query cache because `fetch` in `setup` plus a `store` is the whole pattern.
 

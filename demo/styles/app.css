@@ -109,6 +109,7 @@ footer code { color: var(--ui-primary); }
 
 .nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   justify-content: center;
   margin-top: 1rem;
@@ -798,3 +799,179 @@ footer code { color: var(--ui-primary); }
   border-radius: var(--ui-radius);
   padding: 0.75rem 0.5rem;
 }
+
+/* ── split (shared expenses) ──────────────────────────────────────── */
+
+.split { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.split-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.split-toolbar .hint { margin-top: 0; }
+
+.split-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 0.75rem;
+}
+@media (max-width: 640px) {
+  .split-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* roster */
+.split-people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+.split-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.3rem 0.25rem 0.6rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-surface-2, var(--ui-surface));
+  font-size: 0.8rem;
+}
+.split-person-name { font-weight: 600; }
+.split-person .ui-btn-icon { min-width: 1.5rem; height: 1.5rem; padding: 0; }
+
+.split-add { display: flex; gap: 0.5rem; }
+.split-add .ui-input { flex: 1; }
+
+/* composer */
+.split-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.split-form .ui-field { margin-bottom: 0; }
+.split-grow { flex: 1 1 12rem; }
+.split-amount { flex: 0 0 6.5rem; }
+.split-amount .ui-input { text-align: right; font-variant-numeric: tabular-nums; }
+.split-payer { flex: 0 0 9.5rem; }
+.split-payer .ui-select { width: 100%; }
+
+.split-among {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+.split-among-label { color: var(--ui-text-muted); font-size: 0.8rem; }
+.split-chip {
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--ui-radius-lg);
+  border: 1px solid var(--ui-border);
+  background: transparent;
+  color: var(--ui-text-muted);
+  cursor: pointer;
+}
+.split-chip:hover { border-color: var(--ui-border-hover); }
+.split-chip.is-on {
+  border-color: var(--ui-primary);
+  color: var(--ui-primary);
+  background: color-mix(in srgb, var(--ui-primary) 12%, transparent);
+}
+.split-each {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--ui-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.split-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.85rem;
+}
+.split-actions .hint { margin-top: 0; }
+
+/* expense rows */
+.split-rows { display: flex; flex-direction: column; }
+.split-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--ui-border);
+}
+.split-rows x-split-row:last-child .split-row { border-bottom: 0; padding-bottom: 0; }
+.split-row-main { flex: 1; min-width: 0; }
+.split-what { display: block; font-size: 0.9rem; }
+.split-meta {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--ui-text-muted);
+  margin-top: 0.15rem;
+}
+.split-amount-cell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.split-renders {
+  font-size: 0.68rem;
+  color: var(--ui-text-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 1.75rem;
+  text-align: right;
+}
+
+/* settle up — a grid, not a <table>: an interpolation inside <tbody> is
+   foster-parented out of the table by the HTML parser before the library
+   ever sees it, so the rows would render above the table instead of in it. */
+.split-ledger { font-variant-numeric: tabular-nums; }
+.split-ledger-head, .split-ledger-row {
+  display: grid;
+  grid-template-columns: 1fr repeat(3, minmax(4.5rem, auto));
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  font-size: 0.8rem;
+}
+.split-ledger-head {
+  color: var(--ui-text-muted);
+  border-bottom: 1px solid var(--ui-border);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.split-ledger-row { border-bottom: 1px solid var(--ui-border); }
+.split-ledger-row:last-child { border-bottom: 0; }
+.split-ledger-head span:not(:first-child),
+.split-ledger-row span:not(:first-child) { text-align: right; }
+.split-net.is-up { color: var(--ui-success); }
+.split-net.is-down { color: var(--ui-danger); }
+
+.split-transfers { list-style: none; margin: 0.85rem 0 0; padding: 0; }
+.split-transfers li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--ui-border);
+  font-size: 0.85rem;
+}
+.split-transfers li:last-child { border-bottom: 0; }
+.split-arrow { color: var(--ui-text-muted); }
+.split-to { font-weight: 600; }
+.split-transfer-amount {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.split-done { margin-top: 0.85rem; }
+.split-delete { color: var(--ui-danger); }
+.split-delete:hover { background: color-mix(in srgb, var(--ui-danger) 12%, transparent); }

@@ -264,6 +264,10 @@ define("x-app", (el) => {
           page = "kanban";
           update(el);
         }}>Kanban</button>
+        <button class="ui-btn ${page === "split" ? "is-active" : ""}" onclick=${() => {
+          page = "split";
+          update(el);
+        }}>Split</button>
         <button class="ui-btn ${page === "errors" ? "is-active" : ""}" onclick=${() => {
           page = "errors";
           update(el);
@@ -306,11 +310,13 @@ define("x-app", (el) => {
                     ? html`<x-notes-page></x-notes-page>`
                     : page === "kanban"
                       ? html`<x-kanban></x-kanban>`
-                      : page === "css"
-                        ? html`<x-css-demo></x-css-demo>`
-                        : page === "svg"
-                          ? html`<x-svg-page></x-svg-page>`
-                          : html`<x-errors-page></x-errors-page>`
+                      : page === "split"
+                        ? html`<x-split-page></x-split-page>`
+                        : page === "css"
+                          ? html`<x-css-demo></x-css-demo>`
+                          : page === "svg"
+                            ? html`<x-svg-page></x-svg-page>`
+                            : html`<x-errors-page></x-errors-page>`
     }
 
     <footer>

@@ -8,6 +8,7 @@ import "./gravity.ts";
 import "./beats.ts";
 import "./notes.ts";
 import "./kanban.ts";
+import "./split.ts";
 import "./errors.ts";
 import "./css-utils.ts";
 import "./svg.ts";
