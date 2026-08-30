@@ -10,3 +10,4 @@ demo/node_modules/
 coverage/
 tmp/
 package-lock.json
+packages/micro-ui/test/browser/.chrome-profile/

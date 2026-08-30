@@ -630,6 +630,12 @@ await new Promise(r => setTimeout(r, 200));
 
 const summary = document.createElement("div");
 summary.className = "test";
+summary.id = "summary";
+// Machine-readable for the headless runner (tsr test:browser), which reads the
+// dumped DOM. The visible text is for a human opening this file directly.
+summary.setAttribute("data-passed", String(passCount));
+summary.setAttribute("data-failed", String(failCount));
+summary.setAttribute("data-done", "1");
 summary.innerHTML = `<strong>Results: <span class="pass">${passCount} passed</span>, <span class="${failCount ? 'fail' : ''}">${failCount} failed</span></strong>`;
 results.appendChild(summary);
 

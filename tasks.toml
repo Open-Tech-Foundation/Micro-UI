@@ -62,6 +62,15 @@ run = "tsc --noEmit"
 run = "bun test test/jsdom/*.test.mjs"
 dir = "packages/micro-ui"
 
+# test.html, driven through CDP in whatever chromium or chrome is installed.
+# It covers what jsdom cannot model — real paint, real scrolling, real media —
+# and skips with a message when the machine has no browser, so `check` still
+# passes without one. Needs dist/, which is what test.html imports.
+[tasks."test:browser"]
+deps = ["build:js"]
+run = "bun test/browser/run.mjs"
+dir = "packages/micro-ui"
+
 # ------------------------------------------------------------------ lint / fmt (Biome)
 [tasks.lint]
 run = "biome lint"
@@ -74,7 +83,7 @@ run = "biome check"
 
 # ------------------------------------------------------------------ ci
 [tasks.check]
-deps = ["typecheck", "lint", "fmt:check", "test"]
+deps = ["typecheck", "lint", "fmt:check", "test", "test:browser"]
 
 [tasks.ci]
 deps = ["check", "build"]
