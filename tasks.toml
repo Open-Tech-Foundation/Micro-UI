@@ -13,7 +13,7 @@ dir = "demo"
 
 # ------------------------------------------------------------------ build
 [tasks.build]
-deps = ["build:types", "build:js", "build:js:min", "build:css", "build:css:min", "build:readme"]
+deps = ["build:types", "build:js", "build:js:min", "build:css", "build:css:min", "build:css:parts", "build:readme"]
 
 [tasks."build:types"]
 run = "esdev build --lib src --dts-bundle=src/index.ts && rm -f dist/dom.js dist/reconcile.js dist/vdom.js dist/template.js dist/define.js dist/update.js dist/store.js dist/html.js dist/mount.js dist/lifecycle.js dist/error.js dist/state.js dist/raw.js dist/ns.js dist/types.js dist/index.js"
@@ -33,6 +33,18 @@ dir = "packages/micro-ui"
 
 [tasks."build:css:min"]
 run = "lightningcss --minify --bundle src/styles.css -o dist/styles.min.css"
+dir = "packages/micro-ui"
+
+# The split partials the README documents. Without these, importing
+# @opentf/micro-ui/styles/tokens.css resolves to nothing: only the bundle ships.
+[tasks."build:css:parts"]
+run = """mkdir -p dist/styles \
+&& lightningcss --bundle src/styles/tokens.css     -o dist/styles/tokens.css \
+&& lightningcss --bundle src/styles/base.css       -o dist/styles/base.css \
+&& lightningcss --bundle src/styles/components.css -o dist/styles/components.css \
+&& lightningcss --minify --bundle src/styles/tokens.css     -o dist/styles/tokens.min.css \
+&& lightningcss --minify --bundle src/styles/base.css       -o dist/styles/base.min.css \
+&& lightningcss --minify --bundle src/styles/components.css -o dist/styles/components.min.css"""
 dir = "packages/micro-ui"
 
 [tasks."build:readme"]
