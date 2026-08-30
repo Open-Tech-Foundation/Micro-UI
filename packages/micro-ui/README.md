@@ -13,7 +13,9 @@ A tiny runtime for AI-generated micro-apps
 
 ## Features
 
-* **Lightweight** — zero dependencies, no build step, ~6.3 KB gzipped.
+* **Lightweight** — zero dependencies, no build step. ~6.8 KB gzipped for the
+  core; ~7.4 KB with the `store`, which nothing in the core imports, so a build
+  that never touches it never pays for it.
 * **Simple state management** — use plain variables or the built-in `store` for shared state.
 * **Smooth updates** — changes are batched and applied efficiently, no flicker or jank.
 * **Form-friendly** — inputs, video, canvas, focus, and scroll position all survive re-renders.
@@ -271,6 +273,35 @@ Trusted HTML opt-in — bypasses escaping. Never pass user input.
 html.raw`<div>${trustedMarkup}</div>`
 ```
 
+### `cx(...)` / `sx(...)`
+
+Compose a class or style string. A binding that is not a string becomes a DOM
+*property*, and `el.class` and `el.style` are not writable that way — so
+`class=${["a", "b"]}` sets nothing at all. These turn the shapes you reach for
+into the string the DOM wants.
+
+```js
+import { cx, sx } from "@opentf/micro-ui";
+
+html`<button class=${cx("ui-btn", active && "is-active", { "is-busy": busy })}>`
+// class="ui-btn is-active"
+
+html`<div style=${sx({ color: "red", marginTop: "8px" }, hidden && { display: "none" })}>`
+// style="color: red; margin-top: 8px; display: none"
+```
+
+`cx` takes strings, arrays and `{ name: on }` objects, nested to any depth, and
+drops everything falsy — so a conditional class is just `cond && "is-on"`.
+
+`sx` takes strings, arrays and `{ prop: value }` objects. camelCase keys become
+kebab-case (`marginTop` → `margin-top`), a custom property is left alone, and a
+nullish, `false` or empty value drops that declaration while `0` survives.
+Numbers are written as they are: there is no automatic `px`, because guessing
+which properties take a unit is a table this library would rather not carry.
+
+With `mount(..., { dev: true })`, handing `class` or `style` a raw array or
+object warns and names the helper you wanted.
+
 ### `onReady(callback)`
 
 Registers a callback to run once the component has rendered and is in the
@@ -356,6 +387,18 @@ looking. So the message is withheld from the page unless you ask for it.
 Nothing is lost either way: the full error always goes to `console.error`, and
 `onError` handlers always receive the real `Error` object. Turn `dev` on while
 developing to see the message in the page as well.
+
+`dev` also turns on the warnings for mistakes that otherwise have no symptom at
+all:
+
+| Warning | What it catches |
+| --- | --- |
+| `class=${...} was given an array…` | An array or object handed to `class` or `style`, which the DOM ignores — the attribute is silently left unset. Points at [`cx` / `sx`](#cx--sx). |
+| `<x-row> was removed with 1 live store subscription…` | A component torn down while a `store.subscribe` it made is still live. Nothing re-renders, because the instance is gone — but the listener keeps the element alive, so a page that mounts and unmounts these accumulates detached DOM. Return the unsubscribe from `onReady`. |
+
+Both are dev-only: with `dev` off nothing is tracked and nothing is logged. A
+store listener that *throws* is reported either way — it used to be swallowed,
+which left the component simply not updating.
 
 ### `store.get(key)` / `store.set(key, value)`
 
@@ -672,6 +715,9 @@ the respective bugs actually lived.
 - **`dist/` is not committed.** It is a build artifact, produced by the release
   workflow. Never include it in a PR; measure bundle size by building locally
   (`tsr build:js:min`, then `gzip -c packages/micro-ui/dist/index.min.js | wc -c`).
+  That figure is the core *and* the store. For the core alone — what a
+  tree-shaking build pays when it never imports `store` — build an entry with
+  the `store` line removed from `src/index.ts`; nothing in the core imports it.
 - **There are two READMEs.** `packages/micro-ui/README.md` is *generated* from this
   file by `tsr build:readme` and published to npm. Edit this one.
 

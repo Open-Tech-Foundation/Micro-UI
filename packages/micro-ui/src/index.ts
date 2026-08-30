@@ -1,3 +1,4 @@
+export { cx, sx } from "./classes.ts";
 export { define } from "./define.ts";
 
 export type { HtmlTag } from "./html.ts";

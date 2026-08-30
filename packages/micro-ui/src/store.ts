@@ -1,3 +1,5 @@
+import { currentSetup, devMode, devTeardownChecks } from "./state.ts";
+
 export type Listener<T> = (value: T) => void;
 
 interface StoreEntry<T = unknown> {
@@ -81,12 +83,15 @@ function ensureEntry<T>(key: string): StoreEntry<T> {
   return entry;
 }
 
-function notify<T>(entry: StoreEntry<T>): void {
+function notify<T>(key: string, entry: StoreEntry<T>): void {
   for (const fn of entry.listeners) {
     try {
       fn(entry.value);
-    } catch (_) {
-      /* listener error */
+    } catch (err) {
+      // One listener must not stop the others — but a listener that throws is
+      // a bug, and swallowing it left it with no symptom at all: the component
+      // simply stopped updating.
+      console.error(`[micro-ui] a store listener for "${key}" threw:`, err);
     }
   }
 }
@@ -115,7 +120,7 @@ function set<T>(key: string, value: T, opts?: { path?: string }): void {
   } else {
     entry.value = value;
   }
-  notify(entry);
+  notify(key, entry);
 }
 
 function del(key: string): void;
@@ -129,14 +134,56 @@ function del(key: string, opts?: { path?: string }): void {
   } else {
     entry.value = undefined;
   }
-  notify(entry);
+  notify(key, entry);
 }
+
+/**
+ * Subscriptions made during a component's setup, in dev mode.
+ *
+ * A subscription that outlives its component is invisible: the instance is
+ * gone, so `update()` is a no-op and nothing re-renders — while the listener
+ * set goes on holding the closure, and the closure goes on holding the
+ * element. Nothing to see, and a detached tree that is never collected.
+ */
+const devSubs: WeakMap<HTMLElement, { key: string; live: boolean }[]> =
+  new WeakMap();
 
 function subscribe<T>(key: string, fn: Listener<T>): () => boolean {
   const entry = ensureEntry<T>(key);
   entry.listeners.add(fn);
-  return () => entry.listeners.delete(fn);
+  let record: { key: string; live: boolean } | undefined;
+  if (devMode && currentSetup) {
+    record = { key, live: true };
+    let list = devSubs.get(currentSetup);
+    if (!list) {
+      list = [];
+      devSubs.set(currentSetup, list);
+    }
+    list.push(record);
+  }
+  return () => {
+    if (record) record.live = false;
+    return entry.listeners.delete(fn);
+  };
 }
+
+// Registered on import so the core never has to know the store exists. Only
+// consulted in dev mode — see devTeardownChecks.
+devTeardownChecks.push((el) => {
+  const live = devSubs.get(el)?.filter((r) => r.live);
+  if (!live?.length) return;
+  const keys = [...new Set(live.map((r) => r.key))]
+    .map((k) => `"${k}"`)
+    .join(", ");
+  console.warn(
+    `[micro-ui] <${el.tagName.toLowerCase()}> was removed with ` +
+      `${live.length} live store subscription${live.length === 1 ? "" : "s"} ` +
+      `(${keys}). Nothing will re-render, but the listener keeps the element ` +
+      "alive. Return the unsubscribe from onReady so it is cleaned up: " +
+      'onReady(() => store.subscribe("key", () => update(el))).',
+  );
+  devSubs.delete(el);
+});
 
 function clear(): void {
   // Entries must survive if anyone is still subscribed: `subscribe` closes over
@@ -144,7 +191,7 @@ function clear(): void {
   // orphan that no later set() ever notifies.
   for (const [key, entry] of stores) {
     entry.value = undefined;
-    notify(entry);
+    notify(key, entry);
     if (entry.listeners.size === 0) stores.delete(key);
   }
 }

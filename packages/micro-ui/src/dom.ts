@@ -1,4 +1,5 @@
 import { HTML_NS, resolveNS, SVG_NS, svgTagName } from "./ns.ts";
+import { devMode } from "./state.ts";
 import type { VNode } from "./types.ts";
 
 export function correctVNodeNS(node: VNode, parentNS: string | null): void {
@@ -212,6 +213,23 @@ export function setProp(el: Element, k: string, v: unknown): void {
     }
     el.setAttribute(k, v);
   } else {
+    // `el.class` and `el.style` are not writable, so an array or object here
+    // sets nothing at all — the failure a dev is most likely to hit twice.
+    if (
+      devMode &&
+      (k === "class" || k === "style") &&
+      v != null &&
+      typeof v === "object"
+    ) {
+      console.warn(
+        `[micro-ui] ${k}=\${...} was given ${Array.isArray(v) ? "an array" : "an object"}, ` +
+          `which the DOM ignores — the ${k} is left unset. Compose it first: ` +
+          (k === "class"
+            ? `class=\${cx("ui-btn", { "is-active": active })}`
+            : `style=\${sx({ color: "red", marginTop: "8px" })}`) +
+          ", imported from @opentf/micro-ui.",
+      );
+    }
     if (!isSvg) setElProp(el, k, v);
     if (typeof v === "number" || typeof v === "boolean") {
       el.setAttribute(k, String(v));

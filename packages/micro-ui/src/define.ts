@@ -8,7 +8,14 @@ import {
   setPendingError,
   setPendingReady,
 } from "./lifecycle.ts";
-import { instances, pending } from "./state.ts";
+import {
+  currentSetup,
+  devMode,
+  devTeardownChecks,
+  instances,
+  pending,
+  setCurrentSetup,
+} from "./state.ts";
 import type { SetupFn, VNode } from "./types.ts";
 
 /**
@@ -77,8 +84,10 @@ export function define(tag: string, setup: SetupFn): void {
         for (const a of this.attributes) props[a.name] = a.value;
         const prevReady = pendingReady;
         const prevError = pendingError;
+        const prevSetup = currentSetup;
         setPendingReady([]);
         setPendingError([]);
+        setCurrentSetup(this);
         let render: (() => VNode) | undefined;
         let setupError: unknown = null;
         try {
@@ -101,6 +110,9 @@ export function define(tag: string, setup: SetupFn): void {
         const errs = pendingError!;
         setPendingReady(prevReady);
         setPendingError(prevError);
+        // Restored after the onReady loop below, not here: a subscription made
+        // in onReady belongs to this component just as much as one made in
+        // setup. Every early return past this point restores it first.
 
         if (setupError) {
           mountErrorUI(this, setupError);
@@ -116,6 +128,7 @@ export function define(tag: string, setup: SetupFn): void {
             props,
           });
           if (errs.length) errorHandlers.set(this, errs);
+          setCurrentSetup(prevSetup);
           for (const h of errs) safeCall(h, this, setupError as Error, "setup");
           return;
         }
@@ -146,6 +159,7 @@ export function define(tag: string, setup: SetupFn): void {
             props,
           });
           if (errs.length) errorHandlers.set(this, errs);
+          setCurrentSetup(prevSetup);
           for (const h of errs) safeCall(h, this, err as Error, "render");
           return;
         }
@@ -179,6 +193,7 @@ export function define(tag: string, setup: SetupFn): void {
             for (const h of errs) safeCall(h, this, err, "ready");
           }
         }
+        setCurrentSetup(prevSetup);
       }
       disconnectedCallback() {
         teardownPending.add(this);
@@ -208,6 +223,9 @@ export function define(tag: string, setup: SetupFn): void {
                 );
               }
             }
+          // After the cleanups: one of them is where an unsubscribe belongs,
+          // so anything still live here is genuinely unreleased.
+          if (devMode) for (const check of devTeardownChecks) check(this);
           destroyCallbacks.delete(this);
           instances.delete(this);
           pending.delete(this);

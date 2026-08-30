@@ -1,4 +1,4 @@
-import { define, html, onReady, store, update } from "@opentf/micro-ui";
+import { cx, define, html, onReady, store, update } from "@opentf/micro-ui";
 import {
   type Expense,
   type SplitState,
@@ -152,7 +152,7 @@ define("x-split-people", (el) => {
             return html`
               <span class="split-person" key=${p.id}>
                 <span class="split-person-name">${p.name}</span>
-                <span class="split-net ${net > 0 ? "is-up" : net < 0 ? "is-down" : ""}">
+                <span class=${cx("split-net", { "is-up": net > 0, "is-down": net < 0 })}>
                   ${net === 0 ? "even" : money(net)}
                 </span>
                 <button
@@ -341,7 +341,7 @@ define("x-split-composer", (el) => {
             const on = picked.includes(p.id);
             return html`
               <button
-                class="split-chip ${on ? "is-on" : ""}"
+                class=${cx("split-chip", { "is-on": on })}
                 key=${p.id}
                 aria-pressed=${on}
                 onclick=${() => toggle(p.id)}
@@ -482,7 +482,7 @@ define("x-split-settle", (el) => {
                   <td>${p.name}</td>
                   <td>${money(t.paid)}</td>
                   <td>${money(t.share)}</td>
-                  <td class="split-net ${t.net > 0 ? "is-up" : t.net < 0 ? "is-down" : ""}">
+                  <td class=${cx("split-net", { "is-up": t.net > 0, "is-down": t.net < 0 })}>
                     ${t.net === 0 ? "even" : money(t.net)}
                   </td>
                 </tr>
