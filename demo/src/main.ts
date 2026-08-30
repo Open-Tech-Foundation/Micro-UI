@@ -16,4 +16,8 @@ import "./svg.ts";
 const root = document.getElementById("app");
 if (!root) throw new Error("no #app");
 
-mount(root, "x-app");
+// The demo is a workbench, so it runs with diagnostics on: a component that
+// throws shows its real message in the page, a class or style handed an array
+// or object says so, and a component removed while a store subscription is
+// still live is reported. An app would leave this off.
+mount(root, "x-app", { dev: true });
