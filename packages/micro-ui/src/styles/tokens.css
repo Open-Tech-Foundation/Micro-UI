@@ -111,9 +111,14 @@
   --ui-ease:
     cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Focus */
+  /* Focus. Two layers: a surface-coloured gap so the ring reads against the
+     component it surrounds, then a solid ring that carries the contrast.
+     WCAG 2.2 SC 2.4.11 wants 3:1 against adjacent colours; the previous
+     single 18%-alpha ring measured 1.26:1 and was effectively invisible. */
+  --ui-focus-ring-color: #4f46e5;
   --ui-focus-ring:
-    0 0 0 3px rgb(99 102 241 / 0.18);
+    0 0 0 2px var(--ui-surface),
+    0 0 0 4px var(--ui-focus-ring-color);
 
   /* Layout */
   --ui-container-sm: 640px;
@@ -178,8 +183,10 @@
     --ui-shadow-lg:
       0 12px 32px rgb(0 0 0 / 0.45);
 
+    --ui-focus-ring-color: #a5b4fc;
     --ui-focus-ring:
-      0 0 0 3px rgb(129 140 248 / 0.25);
+      0 0 0 2px var(--ui-surface),
+      0 0 0 4px var(--ui-focus-ring-color);
   }
 }
 
@@ -238,8 +245,10 @@
   --ui-shadow-lg:
     0 12px 32px rgb(0 0 0 / 0.45);
 
+  --ui-focus-ring-color: #a5b4fc;
   --ui-focus-ring:
-    0 0 0 3px rgb(129 140 248 / 0.25);
+    0 0 0 2px var(--ui-surface),
+    0 0 0 4px var(--ui-focus-ring-color);
 }
 
 /* Explicit light theme — forces light even in dark mode */
@@ -297,7 +306,9 @@
   --ui-shadow-lg:
     0 12px 32px rgb(15 23 42 / 0.14);
 
+  --ui-focus-ring-color: #4f46e5;
   --ui-focus-ring:
-    0 0 0 3px rgb(99 102 241 / 0.18);
+    0 0 0 2px var(--ui-surface),
+    0 0 0 4px var(--ui-focus-ring-color);
 }
 }

@@ -100,8 +100,13 @@ test("e2e: tokens define motion values", () => {
 });
 
 test("e2e: tokens define focus ring", () => {
+  // Two layers — a surface-coloured gap, then the solid ring that carries the
+  // contrast. The colour lives in its own token so a11y checks can measure it.
   const v = extractToken(tokensCss, "--ui-focus-ring");
-  assert.ok(v && v.includes("rgb"));
+  assert.ok(v, "--ui-focus-ring must be defined");
+  assert.ok(v.includes("var(--ui-focus-ring-color)"), `got: ${v}`);
+  const c = extractToken(tokensCss, "--ui-focus-ring-color");
+  assert.ok(/^#[0-9a-f]{3,8}$/i.test(c ?? ""), `ring colour must be hex, got: ${c}`);
 });
 
 test("e2e: tokens define container widths", () => {
@@ -528,7 +533,10 @@ test("e2e: automatic and attribute dark use the same token values", () => {
     const a = new RegExp(`${t}:\\s*([^;]+);`).exec(attr);
     assert.ok(m, `${t} must be defined in automatic dark`);
     assert.ok(a, `${t} must be defined in attribute dark`);
-    assert.equal(m[1].trim(), a[1].trim(), `${t} must match between automatic and attribute dark`);
+    // Indentation differs — one block is nested in the media query — so
+    // compare the values, not their layout.
+    const norm = (v) => v.trim().replace(/\s+/g, " ");
+    assert.equal(norm(m[1]), norm(a[1]), `${t} must match between automatic and attribute dark`);
   }
 });
 

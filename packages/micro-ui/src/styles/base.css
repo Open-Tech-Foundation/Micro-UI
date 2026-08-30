@@ -278,6 +278,13 @@ a {
   font-weight: 500;
 }
 
+.ui-link:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--ui-focus-ring);
+  border-radius: var(--ui-radius-sm);
+}
+
 .ui-link:hover {
   text-decoration: underline;
 }

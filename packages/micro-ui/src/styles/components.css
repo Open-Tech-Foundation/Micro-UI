@@ -104,7 +104,10 @@
 }
 
 .ui-btn:focus-visible {
-  outline: none;
+  /* Transparent rather than none: forced-colors mode repaints a transparent
+     outline in the system highlight colour, and box-shadows are dropped. */
+  outline: 2px solid transparent;
+  outline-offset: 2px;
   box-shadow: var(--ui-focus-ring);
 }
 
@@ -287,6 +290,8 @@
 .ui-select:focus {
   border-color: var(--ui-border-focus);
   box-shadow: var(--ui-focus-ring);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
 }
 
 .ui-input:disabled,
@@ -1539,6 +1544,87 @@
 
   .ui-card {
     padding: var(--ui-space-4);
+  }
+}
+
+
+/* ---------------------------------------------------------
+   50a. FOCUS VISIBILITY
+   Every control that reacts to a mouse has to react to a keyboard too.
+   Tabs, menu items, pagination, breadcrumbs and the hoverable list and
+   card surfaces all had a :hover rule and no focus style whatsoever, so
+   keyboard users had nothing to follow. The switch is the worst case: its
+   input is opacity:0, so an unstyled focus is literally invisible.
+   --------------------------------------------------------- */
+
+.ui-tab:focus-visible,
+.ui-menu-item:focus-visible,
+.ui-page:focus-visible,
+.ui-breadcrumb:focus-visible,
+.ui-list-item:focus-visible,
+.ui-list-item-hover:focus-visible,
+.ui-card-hover:focus-visible,
+.ui-avatar:focus-visible,
+.ui-badge:focus-visible,
+.ui-drawer:focus-visible,
+.ui-dialog:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--ui-focus-ring);
+  border-radius: var(--ui-radius-sm);
+}
+
+/* Native controls paint their own focus ring in most browsers, but it is the
+   accent colour and easy to lose against a busy row — make it ours. */
+.ui-checkbox input:focus-visible,
+.ui-radio input:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* The switch's real input is transparent and stretched over the track, so the
+   ring has to be drawn on the track it controls. */
+.ui-switch input:focus-visible + .ui-switch-track {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* ---------------------------------------------------------
+   50b. FORCED COLORS (Windows High Contrast)
+   Box-shadows are dropped entirely in this mode, so every focus ring above
+   would vanish. The transparent outlines are repainted by the OS; these
+   rules just make sure they are wide enough to see.
+   --------------------------------------------------------- */
+
+@media (forced-colors: active) {
+  .ui-btn:focus-visible,
+  .ui-input:focus,
+  .ui-textarea:focus,
+  .ui-select:focus,
+  .ui-tab:focus-visible,
+  .ui-menu-item:focus-visible,
+  .ui-page:focus-visible,
+  .ui-breadcrumb:focus-visible,
+  .ui-list-item:focus-visible,
+  .ui-list-item-hover:focus-visible,
+  .ui-card-hover:focus-visible,
+  .ui-avatar:focus-visible,
+  .ui-badge:focus-visible,
+  .ui-checkbox input:focus-visible,
+  .ui-radio input:focus-visible,
+  .ui-switch input:focus-visible + .ui-switch-track {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
+  }
+
+  /* Selected/active state is carried by colour alone elsewhere, which this
+     mode flattens; give it a border the OS will keep. */
+  .ui-tab.is-active,
+  .ui-page.is-active,
+  .ui-menu-item.is-active {
+    outline: 2px solid Highlight;
   }
 }
 
