@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-08-30
+
 ### Added
 - `tsr test:browser` — runs `test.html` in a real browser through the DevTools protocol and reports its 43 assertions. The file existed but no task, script or workflow ran it, and it imports from a git-ignored `dist/`, so it had been dead since it was written. It covers what jsdom structurally cannot: real paint, real scrolling, real media playback, an `<img>` that must not re-request, a `<canvas>` that must keep its pixels. No new dependencies — bun serves the page and speaks CDP to whatever chromium or chrome is on the machine — and it skips with a message when there is none, so `check` still passes without a browser. Added to `check`, so it cannot go stale again.
 - `test/jsdom/uncovered-branches.test.mjs` — 12 tests for the branches no other file reached, found by intersecting per-file coverage runs. Whole-suite coverage cannot be read directly: each file imports the library with a cache-busting query for its own module state, and the reporter sees only one instance, so the aggregate reads 73% where a single file reads 95%. Intersecting the runs put the real figure at 39 uncovered lines; it is now 17, and those are defensive or structurally unreachable — a fragment vnode as a child (`pushNodes` flattens them away), a namespaced ARIA attribute (ARIA names carry no prefix), a static event value (the parser rejects those before `vdom` sees them), and two `catch` blocks for DOM calls that do not throw here.
