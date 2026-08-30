@@ -73,7 +73,19 @@ export function flush(): void {
   for (const el of batch) {
     const inst = instances.get(el);
     if (!inst) continue;
-    if (inst.errored) continue;
+    if (inst.errored) {
+      // An explicit update() is a request to try again — the app has had the
+      // chance to fix whatever threw, and a component that can never recover
+      // is a component the app has to tear down and rebuild by hand.
+      //
+      // Both sides have to be reset first: the error box replaced the host's
+      // children, and inst.tree still describes the DOM from before the
+      // failure, so reconciling against it would patch nodes that are no
+      // longer in the document.
+      inst.errored = false;
+      el.textContent = "";
+      inst.tree = { type: "fragment", children: [] };
+    }
     let newTree: VNode;
     syncProps(el, inst.props);
     setCurrentRendering(el);

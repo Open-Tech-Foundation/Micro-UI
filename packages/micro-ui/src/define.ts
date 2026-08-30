@@ -54,7 +54,12 @@ export function define(tag: string, setup: SetupFn): void {
           mountErrorUI(this, setupError);
           instances.set(this, {
             errored: true,
-            render: () => ({ type: "fragment", children: [] }),
+            // setup() cannot be re-run — a custom element gets one — so a
+            // retry has to fail the same way instead of rendering an empty
+            // component over the error box.
+            render: () => {
+              throw setupError;
+            },
             tree: { type: "fragment", children: [] },
             props,
           });
@@ -76,7 +81,10 @@ export function define(tag: string, setup: SetupFn): void {
           mountErrorUI(this, err);
           instances.set(this, {
             errored: true,
-            render: () => ({ type: "fragment", children: [] }),
+            // Keep the render function: the state it choked on may be fixed
+            // by the time the app calls update() again, and without it there
+            // would be nothing to recover to.
+            render: render!,
             tree: { type: "fragment", children: [] },
             props,
           });

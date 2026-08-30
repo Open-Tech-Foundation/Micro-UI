@@ -430,7 +430,7 @@ test("jsdom: onError handler that throws is logged but does not break the host",
   }
 });
 
-test("jsdom: errored component is not re-rendered on subsequent updates", async () => {
+test("jsdom: a component that keeps throwing keeps showing the error box", async () => {
   const tag = uniqueTag("x-errored-once");
   define(tag, (el) => {
     let n = 0;
@@ -446,12 +446,17 @@ test("jsdom: errored component is not re-rendered on subsequent updates", async 
   flush();
   const errBox = el.querySelector("[data-micro-ui-error]");
   assert.ok(errBox);
-  // Trigger again — the errored instance should not throw a second time
-  // and the fallback should still be there.
+  // Trigger again. update() now retries an errored component — the app may
+  // have fixed the cause — but this render throws every time, so the error
+  // box is rebuilt rather than replaced by broken content. The box is a new
+  // node each time, which is why identity is not asserted here.
   el.dispatchEvent(new Event("kick", { bubbles: true }));
   await tick();
   flush();
-  assert.strictEqual(el.querySelector("[data-micro-ui-error]"), errBox);
+  const again = el.querySelector("[data-micro-ui-error]");
+  assert.ok(again, "still showing an error box");
+  assert.equal(el.querySelectorAll("[data-micro-ui-error]").length, 1, "exactly one");
+  assert.equal(el.querySelector("p"), null, "and no half-rendered content");
 });
 
 // ── deferred DOM creation (allocation optimisation) ────────────────

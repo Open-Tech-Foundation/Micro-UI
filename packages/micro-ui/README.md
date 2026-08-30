@@ -219,7 +219,13 @@ html.raw`<div>${trustedMarkup}</div>`
 
 ### `update(el)`
 
-Triggers a re-render. Multiple calls are batched into a single update. No-op on errored components.
+Triggers a re-render. Multiple calls are batched into a single update.
+
+A component that has failed is retried: `update()` clears the error box and
+renders again, on the assumption that whatever threw has been fixed. If it
+throws again, the error box comes back. A failure in `setup` is the exception —
+`setup` runs once per element and cannot be re-run, so the same error is
+reported again rather than the component being blanked.
 
 ### `flush()`
 
