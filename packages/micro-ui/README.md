@@ -13,8 +13,8 @@ A small runtime for AI-generated micro-apps
 
 ## Features
 
-* **Lightweight** — zero dependencies, no build step. ~6.8 KB gzipped for the
-  core; ~7.4 KB with the `store`, which nothing in the core imports, so a build
+* **Lightweight** — zero dependencies, no build step. ~7.1 KB gzipped for the
+  core; ~7.8 KB with the `store`, which nothing in the core imports, so a build
   that never touches it never pays for it.
 * **Simple state management** — use plain variables or the built-in `store` for shared state.
 * **Smooth updates** — changes are batched and applied efficiently, no flicker or jank.
