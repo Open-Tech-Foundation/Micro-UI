@@ -4,13 +4,13 @@
 
 *An [Open Tech Foundation](https://opentechf.org/) project*
 
-A tiny runtime for AI-generated micro-apps
+A small runtime for AI-generated micro-apps
 
 ![Micro-UI Screenshot](Screenshot.png)
 
 </div>
 
-> *A tiny functional JavaScript UI library for AI agents to generate lightweight, interactive micro-apps.*
+> *A small functional JavaScript UI library for AI agents to generate lightweight, interactive micro-apps.*
 
 ## Features
 
@@ -526,7 +526,7 @@ define("x-safe", (el) => {
 
 # Micro-UI Utils
 
-A tiny, semantic, framework-free CSS utility and component layer for building **Micro-UI apps**.
+A small, semantic, framework-free CSS utility and component layer for building **Micro-UI apps**.
 
 **No Tailwind. No Bootstrap. No build step required.**
 

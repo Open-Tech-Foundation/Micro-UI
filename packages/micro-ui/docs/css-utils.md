@@ -1,6 +1,6 @@
 # Micro-UI CSS Utils
 
-A tiny, semantic, framework-free CSS utility and component layer for building **Micro-UI apps**.
+A small, semantic, framework-free CSS utility and component layer for building **Micro-UI apps**.
 
 Micro-UI Utils provides a predictable set of `ui-*` classes for layout, typography, forms, buttons, surfaces, feedback, navigation, and common application UI.
 
