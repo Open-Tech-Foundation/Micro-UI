@@ -163,14 +163,23 @@ test("adversarial: attribute breakout via interpolations stays literal", async (
     assert.equal(el.querySelector("img"), null);
     el.remove();
   }
-  // also test href javascript: is literal, not executed
+  // A javascript: URL is refused outright rather than written and left for a
+  // click to run. This used to assert the opposite — that the attribute was
+  // set verbatim, on the grounds that the text was never *parsed* as markup.
+  // Text is the XSS boundary for content; an attribute the browser navigates
+  // to is a second door, and it was open.
   const tag2 = uniqueTag("adv-href");
+  const realError = console.error;
+  const logged = [];
+  console.error = (...a) => logged.push(String(a[0]));
   mod.define(tag2, () => () => mod.html`<a href=${"javascript:alert(1)"}>click</a>`);
   const el2 = document.createElement(tag2);
   document.body.appendChild(el2);
   await tick();
-  assert.equal(el2.querySelector("a").getAttribute("href"), "javascript:alert(1)");
+  console.error = realError;
+  assert.equal(el2.querySelector("a").hasAttribute("href"), false);
   assert.equal(el2.querySelector("a").textContent, "click");
+  assert.ok(logged.some((l) => l.includes("refused to set href")));
   el2.remove();
 });
 

@@ -478,6 +478,31 @@ html`<p>${"Tom & Jerry"}</p>`   // shows: Tom & Jerry
 html`<p>${"5 < 10"}</p>`        // shows: 5 < 10
 ```
 
+### URL attributes are refused when they would run script
+
+Text is the boundary for content, but an attribute the browser *navigates* to
+is a second door. `href=${untrusted}` used to be written verbatim, so a
+`javascript:` URL out of a database ran on the next click, with the page's
+origin.
+
+An `href`, `src`, `action`, `formaction`, `ping`, `srcdoc` or `xlink:href`
+whose value would execute is not set at all, and the refusal is reported to the
+console:
+
+```js
+html`<a href=${"javascript:alert(1)"}>click</a>`   // no href is set
+html`<a href=${"/search?q=javascript:alert(1)"}>`  // fine — it is a path
+```
+
+The scheme is read the way the parser reads it, so `JaVaScRiPt:`, a leading
+space and `java\tscript:` are all the same URL. `mailto:`, `tel:`, `blob:` and
+`data:` images are left alone; only `javascript:`, `vbscript:` and
+`data:text/html` are refused.
+
+If you meant it — a `javascript:` URL of your own — use an `onclick` handler
+instead. There is no way to opt back in, because there is no version of this
+that is safe with a value you did not write.
+
 ### Trusted HTML opt-in (`html.raw`)
 
 When you need to render trusted markup, use `html.raw`:

@@ -136,6 +136,38 @@ function writeValue(el: HTMLInputElement, next: string): void {
   }
 }
 
+/**
+ * Attributes the browser will navigate to or submit to, where the value is
+ * treated as a URL and a `javascript:` scheme executes.
+ */
+const URL_ATTRS = new Set([
+  "href",
+  "src",
+  "action",
+  "formaction",
+  "xlink:href",
+  "ping",
+  "srcdoc",
+]);
+
+/**
+ * Whether a URL would run script if the browser followed it.
+ *
+ * The scheme is read the way the parser does: leading whitespace and C0
+ * control characters are ignored, so `java\tscript:alert(1)` and a
+ * newline-padded value are the same URL. Anything relative or with a normal
+ * scheme has no colon before the first `/`, `?` or `#`, and passes.
+ */
+function isScriptURL(url: string): boolean {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: stripping them is the point
+  const s = url.replace(/[\u0000-\u001F\u007F-\u009F\s]/g, "").toLowerCase();
+  return (
+    s.startsWith("javascript:") ||
+    s.startsWith("vbscript:") ||
+    s.startsWith("data:text/html")
+  );
+}
+
 function setElProp(el: Element, k: string, v: unknown): void {
   try {
     (el as unknown as Record<string, unknown>)[k] = v;
@@ -171,6 +203,19 @@ function isTruthyAttrVal(v: unknown): boolean {
 
 export function setProp(el: Element, k: string, v: unknown): void {
   const isSvg = el.namespaceURI === SVG_NS;
+  // A text interpolation cannot become markup, but an attribute is a second
+  // door: `href=${untrusted}` runs whatever `javascript:` it was handed, on a
+  // click, with the page's origin. The attribute is refused rather than
+  // written, because a half-written one still navigates.
+  if (typeof v === "string" && URL_ATTRS.has(k) && isScriptURL(v)) {
+    console.error(
+      `[micro-ui] refused to set ${k}="${v.slice(0, 60)}" — that URL runs ` +
+        "script when followed. If it came from user input, it is an injection; " +
+        "if it is yours, use an onclick handler instead of a javascript: URL.",
+    );
+    el.removeAttribute(k);
+    return;
+  }
   if (!isSvg) {
     if (k === "value") {
       if (v == null) {
