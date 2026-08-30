@@ -175,60 +175,140 @@ function patchKeyed(
   newCh: VNode[],
   parent: HTMLElement | Element | DocumentFragment,
 ): void {
-  const oldMap = new Map<string, VNode>();
-  const unmatchedUnkeyed = new Set<VNode>();
-  for (const o of oldCh) {
-    const k = getKey(o);
-    if (k != null) oldMap.set(String(k), o);
-    else unmatchedUnkeyed.add(o);
-  }
-  let nextSib: Node | null = null;
+  const oldLen = oldCh.length;
+  const newLen = newCh.length;
   const parentNS = getParentNS(parent);
-  for (let i = newCh.length - 1; i >= 0; i--) {
+
+  // key -> index in oldCh. A duplicate key keeps the last node; the shadowed
+  // one stays unmatched and is removed with the rest below.
+  const keyToOld = new Map<string, number>();
+  for (let i = 0; i < oldLen; i++) {
+    const k = getKey(oldCh[i]!);
+    if (k != null) keyToOld.set(String(k), i);
+  }
+
+  // pairs[i] = index in oldCh that newCh[i] reuses, or -1 for a fresh node.
+  const pairs: number[] = new Array(newLen);
+  const matched: boolean[] = new Array(oldLen).fill(false);
+  for (let i = 0; i < newLen; i++) {
+    const k = getKey(newCh[i]!);
+    let oi = -1;
+    if (k != null) {
+      const cand = keyToOld.get(String(k));
+      if (cand !== undefined && !matched[cand]) {
+        const dom = oldCh[cand]!.dom;
+        // A node detached from outside (parentNode === null) is still ours to
+        // reclaim by key; one adopted by another parent is not.
+        if (dom && (dom.parentNode === parent || dom.parentNode === null))
+          oi = cand;
+      }
+    } else {
+      // Unkeyed children mixed into a keyed list still match by position.
+      const f = oldCh[i];
+      if (f && !matched[i] && getKey(f) == null && f.dom?.parentNode === parent)
+        oi = i;
+    }
+    if (oi >= 0) matched[oi] = true;
+    pairs[i] = oi;
+  }
+
+  // Pass 1 — content. Placement is deliberately a separate pass: the move plan
+  // below has to be computed against the DOM this pass leaves behind.
+  const doms: Node[] = new Array(newLen);
+  for (let i = 0; i < newLen; i++) {
     const n = newCh[i]!;
-    const k = getKey(n);
-    const o = k != null ? oldMap.get(String(k)) : undefined;
-    if (o && (o.dom?.parentNode === parent || o.dom?.parentNode === null)) {
-      if (n.type === "element" || n.type === "fragment")
-        correctVNodeNS(n, parentNS);
+    if (n.type === "element" || n.type === "fragment")
+      correctVNodeNS(n, parentNS);
+    const oi = pairs[i]!;
+    if (oi >= 0) {
+      const o = oldCh[oi]!;
       // No materializeNode() here: reconcile() reuses the matched node's DOM
       // (or builds a replacement itself when tag/ns changed). Materializing
       // first built a full subtree that was then thrown away every pass.
       reconcile(o, n, parent);
       // reconcile() sets n.dom — to o.dom when reused, or to a fresh element
       // when it had to replace. Placing o.dom would resurrect the replaced node.
-      const placed = n.dom ?? o.dom!;
-      if (placed.nextSibling !== nextSib) parent.insertBefore(placed, nextSib);
-      nextSib = placed;
-      oldMap.delete(String(k));
+      doms[i] = n.dom ?? o.dom!;
     } else {
-      const fallback = k == null ? oldCh[i] : undefined;
-      if (
-        fallback &&
-        fallback.dom?.parentNode === parent &&
-        getKey(fallback) == null
-      ) {
-        unmatchedUnkeyed.delete(fallback);
-        if (n.type === "element" || n.type === "fragment")
-          correctVNodeNS(n, parentNS);
-        reconcile(fallback, n, parent);
-        const placed = n.dom ?? fallback.dom!;
-        if (placed.nextSibling !== nextSib)
-          parent.insertBefore(placed, nextSib);
-        nextSib = placed;
-      } else {
-        if (n.type === "element" || n.type === "fragment")
-          correctVNodeNS(n, parentNS);
-        materializeNode(n, parentNS);
-        parent.insertBefore(n.dom!, nextSib);
-        nextSib = n.dom!;
-      }
+      materializeNode(n, parentNS);
+      doms[i] = n.dom!;
     }
   }
-  for (const o of oldMap.values())
-    if (o.dom?.parentNode === parent) o.dom!.remove();
-  for (const o of unmatchedUnkeyed)
-    if (o.dom?.parentNode === parent) o.dom!.remove();
+
+  // Pass 2 — removals, before positions are read, so a departing node between
+  // two survivors cannot make them look out of order.
+  for (let i = 0; i < oldLen; i++) {
+    if (matched[i]) continue;
+    const dom = oldCh[i]!.dom;
+    if (dom?.parentNode === parent) dom.remove();
+  }
+
+  // Pass 3 — the move plan. Positions come from the live DOM rather than from
+  // oldCh's order, so a list re-ordered from outside (drag and drop) still
+  // converges, and a node detached from outside falls out as -1.
+  const pos = new Map<Node, number>();
+  let at = 0;
+  for (let c = parent.firstChild; c; c = c.nextSibling) pos.set(c, at++);
+  const source: number[] = new Array(newLen);
+  let reordered = false;
+  let highest = -1;
+  for (let i = 0; i < newLen; i++) {
+    const s = pos.get(doms[i]!) ?? -1;
+    source[i] = s;
+    if (s >= 0) {
+      if (s < highest) reordered = true;
+      else highest = s;
+    }
+  }
+  // Nodes on the longest increasing subsequence are already in the right order
+  // relative to each other, so they never move; everyone else is inserted once.
+  // Swapping two rows of a thousand costs two insertBefore calls, not n.
+  const keep = reordered ? lis(source) : null;
+
+  // Pass 4 — placement, right to left: everything past `nextSib` is final.
+  let k = keep ? keep.length - 1 : 0;
+  let nextSib: Node | null = null;
+  for (let i = newLen - 1; i >= 0; i--) {
+    const dom = doms[i]!;
+    const stays = keep ? k >= 0 && keep[k] === i : source[i]! >= 0;
+    if (stays) k--;
+    else if (dom.nextSibling !== nextSib || dom.parentNode !== parent)
+      parent.insertBefore(dom, nextSib);
+    nextSib = dom;
+  }
+}
+
+/**
+ * Indices of a longest strictly increasing subsequence of `source`, ignoring
+ * the -1 entries (fresh or detached nodes, which are always inserted).
+ * Patience sorting: O(n log n), with `prev` linking each index to the tail of
+ * the best run it extends so the winning run can be walked back out.
+ */
+function lis(source: number[]): number[] {
+  const prev: number[] = new Array(source.length);
+  // tails[l] = index of the smallest tail among the runs of length l + 1.
+  const tails: number[] = [];
+  for (let i = 0; i < source.length; i++) {
+    const v = source[i]!;
+    if (v < 0) continue;
+    let lo = 0;
+    let hi = tails.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (source[tails[mid]!]! < v) lo = mid + 1;
+      else hi = mid;
+    }
+    prev[i] = lo > 0 ? tails[lo - 1]! : -1;
+    tails[lo] = i;
+  }
+  let l = tails.length;
+  const out: number[] = new Array(l);
+  let cur = l > 0 ? tails[l - 1]! : -1;
+  while (l > 0) {
+    out[--l] = cur;
+    cur = prev[cur]!;
+  }
+  return out;
 }
 
 function patchAttrs(

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Keyed list patching now computes the minimum set of DOM moves instead of re-anchoring every node it walks past. `patchKeyed` iterated the new children right to left and called `insertBefore` on any node whose `nextSibling` was not the previously placed one — so moving a single row displaced every row after it, cascading: swapping two rows of 1,001 cost **997** `insertBefore` calls where 2 suffice, and removing one row from the middle of a list moved the rows below it. Matching, content patching, removal and placement are now four separate passes, and placement keeps the rows on a longest increasing subsequence of their live DOM positions (patience sorting, O(n log n)) fixed while moving only the rest. Sorting, filtering and drag-reorder in long lists are the visible wins; a list whose order did not change now performs no `insertBefore` at all.
+
+### Fixed
+- A duplicate key in a keyed list no longer leaks a row. The old-node lookup was keyed by a `Map` whose later entry overwrote the earlier one, so the shadowed node was neither matched nor removed and stayed in the DOM forever. Unmatched old nodes are now tracked per index, so every one of them is removed.
+- A keyed row detached from outside is re-inserted even when it belongs last. The re-insert was guarded by `nextSibling !== nextSib`, both of which are `null` for a detached final row, so it was silently dropped from the render.
+
+### Added
+- `test/jsdom/keyed-lis.test.mjs` — 18 tests that assert the *number* of `insertBefore` calls, not only the final order: the 1,001-row swap, unchanged re-render, content-only change, move-to-front, reversal, append, prepend, middle removal, and 25 seeded shuffles of 40 rows checked against an independent LIS reference for both optimal move count and node identity. Plus the mixed keyed/unkeyed, duplicate-key, detached-row, tag-change and external-reorder cases.
+
 ## [0.9.0] - 2026-08-29
 
 ### Added
