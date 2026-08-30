@@ -624,6 +624,175 @@ function assert(testId, condition, msg) {
   assert("test15", val2.textContent === "11", `Instance 2 after click: "${val2.textContent}"`);
 }
 
+// ── Test 16: Rows interpolated into a table ────────────────────────
+// jsdom uses the same parser, but foster parenting is a real-browser
+// behaviour worth pinning where it actually happens.
+
+{
+  const section = document.createElement("div");
+  section.id = "test16";
+  section.className = "test";
+  section.innerHTML = '<span class="label">16. Table bindings land inside the table</span>';
+  results.appendChild(section);
+
+  let rows16 = [{ id: "a", name: "Ada" }, { id: "b", name: "Grace" }];
+  let triggerUpdate16;
+
+  define("t16-table", (el) => {
+    triggerUpdate16 = () => update(el);
+    return () => html`
+      <table class="tbl">
+        <thead><tr><th>Name</th></tr></thead>
+        <tbody>
+          ${rows16.map((r) => html`<tr key=${r.id}><td>${r.name}</td></tr>`)}
+        </tbody>
+      </table>
+    `;
+  });
+
+  const el = document.createElement("t16-table");
+  results.appendChild(el);
+  await customElements.whenDefined("t16-table");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const tbody = el.querySelector("tbody");
+  assert("test16", tbody.querySelectorAll("tr").length === 2, `Rows inside tbody: ${tbody.querySelectorAll("tr").length}`);
+  assert("test16", el.querySelectorAll("table > tr").length === 0, "Nothing fostered out beside the rows");
+  assert("test16", tbody.rows[0].cells[0].textContent === "Ada", `First cell: "${tbody.rows[0].cells[0].textContent}"`);
+
+  const firstRow = tbody.rows[0];
+  rows16 = [{ id: "b", name: "Grace" }, { id: "a", name: "Ada" }];
+  triggerUpdate16();
+  await new Promise(r => requestAnimationFrame(r));
+
+  assert("test16", tbody.rows[1] === firstRow, "Keyed row moved, not rebuilt");
+  assert("test16", tbody.rows[0].cells[0].textContent === "Grace", `Reordered first cell: "${tbody.rows[0].cells[0].textContent}"`);
+}
+
+// ── Test 17: A select takes the value it is given ──────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test17";
+  section.className = "test";
+  section.innerHTML = '<span class="label">17. Select honours its value binding</span>';
+  results.appendChild(section);
+
+  let pick17 = "grace";
+  let people17 = ["ada", "grace", "linus"];
+  let triggerUpdate17;
+
+  define("t17-select", (el) => {
+    triggerUpdate17 = () => update(el);
+    return () => html`
+      <select class="sel" value=${pick17}>
+        ${people17.map((p) => html`<option key=${p} value=${p}>${p}</option>`)}
+      </select>
+    `;
+  });
+
+  const el = document.createElement("t17-select");
+  results.appendChild(el);
+  await customElements.whenDefined("t17-select");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const sel = el.querySelector(".sel");
+  // The bug this pins: the value was applied before the options existed, so
+  // the browser showed the first option instead of the one asked for.
+  assert("test17", sel.value === "grace", `First render selection: "${sel.value}"`);
+  assert("test17", sel.selectedIndex === 1, `selectedIndex: ${sel.selectedIndex}`);
+
+  pick17 = "linus";
+  triggerUpdate17();
+  await new Promise(r => requestAnimationFrame(r));
+  assert("test17", sel.value === "linus", `After the binding changed: "${sel.value}"`);
+
+  // A choice the user made is not overwritten by an unchanged binding.
+  sel.value = "ada";
+  triggerUpdate17();
+  await new Promise(r => requestAnimationFrame(r));
+  assert("test17", sel.value === "ada", `User's choice kept: "${sel.value}"`);
+}
+
+// ── Test 18: The caret survives a rewritten value ──────────────────
+// Selection is emulated in jsdom; this is the one that counts.
+
+{
+  const section = document.createElement("div");
+  section.id = "test18";
+  section.className = "test";
+  section.innerHTML = '<span class="label">18. Caret survives a rewritten value</span>';
+  results.appendChild(section);
+
+  let text18 = "hello";
+  let triggerUpdate18;
+
+  define("t18-caret", (el) => {
+    triggerUpdate18 = () => update(el);
+    // An uppercase-as-you-type field: every keystroke produces a different
+    // string from the one in the DOM, so the value is genuinely rewritten.
+    return () => html`<input class="inp" value=${text18.toUpperCase()} />`;
+  });
+
+  const el = document.createElement("t18-caret");
+  results.appendChild(el);
+  await customElements.whenDefined("t18-caret");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const input = el.querySelector(".inp");
+  input.focus();
+  input.value = "helXlo";
+  input.setSelectionRange(4, 4);
+  text18 = "helXlo";
+  triggerUpdate18();
+  await new Promise(r => requestAnimationFrame(r));
+
+  assert("test18", input.value === "HELXLO", `Value rewritten: "${input.value}"`);
+  assert("test18", input.selectionStart === 4, `Caret stayed at 4, got ${input.selectionStart}`);
+  assert("test18", document.activeElement === input, "Focus kept");
+
+  // A value the DOM already holds is not written again, so the caret is not
+  // touched at all.
+  input.value = "HELXLO";
+  input.setSelectionRange(2, 2);
+  triggerUpdate18();
+  await new Promise(r => requestAnimationFrame(r));
+  assert("test18", input.selectionStart === 2, `Unchanged value left the caret alone: ${input.selectionStart}`);
+  input.blur();
+}
+
+// ── Test 19: A URL that would run script is refused ────────────────
+
+{
+  const section = document.createElement("div");
+  section.id = "test19";
+  section.className = "test";
+  section.innerHTML = '<span class="label">19. Script URLs are refused</span>';
+  results.appendChild(section);
+
+  define("t19-urls", () => () => html`
+    <div>
+      <a class="bad" href=${"javascript:window.__xss = 1"}>bad</a>
+      <a class="ok" href=${"/search?q=javascript:alert(1)"}>ok</a>
+      <img class="badimg" src=${"javascript:void(0)"} alt="" />
+    </div>
+  `);
+
+  const el = document.createElement("t19-urls");
+  results.appendChild(el);
+  await customElements.whenDefined("t19-urls");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const bad = el.querySelector(".bad");
+  assert("test19", !bad.hasAttribute("href"), `javascript: href refused, got "${bad.getAttribute("href")}"`);
+  assert("test19", el.querySelector(".ok").getAttribute("href") === "/search?q=javascript:alert(1)", "A path containing the word is untouched");
+  assert("test19", !el.querySelector(".badimg").hasAttribute("src"), "javascript: src refused");
+
+  bad.click();
+  await new Promise(r => requestAnimationFrame(r));
+  assert("test19", window.__xss === undefined, "Clicking the refused link ran nothing");
+}
+
 // ── Summary ────────────────────────────────────────────────────────
 
 await new Promise(r => setTimeout(r, 200));
