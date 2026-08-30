@@ -78,15 +78,21 @@ test("adversarial: buildTemplate with foreignObject resets to HTML", async () =>
 });
 
 test("adversarial: static on* attribute without MARKER throws actionable error", async () => {
+  // The message reaches the page only in dev mode, so this mounts in dev mode
+  // rather than assuming it. It used to assume it, and passed only because a
+  // `?static-on-${Date.now()}` import happened to land in the same
+  // millisecond as another file's — sharing that file's module instance, and
+  // with it the dev flag that file had set. Run alone, it failed.
   const mod = await import(`../../src/index.ts?static-on-${Date.now()}`);
   const tag = uniqueTag("adv-static-on");
   mod.define(tag, () => () => mod.html`<div onclick="alert(1)">x</div>`);
-  const el = document.createElement(tag);
-  document.body.appendChild(el);
+  const host = document.createElement("div");
+  document.body.appendChild(host);
+  const el = mod.mount(host, tag, { dev: true });
   await tick();
   assert.ok(el.querySelector("[data-micro-ui-error]"), "static onclick should mount error UI");
   assert.ok(el.textContent.includes("onclick") && el.textContent.includes("interpolated"));
-  el.remove();
+  host.remove();
 
   const mod2 = await import(`../../src/index.ts?static-onsvg-${Date.now()}`);
   const tag2 = uniqueTag("adv-static-onsvg");
@@ -96,6 +102,23 @@ test("adversarial: static on* attribute without MARKER throws actionable error",
   await tick();
   assert.ok(el2.querySelector("[data-micro-ui-error]"));
   el2.remove();
+});
+
+test("adversarial: the same failure says nothing specific with dev off", async () => {
+  // The other half of the contract, and the reason the test above has to ask
+  // for dev mode: a thrown message can carry a URL, a token or an internal
+  // path, and the box renders where the user is looking.
+  const mod = await import(`../../src/index.ts?static-on-prod-${Date.now()}`);
+  const tag = uniqueTag("adv-static-on-prod");
+  mod.define(tag, () => () => mod.html`<div onclick="alert(1)">x</div>`);
+  const host = document.createElement("div");
+  document.body.appendChild(host);
+  const el = mod.mount(host, tag, { dev: false });
+  await tick();
+  assert.ok(el.querySelector("[data-micro-ui-error]"));
+  assert.equal(el.textContent, "Something went wrong.");
+  assert.equal(el.textContent.includes("onclick"), false);
+  host.remove();
 });
 
 test("adversarial: static on* variations throw (onfocus, onmouseover, case-insensitive)", async () => {

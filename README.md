@@ -734,9 +734,18 @@ Every test file imports `./setup.mjs` **first**: it builds a jsdom window and pu
 `document`, `customElements`, `HTMLElement` and friends on `globalThis` before the
 library is loaded, because the library reaches for them at module scope. Each file
 then imports the library with a cache-busting query
-(`../../src/index.ts?keyed-lis-${Date.now()}`) so it gets a fresh module instance,
-and generates random tag names — a custom element name can only be defined once per
-registry, and tests must not collide.
+(`../../src/index.ts?keyed-lis-${Date.now()}`) and generates random tag names — a
+custom element name can only be defined once per registry, and tests must not
+collide.
+
+**The cache-busting query does not buy you a fresh module instance.** Under the
+bun in use, every `src/index.ts?whatever` resolves to the same module, so
+everything at module scope — `devMode` above all — is shared by the whole run. A
+test that depends on dev mode must call `mount(host, tag, { dev: true })` itself,
+and one that depends on it being *off* must pass `{ dev: false }`. Assuming the
+default is a bet on which file ran first: `template.adversarial.test.mjs` made
+that bet, passed for months in the full suite, and failed the moment its file was
+run on its own.
 
 Write the test so it fails against the bug. Asserting the final DOM often passes
 either way: `keyed-lis.test.mjs` counts `insertBefore` calls, and
