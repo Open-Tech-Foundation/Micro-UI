@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-08-30
+
 ### Added
 - `cx()` and `sx()` — compose a class or style string. A binding that is not a string becomes a DOM *property*, and `el.class` and `el.style` are not writable that way, so `class=${["a", "b"]}` set nothing at all and said nothing about it. `cx` takes strings, arrays and `{ name: on }` objects nested to any depth and drops everything falsy, so a conditional class is `cond && "is-on"`. `sx` takes strings, arrays and `{ prop: value }` objects, kebab-cases camelCase keys, leaves custom properties alone, and drops a nullish/`false`/empty value while keeping `0`. Numbers are written as-is — no automatic `px`, because the table of unitless properties is not worth its bytes here.
 - `mount(..., { dev: true })` now warns about the two mistakes that otherwise have no symptom at all. Handing `class` or `style` an array or object warns and names the helper that was wanted. Removing a component while a `store.subscribe` it made is still live warns with the element and the keys: nothing re-renders after that (the instance is gone, so `update()` is a no-op), but the listener holds the closure and the closure holds the element, so a page that mounts and unmounts these accumulates detached DOM invisibly. Both are dev-only — with `dev` off nothing is tracked and nothing is logged. The core does not import the store to do this: `state.ts` holds a list of teardown checks and `store.ts` adds its own when it is loaded.
