@@ -128,9 +128,17 @@
   --ui-container-xl: 1280px;
 }
 
-/* Dark mode — automatic via prefers-color-scheme */
+/* Dark mode — automatic via prefers-color-scheme.
+   The three theme blocks below restate the same 40 token names, which CSS
+   gives no way to avoid: "the system is dark AND no explicit light theme" is
+   a media query, "the theme attribute says dark" is a selector, and the two
+   cannot be combined into one rule. The suite compares all three blocks
+   token for token so they cannot drift apart.
+   `:not([data-theme="light"])` is what makes an explicit light theme win.
+   Without it this block and [data-theme="light"] have equal specificity and
+   the winner is whichever appears later in the file. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --ui-background: #09090b;
     --ui-surface: #18181b;
     --ui-surface-muted: #27272a;

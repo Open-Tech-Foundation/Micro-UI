@@ -525,19 +525,64 @@ test("e2e: tokens.css defines data-theme dark/light pins", () => {
   assert.ok(!componentsCss.includes('[data-theme="'), "theme pin blocks must live in tokens.css, not components");
 });
 
-test("e2e: automatic and attribute dark use the same token values", () => {
-  const media = tokensCss.slice(tokensCss.indexOf("@media (prefers-color-scheme: dark)"));
-  const attr = tokensCss.slice(tokensCss.indexOf('[data-theme="dark"]'));
-  for (const t of ["--ui-background", "--ui-primary", "--ui-danger-soft", "--ui-text-disabled", "--ui-focus-ring", "--ui-shadow-lg"]) {
-    const m = new RegExp(`${t}:\\s*([^;]+);`).exec(media);
-    const a = new RegExp(`${t}:\\s*([^;]+);`).exec(attr);
-    assert.ok(m, `${t} must be defined in automatic dark`);
-    assert.ok(a, `${t} must be defined in attribute dark`);
-    // Indentation differs — one block is nested in the media query — so
-    // compare the values, not their layout.
-    const norm = (v) => v.trim().replace(/\s+/g, " ");
-    assert.equal(norm(m[1]), norm(a[1]), `${t} must match between automatic and attribute dark`);
+test("e2e: the three theme blocks stay in sync, token for token", () => {
+  // CSS cannot express "system dark, unless overridden" and "attribute dark"
+  // in one rule, so the values are written out three times. Nothing but this
+  // test stops them drifting — it used to check six hand-picked tokens.
+  // Anchored at the start of a line: [data-theme="light"] also appears inside
+  // the dark block's own :not(...) selector.
+  const blockOf = (selector) => {
+    const re = new RegExp(
+      `^[ \\t]*${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[^{]*\\{`,
+      "m",
+    );
+    const m = re.exec(tokensCss);
+    assert.ok(m, `missing block: ${selector}`);
+    const open = m.index + m[0].length - 1;
+    let depth = 0;
+    let j = open;
+    for (; j < tokensCss.length; j++) {
+      if (tokensCss[j] === "{") depth++;
+      else if (tokensCss[j] === "}" && --depth === 0) break;
+    }
+    return Object.fromEntries(
+      [...tokensCss.slice(open, j).matchAll(/(--[\w-]+):\s*([^;]+);/g)].map(
+        (m) => [m[1], m[2].trim().replace(/\s+/g, " ")],
+      ),
+    );
+  };
+
+  const root = blockOf(":root");
+  const autoDark = blockOf(':root:not([data-theme="light"])');
+  const attrDark = blockOf('[data-theme="dark"]');
+  const attrLight = blockOf('[data-theme="light"]');
+
+  assert.ok(Object.keys(autoDark).length > 30, "dark block looks truncated");
+  assert.deepEqual(
+    Object.keys(autoDark).sort(),
+    Object.keys(attrDark).sort(),
+    "automatic and attribute dark must define the same token names",
+  );
+  for (const [name, value] of Object.entries(autoDark))
+    assert.equal(attrDark[name], value, `${name} differs between the dark blocks`);
+
+  // The explicit light theme has to restore every token dark overrides,
+  // otherwise data-theme="light" inside a dark page is half-themed.
+  for (const name of Object.keys(autoDark)) {
+    assert.ok(name in attrLight, `${name} is overridden by dark but not restored by [data-theme="light"]`);
+    assert.equal(attrLight[name], root[name], `${name} must match the :root default`);
   }
+});
+
+test("e2e: an explicit light theme outranks the dark media query", () => {
+  // Equal specificity would make this depend on source order.
+  const m = /@media \(prefers-color-scheme: dark\) \{\s*([^{]+)\{/.exec(tokensCss);
+  assert.ok(m, "no dark media query");
+  assert.equal(
+    m[1].trim(),
+    ':root:not([data-theme="light"])',
+    "the dark media query must exclude an explicit light theme",
+  );
 });
 
 // ── LAYERS: structure ─────────────────────────────────────────────
