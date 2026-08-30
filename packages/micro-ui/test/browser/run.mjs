@@ -12,6 +12,7 @@
 // so `tsr check` still passes on a box without one.
 import { execSync, spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -121,7 +122,11 @@ async function main() {
       "--no-first-run",
       "--disable-dev-shm-usage",
       `--remote-debugging-port=${port}`,
-      "--user-data-dir=" + join(here, ".chrome-profile"),
+      // Outside the repo on purpose. Chrome leaves broken symlinks in a
+      // profile (SingletonLock and friends), and Biome walks the tree and
+      // warns about every one of them — two warnings on every `tsr lint`,
+      // which is how a project learns to ignore its own warnings.
+      "--user-data-dir=" + join(tmpdir(), "micro-ui-browser-test-profile"),
       url,
     ],
     { stdio: "ignore" },
