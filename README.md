@@ -14,7 +14,7 @@ A tiny runtime for AI-generated micro-apps
 
 ## Features
 
-* **Lightweight** — zero dependencies, no build step, ~5 KB gzipped.
+* **Lightweight** — zero dependencies, no build step, ~6.5 KB gzipped.
 * **Simple state management** — use plain variables or the built-in `store` for shared state.
 * **Smooth updates** — changes are batched and applied efficiently, no flicker or jank.
 * **Form-friendly** — inputs, video, canvas, focus, and scroll position all survive re-renders.

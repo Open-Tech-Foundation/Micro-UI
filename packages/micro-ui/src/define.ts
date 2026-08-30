@@ -21,7 +21,47 @@ import type { SetupFn, VNode } from "./types.ts";
  */
 const teardownPending: WeakSet<HTMLElement> = new WeakSet<HTMLElement>();
 
+/**
+ * Why `tag` cannot be registered, or null if it can.
+ *
+ * Deliberately a set of specific checks rather than the full spec grammar,
+ * which allows plenty of exotic-but-valid names: the point is to say what is
+ * wrong with the name someone actually typed, where the platform only says
+ * "Name argument is not a valid custom element name."
+ */
+function tagNameProblem(tag: string): string | null {
+  if (typeof tag !== "string" || tag === "")
+    return "a custom element name must be a non-empty string";
+  if (!tag.includes("-"))
+    return `a custom element name must contain a dash — try "x-${tag.toLowerCase()}"`;
+  // Before the leading-character check: "X-Counter" is more usefully described
+  // as needing lowercase than as starting with the wrong character.
+  if (/[A-Z]/.test(tag))
+    return `a custom element name must be lowercase — try "${tag.toLowerCase()}"`;
+  if (!/^[a-z]/.test(tag))
+    return "a custom element name must start with a lowercase letter";
+  if (/\s/.test(tag)) return "a custom element name cannot contain whitespace";
+  return null;
+}
+
 export function define(tag: string, setup: SetupFn): void {
+  const problem = tagNameProblem(tag);
+  if (problem) throw new Error(`define(${JSON.stringify(tag)}): ${problem}.`);
+  if (typeof setup !== "function")
+    throw new Error(
+      `define("${tag}"): the second argument must be a setup function, ` +
+        `got ${setup === null ? "null" : typeof setup}. It runs once per ` +
+        "element and returns the render function: " +
+        "define(tag, (el, props) => () => html`...`).",
+    );
+  if (customElements.get(tag))
+    throw new Error(
+      `define("${tag}"): already defined. A name can only be registered once ` +
+        "per page, so this usually means the module ran twice — a duplicate " +
+        "import, or a reload that re-evaluated it. Pick another name, or " +
+        `guard the call with customElements.get("${tag}").`,
+    );
+
   customElements.define(
     tag,
     class extends HTMLElement {
@@ -42,6 +82,17 @@ export function define(tag: string, setup: SetupFn): void {
         let setupError: unknown = null;
         try {
           render = setup(this, props);
+          if (typeof render !== "function") {
+            // Returning the template instead of a function that produces it is
+            // the usual slip. Left alone it surfaces much later as
+            // "render is not a function", pointing at the library.
+            throw new Error(
+              `define("${tag}"): setup must return a render function, got ` +
+                `${render === null ? "null" : typeof render}. Return a ` +
+                "function that builds the template — () => html`...` — " +
+                "rather than the template itself.",
+            );
+          }
         } catch (err) {
           setupError = err;
         }
