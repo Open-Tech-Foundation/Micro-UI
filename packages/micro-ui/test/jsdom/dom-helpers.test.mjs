@@ -1,4 +1,4 @@
-// jsdom tests for dom.ts helpers: addListener, removeListener, setElProp, setProp
+// jsdom tests for dom.ts helpers: setEventHandler, setElProp, setProp
 import test from "node:test";
 import assert from "node:assert/strict";
 import "./setup.mjs";
@@ -266,7 +266,7 @@ test("jsdom setProp: addListener fires after keyed reorder", async () => {
   assert.equal(afterBtns[1].textContent, "2");
 });
 
-test("jsdom setProp: removeListener detaches old handler on update", async () => {
+test("jsdom setProp: a replaced handler supersedes the old one", async () => {
   const tag = uniqueTag("x-sp-remove-listener");
   let calls = [];
   let fn = () => calls.push("a");

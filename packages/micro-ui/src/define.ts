@@ -1,3 +1,4 @@
+import { materializeNode } from "./dom.ts";
 import { mountErrorUI, safeCall } from "./error.ts";
 import {
   destroyCallbacks,
@@ -121,6 +122,11 @@ export function define(tag: string, setup: SetupFn): void {
 
         try {
           const tree = render!();
+          // The library's own trees arrive with their DOM already built, but a
+          // render may hand back a vnode it constructed itself — resolveBinding
+          // accepts those as values, so they are part of the contract. Without
+          // this, appending one threw on an undefined child node.
+          materializeNode(tree);
           this.textContent = "";
           if (tree.type === "text") {
             this.appendChild(tree.dom!);

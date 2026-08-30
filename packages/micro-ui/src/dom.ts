@@ -47,14 +47,6 @@ export function addListener(el: Element, type: string, handler: unknown): void {
   el.addEventListener(type, handler as EventListener);
 }
 
-export function removeListener(
-  el: Element,
-  type: string,
-  handler: unknown,
-): void {
-  el.removeEventListener(type, handler as EventListener);
-}
-
 /**
  * The current handler for each event type on an element.
  *
@@ -225,6 +217,12 @@ export function setProp(el: Element, k: string, v: unknown): void {
       el.setAttribute(k, String(v));
     } else if (isSvg && v != null) {
       el.setAttribute(k, String(v));
+    } else {
+      // An object or function lives on the element as a property, never as an
+      // attribute. If the same binding was a string last render the attribute
+      // is still there, stale — and on a child component it shadows the
+      // property, because props is rebuilt from the element's attributes.
+      el.removeAttribute(k);
     }
   }
 }
