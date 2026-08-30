@@ -255,8 +255,6 @@
 
   font-size: var(--ui-font-sm);
 
-  outline: none;
-
   transition:
     border-color var(--ui-duration) var(--ui-ease),
     box-shadow var(--ui-duration) var(--ui-ease);
@@ -324,13 +322,16 @@
   display: inline-flex;
   align-items: center;
   gap: var(--ui-space-2);
+  /* The label is the click target, so it carries the 24px minimum from
+     WCAG 2.2 SC 2.5.8 — the native box alone is 16px. */
+  min-height: 1.5rem;
   cursor: pointer;
   user-select: none;
 }
 
 .ui-checkbox input {
-  width: 1rem;
-  height: 1rem;
+  width: 1.125rem;
+  height: 1.125rem;
   margin: 0;
   accent-color: var(--ui-primary);
 }
@@ -344,13 +345,16 @@
   display: inline-flex;
   align-items: center;
   gap: var(--ui-space-2);
+  /* The label is the click target, so it carries the 24px minimum from
+     WCAG 2.2 SC 2.5.8 — the native box alone is 16px. */
+  min-height: 1.5rem;
   cursor: pointer;
   user-select: none;
 }
 
 .ui-radio input {
-  width: 1rem;
-  height: 1rem;
+  width: 1.125rem;
+  height: 1.125rem;
   margin: 0;
   accent-color: var(--ui-primary);
 }

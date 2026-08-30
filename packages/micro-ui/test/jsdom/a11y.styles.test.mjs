@@ -74,9 +74,21 @@ for (const [themeName, theme] of [
   ["light", LIGHT],
   ["dark", DARK],
 ]) {
-  test(`a11y: ${themeName} text meets WCAG AA on both surfaces`, () => {
-    for (const t of ["--ui-text", "--ui-text-secondary", "--ui-text-muted"]) {
-      for (const bg of ["--ui-surface", "--ui-background"]) {
+  test(`a11y: ${themeName} text meets WCAG AA on every surface`, () => {
+    // Every text colour against every background the library paints. Checking
+    // only --ui-surface and --ui-background left --ui-text-muted failing on
+    // --ui-surface-muted at 4.34:1, which .ui-empty-icon and any .ui-muted
+    // inside a .ui-table th or a muted panel land on.
+    const TEXT = [
+      "--ui-text",
+      "--ui-text-secondary",
+      "--ui-text-muted",
+      "--ui-primary",
+      "--ui-primary-text",
+    ];
+    const SURFACES = ["--ui-surface", "--ui-background", "--ui-surface-muted"];
+    for (const t of TEXT) {
+      for (const bg of SURFACES) {
         const r = contrast(theme[t], theme[bg]);
         assert.ok(
           r >= AA_TEXT,
@@ -84,6 +96,27 @@ for (const [themeName, theme] of [
         );
       }
     }
+  });
+
+  test(`a11y: ${themeName} soft badge and alert text meets WCAG AA`, () => {
+    for (const role of ["primary", "success", "warning", "danger", "info"]) {
+      const r = contrast(theme[`--ui-${role}-text`], theme[`--ui-${role}-soft`]);
+      assert.ok(
+        r >= AA_TEXT,
+        `--ui-${role}-text on --ui-${role}-soft is ${r.toFixed(2)}:1 (${themeName})`,
+      );
+    }
+  });
+
+  test(`a11y: ${themeName} muted text stays distinguishable from secondary`, () => {
+    // Raising muted for contrast must not collapse it into secondary — they
+    // are two deliberately different weights of de-emphasis.
+    const muted = contrast(theme["--ui-text-muted"], theme["--ui-surface"]);
+    const secondary = contrast(theme["--ui-text-secondary"], theme["--ui-surface"]);
+    assert.ok(
+      secondary - muted > 0.75,
+      `muted ${muted.toFixed(2)}:1 and secondary ${secondary.toFixed(2)}:1 are too close (${themeName})`,
+    );
   });
 
   test(`a11y: ${themeName} filled surfaces meet WCAG AA against their label`, () => {
@@ -199,6 +232,43 @@ test("a11y: no rule hardcodes a foreground colour on a themed fill", () => {
     hardcoded.length,
     0,
     `use a token that flips with the theme (--ui-text-on-accent / --ui-surface); found ${hardcoded.length}`,
+  );
+});
+
+test("a11y: pointer targets meet the 24px minimum", () => {
+  // WCAG 2.2 SC 2.5.8. The native checkbox and radio boxes are smaller than
+  // that on purpose — the label wrapping them is the actual click target, so
+  // the minimum lives there.
+  const rem = 16;
+  const sizeOf = (selector, prop) => {
+    const re = new RegExp(
+      `\\.${selector}\\s*\\{[^}]*?\\b${prop}:\\s*([\\d.]+)(rem|px)`,
+      "s",
+    );
+    const m = re.exec(components);
+    assert.ok(m, `no ${prop} on .${selector}`);
+    return m[2] === "rem" ? parseFloat(m[1]) * rem : parseFloat(m[1]);
+  };
+
+  for (const wrapper of ["ui-checkbox", "ui-radio"])
+    assert.ok(
+      sizeOf(wrapper, "min-height") >= 24,
+      `.${wrapper} is the click target and must be at least 24px tall`,
+    );
+
+  assert.ok(sizeOf("ui-btn", "min-height") >= 24, ".ui-btn");
+  assert.ok(sizeOf("ui-btn-sm", "min-height") >= 24, ".ui-btn-sm");
+  assert.ok(sizeOf("ui-btn-icon", "width") >= 24, ".ui-btn-icon");
+  assert.ok(sizeOf("ui-page", "height") >= 24, ".ui-page");
+  assert.ok(sizeOf("ui-switch", "height") >= 24, ".ui-switch");
+});
+
+test("a11y: nothing strips the browser's focus ring without replacing it", () => {
+  // Not just inside :focus rules — a base rule doing it is the same problem.
+  assert.equal(
+    (all.match(/outline:\s*none/g) ?? []).length,
+    0,
+    "use a transparent outline so forced-colors mode can repaint it",
   );
 });
 

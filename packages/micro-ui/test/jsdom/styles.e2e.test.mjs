@@ -219,7 +219,13 @@ test("e2e: components.css defines button states", () => {
 test("e2e: components.css defines .ui-input", () => {
   assert.ok(hasProperty(componentsCss, ".ui-input", "width") || componentsCss.includes("width: 100%"));
   assert.ok(hasProperty(componentsCss, ".ui-input", "height") || componentsCss.includes("height: 2.5rem"));
-  assert.ok(hasProperty(componentsCss, ".ui-input", "outline") || componentsCss.includes("outline: none"));
+  // The outline is set on :focus, not stripped in the base rule — a base
+  // `outline: none` removes the browser's own ring in every state, including
+  // any state the focus rule does not reach.
+  assert.ok(
+    /\.ui-input:focus[^{]*\{[^}]*outline:\s*2px solid transparent/s.test(componentsCss),
+    ".ui-input:focus must set a transparent outline for forced-colors mode",
+  );
 });
 
 test("e2e: components.css defines input states", () => {
