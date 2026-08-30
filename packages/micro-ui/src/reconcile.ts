@@ -1,4 +1,5 @@
 import {
+  applyDeferredValue,
   correctVNodeNS,
   materializeNode,
   setEventHandler,
@@ -112,7 +113,18 @@ export function reconcile(
       }
       if (changed) update(dom as HTMLElement);
     }
+    // A <select>'s value is one of its children, so patching the options can
+    // move the selection on its own — the option that held it is gone, or is
+    // now a different option. Read it first: if the DOM still agrees with the
+    // binding (or holds nothing), the app is in control and the binding is
+    // re-applied afterwards. If it does not, someone chose that value, and a
+    // user's choice is left alone the way a typed-in input's is.
+    const isSelect = (dom as Element).tagName === "SELECT";
+    const had = old.attrs.value;
+    const before = isSelect ? (dom as HTMLSelectElement).value : "";
     patchLists(old.children, nxt.children, dom);
+    if (isSelect && (before === "" || had == null || before === String(had)))
+      applyDeferredValue(dom as Element, nxt.attrs);
   }
 }
 

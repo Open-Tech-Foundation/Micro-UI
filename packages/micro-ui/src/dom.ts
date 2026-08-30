@@ -101,6 +101,41 @@ export function setEventHandler(
   });
 }
 
+/**
+ * Write an element's value without throwing the caret to the end.
+ *
+ * Assigning `.value` collapses the selection to the end of the field. That is
+ * invisible while a binding only echoes what was typed — the strings match, so
+ * nothing is written — but any input that *rewrites* what it is given (an
+ * uppercase field, a currency or phone mask, a trim) writes a different string
+ * on every keystroke, and the caret jumps to the end of each one.
+ *
+ * So: skip the write when the DOM already says this, and when the field is
+ * focused, put the selection back where it was, clamped to the new length.
+ */
+function writeValue(el: HTMLInputElement, next: string): void {
+  if (el.value === next) return;
+  const focused = el.ownerDocument?.activeElement === el;
+  let start: number | null = null;
+  let end: number | null = null;
+  if (focused) {
+    // Throws on an input type that has no selection (number, email, ...).
+    try {
+      start = el.selectionStart;
+      end = el.selectionEnd;
+    } catch {}
+  }
+  el.value = next;
+  if (start !== null) {
+    try {
+      el.setSelectionRange(
+        Math.min(start, next.length),
+        Math.min(end ?? start, next.length),
+      );
+    } catch {}
+  }
+}
+
 function setElProp(el: Element, k: string, v: unknown): void {
   try {
     (el as unknown as Record<string, unknown>)[k] = v;
@@ -140,9 +175,9 @@ export function setProp(el: Element, k: string, v: unknown): void {
     if (k === "value") {
       if (v == null) {
         el.removeAttribute(k);
-        (el as HTMLInputElement).value = "";
+        writeValue(el as HTMLInputElement, "");
       } else {
-        (el as HTMLInputElement).value = String(v);
+        writeValue(el as HTMLInputElement, String(v));
         el.setAttribute(k, String(v));
       }
       return;
@@ -245,6 +280,25 @@ export function setProp(el: Element, k: string, v: unknown): void {
   }
 }
 
+/**
+ * Re-apply `value` once the children exist.
+ *
+ * A `<select>`'s value is one of its options, so setting it before the options
+ * are appended selects nothing and leaves the first option showing — which is
+ * wrong exactly when the initial selection is not the first one. A `<textarea>`
+ * has the same shape: its children are its value.
+ */
+export function applyDeferredValue(
+  el: Element,
+  attrs: Record<string, unknown>,
+): void {
+  const tag = el.tagName;
+  if (tag !== "SELECT" && tag !== "TEXTAREA") return;
+  const v = attrs.value;
+  if (v == null || typeof v === "object" || typeof v === "function") return;
+  setProp(el, "value", v);
+}
+
 export function materializeNode(
   node: VNode,
   parentNS: string | null = null,
@@ -271,6 +325,7 @@ export function materializeNode(
       materializeNode(c, childParentNS);
       el.appendChild(c.dom!);
     }
+    applyDeferredValue(el, node.attrs);
     node.dom = el;
   } else if (node.type === "fragment") {
     for (const c of node.children) {
