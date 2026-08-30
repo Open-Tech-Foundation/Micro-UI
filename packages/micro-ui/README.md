@@ -13,7 +13,7 @@ A tiny runtime for AI-generated micro-apps
 
 ## Features
 
-* **Lightweight** — zero dependencies, no build step, ~6.5 KB gzipped.
+* **Lightweight** — zero dependencies, no build step, ~6.3 KB gzipped.
 * **Simple state management** — use plain variables or the built-in `store` for shared state.
 * **Smooth updates** — changes are batched and applied efficiently, no flicker or jank.
 * **Form-friendly** — inputs, video, canvas, focus, and scroll position all survive re-renders.
@@ -241,6 +241,28 @@ Tagged template that produces a renderable tree. Supports text, attributes, even
 html`<button onclick=${handler} class="btn ${active}">Click</button>`
 ```
 
+Two restrictions are worth knowing up front, because both fail in ways that do
+not look like your mistake:
+
+**An `on*` attribute must be an interpolated function, never a string of code.**
+`onclick="doThing()"` throws with a message telling you so — including inside
+`html.raw`, where an inline handler in markup is exactly the injection this
+library is built to refuse.
+
+```js
+html`<button onclick=${() => doThing()}>ok</button>`   // a handler
+html`<button onclick="doThing()">no</button>`          // throws
+```
+
+**A tag name cannot be interpolated.** Each template is parsed once and cached
+on the literal, so a `${...}` where a tag name belongs is text, not a tag — it
+renders as escaped characters rather than raising. Write the tag literally, or
+build the element with `document.createElement`.
+
+```js
+html`<${tag}>hi</${tag}>`     // renders the literal text "<x-foo>hi</x-foo>"
+```
+
 ### `html.raw`
 
 Trusted HTML opt-in — bypasses escaping. Never pass user input.
@@ -248,6 +270,44 @@ Trusted HTML opt-in — bypasses escaping. Never pass user input.
 ```js
 html.raw`<div>${trustedMarkup}</div>`
 ```
+
+### `onReady(callback)`
+
+Registers a callback to run once the component has rendered and is in the
+document. Must be called synchronously inside `setup`. Returning a function
+from it registers a cleanup, run when the element is genuinely removed — a
+move or a re-parent does not count.
+
+```js
+define("x-clock", (el) => {
+  let now = new Date();
+  onReady(() => {
+    const id = setInterval(() => { now = new Date(); update(el); }, 1000);
+    return () => clearInterval(id);
+  });
+  return () => html`<time>${now.toLocaleTimeString()}</time>`;
+});
+```
+
+Each callback is isolated: one that throws is reported through `onError` with
+the `"ready"` phase and does not stop the others, or cost you their cleanups.
+
+### `onError(handler)`
+
+Registers an error handler for this component. Must be called synchronously
+inside `setup`. Receives the element, the `Error`, and the phase it happened
+in — `"setup"`, `"ready"`, `"render"` or `"reconcile"`.
+
+```js
+define("x-risky", (el) => {
+  onError((target, err, phase) => report(`${phase}: ${err.message}`));
+  return () => html`<p>${mightThrow()}</p>`;
+});
+```
+
+Errors do not travel to a parent component — every component is its own
+boundary. Throws from an event handler are not caught here; they reach
+`window.onerror` like any other listener.
 
 ### `update(el)`
 
@@ -514,6 +574,7 @@ reaching past it to the underlying tool is the usual way to lose an afternoon (s
 | `tsr` | every task below | `curl -fsSL https://raw.githubusercontent.com/Open-Tech-Foundation/tsr/main/install.sh \| bash` |
 | `esdev` | `build` and `demo` | `curl -fsSL https://raw.githubusercontent.com/Open-Tech-Foundation/ES-Runtime/main/install.sh \| bash` |
 | `bun` | the test suite | `curl -fsSL https://bun.sh/install \| bash` |
+| chromium *(optional)* | `tsr test:browser`, which skips without it | your package manager, or set `CHROME_BIN` |
 
 `tsr` and `esdev` are standalone binaries, not npm dependencies — they land in
 `~/.tsr/bin` and `~/.es-runtime/bin`, and both need to be on your `PATH`.
@@ -536,8 +597,9 @@ run without running it.
 
 | Task | What it does |
 |------|--------------|
-| `tsr check` | The gate: `typecheck` + `lint` + `fmt:check` + `test`. Run it before every commit. |
-| `tsr test` | The whole suite — `bun test` against jsdom (480 tests across 16 files today). |
+| `tsr check` | The gate: `typecheck` + `lint` + `fmt:check` + `test` + `test:browser`. Run it before every commit. |
+| `tsr test` | The jsdom suite — `bun test`, 572 tests across 24 files today. |
+| `tsr test:browser` | `test.html` in a real browser, over the DevTools protocol. Skips if no browser is installed. |
 | `tsr typecheck` | `tsc --noEmit` over `packages/*`. |
 | `tsr lint` | Biome lint. |
 | `tsr fmt` / `tsr fmt:check` | Biome format — `fmt` rewrites files, `fmt:check` only reports. |
@@ -633,9 +695,9 @@ GitHub Release from the curated changelog.
 ## What This Is Not
 
 - Not a React/Vue/Angular replacement for large apps
-- Not optimized (v0 uses a full internal tree for correctness)
+- Not a full framework — no router, no forms layer, no data fetching, no devtools
+- No SSR/hydration — client islands only
 - Not a build tool or compiler
-- No SSR/hydration — client islands only; updates are batched via `queueMicrotask`
 
 ## License
 
