@@ -460,12 +460,138 @@ Opt-in CSS — `package.json` has `"sideEffects": ["*.css"]` so JS tree-shakes, 
 
 ---
 
-## Design
+## Development
 
-- **State**: ordinary JavaScript closures. Optional built-in `store`/`subscribe`/`del` for shared state — still no signals or reactive primitives.
-- **Composition**: native Custom Elements. `<x-parent>` contains `<x-child>` as regular HTML.
-- **DOM identity**: elements, inputs, videos, canvases survive updates. No `innerHTML` rebuilds.
-- **Reconciliation**: positional by default; keyed when `key` present (`key=${id}`) — stable DOM reuse for cart / data lists. Matches old and new children by index or key. Unchanged nodes are reused. Changed nodes are patched in place.
+This repo is a pnpm workspace driven by [`tsr`](https://tsr.opentechf.org). Every
+task — build, test, lint, demo — is declared in [`tasks.toml`](https://github.com/Open-Tech-Foundation/Micro-UI/blob/main/tasks.toml) at the
+root and can be run from **any** directory in the repo. Run things through `tsr`;
+reaching past it to the underlying tool is the usual way to lose an afternoon (see
+[Gotchas](#gotchas)).
+
+### Prerequisites
+
+| Tool | Needed for | Install |
+|------|-----------|---------|
+| Node 22+ | the toolchain | [nodejs.org](https://nodejs.org), or `nvm install 22` |
+| pnpm | workspace dependencies | `corepack enable` |
+| `tsr` | every task below | `curl -fsSL https://raw.githubusercontent.com/Open-Tech-Foundation/tsr/main/install.sh \| bash` |
+| `esdev` | `build` and `demo` | `curl -fsSL https://raw.githubusercontent.com/Open-Tech-Foundation/ES-Runtime/main/install.sh \| bash` |
+| `bun` | the test suite | `curl -fsSL https://bun.sh/install \| bash` |
+
+`tsr` and `esdev` are standalone binaries, not npm dependencies — they land in
+`~/.tsr/bin` and `~/.es-runtime/bin`, and both need to be on your `PATH`.
+[`.github/workflows/ci.yml`](https://github.com/Open-Tech-Foundation/Micro-UI/blob/main/.github/workflows/ci.yml) does exactly this and is
+the shortest complete description of a working environment.
+
+### Setup
+
+```sh
+git clone https://github.com/Open-Tech-Foundation/Micro-UI.git
+cd Micro-UI
+pnpm install
+tsr check     # typecheck + lint + format + the full test suite
+```
+
+### Tasks
+
+`tsr --list` prints them all; `tsr <task> --dry-run` shows the command a task would
+run without running it.
+
+| Task | What it does |
+|------|--------------|
+| `tsr check` | The gate: `typecheck` + `lint` + `fmt:check` + `test`. Run it before every commit. |
+| `tsr test` | The whole suite — `bun test` against jsdom (480 tests across 16 files today). |
+| `tsr typecheck` | `tsc --noEmit` over `packages/*`. |
+| `tsr lint` | Biome lint. |
+| `tsr fmt` / `tsr fmt:check` | Biome format — `fmt` rewrites files, `fmt:check` only reports. |
+| `tsr build` | Types, `dist/index.js`, `dist/index.min.js`, both CSS bundles, and the package README. |
+| `tsr demo` | The demo workbench on <http://localhost:5173>. |
+| `tsr ci` | `check` then `build` — what GitHub Actions runs on every PR. |
+
+### Repo layout
+
+```
+packages/micro-ui/
+  src/            the library — ~1,700 lines, zero dependencies
+  test/jsdom/     the entire test suite
+  docs/           CSS utility reference
+  dist/           build output (git-ignored, not committed)
+demo/src/         demo apps, one file per feature area
+tasks.toml        task definitions for tsr
+biome.json        lint + format rules
+CHANGELOG.md      curated by hand; release notes are generated from it
+```
+
+### The source, module by module
+
+| Module | Role |
+|--------|------|
+| `html.ts` | The `html` tag. Looks up the parsed template for this literal, builds a vnode tree from the current values. |
+| `template.ts` | Parses each template **once** into a static description, with a `\ue000` marker wherever a `${...}` sits. Cached on the template literal itself. |
+| `vdom.ts` | Clones that description into a vnode tree, substituting values and flattening nested fragments and arrays. |
+| `reconcile.ts` | Diffs the previous vnode tree against the new one and patches the DOM: attributes, events, child components' props, and keyed/unkeyed child lists. |
+| `dom.ts` | DOM primitives — element creation, `setProp`'s attribute-vs-property rules, namespace correction. |
+| `define.ts` | Wraps a setup function in a Custom Element. One reconciliation root, and one error boundary, per element. |
+| `update.ts` | `update()` and `flush()` — microtask batching, plus render-loop detection. |
+| `lifecycle.ts` | `onReady` / `onError`, collected during setup. |
+| `state.ts` | The WeakMaps: instance records, template cache, the pending-render set. |
+| `store.ts` | The optional shared store — `get`/`set`/`subscribe`/`del`/`clear`, including path writes. |
+| `ns.ts` | SVG namespace resolution and the camelCase SVG tag names `createElementNS` will not canonicalize for you. |
+| `raw.ts` | `html.raw`, the explicit trusted-HTML escape hatch. |
+| `error.ts` | The per-component error boundary and its on-page box. |
+| `mount.ts` | `mount(el, tag, options)`. |
+
+### Tests
+
+```sh
+tsr test                                       # everything
+cd packages/micro-ui
+bun test test/jsdom/keyed-lis.test.mjs         # one file
+bun test test/jsdom -t "swapping two rows"     # one test, by name
+```
+
+Every test file imports `./setup.mjs` **first**: it builds a jsdom window and puts
+`document`, `customElements`, `HTMLElement` and friends on `globalThis` before the
+library is loaded, because the library reaches for them at module scope. Each file
+then imports the library with a cache-busting query
+(`../../src/index.ts?keyed-lis-${Date.now()}`) so it gets a fresh module instance,
+and generates random tag names — a custom element name can only be defined once per
+registry, and tests must not collide.
+
+Write the test so it fails against the bug. Asserting the final DOM often passes
+either way: `keyed-lis.test.mjs` counts `insertBefore` calls, and
+`lifecycle.coverage.test.mjs` counts how many times setup ran, because that is where
+the respective bugs actually lived.
+
+### Gotchas
+
+- **Don't reach for `npx`.** `npx esdev build src/index.ts --out=dist/index.min.js
+  --minify` resolves a *different* esdev out of the npx cache and fails with
+  `ENOENT: … /build/`, then with a bogus `SyntaxError: Export 'define' is not
+  defined`. Nothing is wrong with the repo — `tsr build` works. The same applies to
+  Biome and `tsc`: use `tsr lint`, `tsr fmt`, `tsr typecheck`.
+- **`dist/` is not committed.** It is a build artifact, produced by the release
+  workflow. Never include it in a PR; measure bundle size by building locally
+  (`tsr build:js:min`, then `gzip -c packages/micro-ui/dist/index.min.js | wc -c`).
+- **There are two READMEs.** `packages/micro-ui/README.md` is *generated* from this
+  file by `tsr build:readme` and published to npm. Edit this one.
+
+### Before you open a PR
+
+- `tsr check` is green.
+- The change has a test. Unit tests for logic, a jsdom test under
+  `packages/micro-ui/test/jsdom/` for anything user-facing, plus the edge and error
+  cases.
+- `CHANGELOG.md` has an entry under `## [Unreleased]`, saying what broke and why —
+  the release notes are generated from it verbatim.
+- Commits follow [Conventional Commits](https://www.conventionalcommits.org)
+  (`fix(reconcile): …`). See [AGENTS.md](https://github.com/Open-Tech-Foundation/Micro-UI/blob/main/AGENTS.md) for the full contributor
+  rules.
+
+Releases are automated: a merge to `main` runs
+[`release.yml`](https://github.com/Open-Tech-Foundation/Micro-UI/blob/main/.github/workflows/release.yml), which builds with `tsr build`,
+publishes `@opentf/micro-ui` to npm with provenance, tags `v{version}`, and cuts a
+GitHub Release from the curated changelog.
 
 ## What This Is Not
 

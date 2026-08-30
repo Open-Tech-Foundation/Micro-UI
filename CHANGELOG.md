@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `test/jsdom/keyed-lis.test.mjs` — 18 tests that assert the *number* of `insertBefore` calls, not only the final order: the 1,001-row swap, unchanged re-render, content-only change, move-to-front, reversal, append, prepend, middle removal, and 25 seeded shuffles of 40 rows checked against an independent LIS reference for both optimal move count and node identity. Plus the mixed keyed/unkeyed, duplicate-key, detached-row, tag-change and external-reorder cases.
 
+### Documentation
+- README gains a **Development** section: prerequisites with the exact install commands for the standalone `tsr` and `esdev` binaries, every `tsr` task and what it does, repo layout, a module-by-module map of `src/`, how to run one test file or one test, and the PR checklist. The repo is driven by `tsr` from `tasks.toml`; reaching past it — `npx esdev build ...` — silently resolves a different esdev from the npx cache and fails with an `ENOENT` on `build/` and then a bogus `SyntaxError`, which reads as a broken repo and is not one. That trap is now written down.
+
+### Removed
+- The README's **Design** section. Its four bullets restated Features, How it works and the API sections above it, and its reconciliation bullet had gone stale — placement is no longer "matched by index or key" alone.
+
 ## [0.9.0] - 2026-08-29
 
 ### Added
