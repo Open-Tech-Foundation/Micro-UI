@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+- README's "What This Is Not" no longer reads as a list of things the library cannot do. It said "no forms layer, no data fetching", which lands as "forms and fetching are unsupported" — while the Features list advertises the library as form-friendly and the Styles section ships `ui-field`, `ui-input`, `ui-textarea`, `ui-select`, `ui-checkbox`, `ui-radio` and `ui-switch`. Forms are gone from the section entirely, since they are a supported capability and not a limit. What remains names the substitute rather than the gap: no router because one root per element means islands mount into whatever already routes, and no query cache because `fetch` in `setup` plus a `store` is the whole pattern.
+
 ## [0.10.0] - 2026-08-30
 
 ### Added

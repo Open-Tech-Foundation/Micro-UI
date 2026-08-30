@@ -695,10 +695,17 @@ GitHub Release from the curated changelog.
 
 ## What This Is Not
 
-- Not a React/Vue/Angular replacement for large apps
-- Not a full framework — no router, no forms layer, no data fetching, no devtools
-- No SSR/hydration — client islands only
-- Not a build tool or compiler
+Micro-UI renders and updates the DOM. Everything else you use the platform for:
+
+- **No router** — one reconciliation root per custom element, so islands drop into
+  whatever page or framework already routes.
+- **No data-fetching layer** — call `fetch` in `setup` and put the result in a
+  `store`; there is no query cache, retry, or invalidation to learn.
+- **No SSR or hydration** — client islands only.
+- **No compiler, build step, or devtools** — templates are parsed at runtime.
+
+For a large app with deep routing and server rendering, reach for React, Vue, or
+Angular instead.
 
 ## License
 
