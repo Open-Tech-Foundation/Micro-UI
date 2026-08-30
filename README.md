@@ -192,6 +192,38 @@ el.setAttribute("name", "Ada");
 update(el);                       // now it re-renders, with name = "Ada"
 ```
 
+#### Passing objects, arrays and callbacks
+
+`props` mirrors attributes, and attributes are strings. A binding whose value is
+not a string is set as a **DOM property** on the child instead, which is how the
+platform itself separates the two:
+
+```js
+define("x-row", (el) => {
+  // el.item is the object the parent passed; el.onsave is the callback
+  return () => html`<li>${el.item.label}</li>`;
+});
+
+define("x-list", () => () =>
+  html`<ul>${rows.map((r) =>
+    html`<x-row item=${r} save=${() => remove(r.id)}></x-row>`)}</ul>`);
+```
+
+The value is set before the child's `setup` runs, so it is available
+immediately. Such bindings never appear in `props`.
+
+An **object or array** binding is compared by identity: hand the child a new
+object and it re-renders, hand it the same one and it does not. So replace the
+object when its contents change, rather than mutating it in place.
+
+A **callback** is read when it is called, not when the child renders, so a new
+closure each render — the normal case — updates the property without
+re-rendering the child. Calling it always runs the latest one.
+
+> Attribute names starting with `on` are event bindings, not props. Name a
+> callback prop something else (`save`, not `onsave`) if you want the child to
+> call it rather than the DOM to fire it.
+
 There is no `observedAttributes` or `attributeChangedCallback` — an attribute
 changed from outside is picked up by the next `update()`, not observed as it
 happens. Attributes bound from a parent template are the exception: the parent's

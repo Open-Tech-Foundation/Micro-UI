@@ -77,6 +77,27 @@ export function reconcile(
           }
           continue;
         }
+        // An object, array or function binding is not an attribute at all —
+        // setProp writes it as a DOM property, which is how a child reads a
+        // value that is not a string. Stringifying it into props stored the
+        // useless "[object Object]" and, since syncProps drops any prop that
+        // is not a real attribute, that looked like a change on every single
+        // pass: a child with an object or callback binding re-rendered every
+        // time its parent did.
+        if (typeof v === "object" || typeof v === "function") {
+          if (k in inst.props) {
+            delete inst.props[k];
+            changed = true;
+          }
+          // A callback is read when it is called, not when the child renders,
+          // and `save=${() => remove(row)}` is a fresh closure every pass —
+          // patchAttrs has already pointed the property at the newest one, so
+          // re-rendering the child would achieve nothing. An object binding is
+          // different: the child reads it *during* render, so a new object is
+          // a real change and the same object is not.
+          if (typeof v === "object" && old.attrs[k] !== v) changed = true;
+          continue;
+        }
         const nextVal = String(v);
         if (inst.props[k] !== nextVal) {
           inst.props[k] = nextVal;
