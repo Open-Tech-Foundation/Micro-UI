@@ -10,11 +10,113 @@ import type {
   TemplateCache,
 } from "./types.ts";
 
+/**
+ * Elements whose content the parser reads as raw text. `<!--` inside one of
+ * these is literally the characters `<`, `!`, `-`, `-` — not a comment — so a
+ * placeholder there has to stay a bare marker character.
+ */
+const RAW_TEXT =
+  /^(script|style|textarea|title|xmp|iframe|noembed|noframes|plaintext)$/i;
+
+type ScanState = {
+  /** Between `<tag` and the `>` that closes it — an attribute position. */
+  inTag: boolean;
+  /** The quote character an attribute value is inside, or "". */
+  quote: string;
+  /** The raw-text element we are inside, or "". */
+  raw: string;
+  /** Inside an author's `<!-- ... -->`. */
+  comment: boolean;
+  /** A raw-text tag whose `>` we have not reached yet. */
+  pending: string;
+};
+
+/**
+ * Walks `s` from `i` to its end, tracking just enough of the tokenizer to
+ * answer one question: at the point we stopped, is a `<!-- -->` comment a
+ * comment? Templates are parsed once and cached on the literal, so this runs
+ * once per distinct template.
+ */
+function scan(s: string, i: number, st: ScanState): void {
+  while (i < s.length) {
+    if (st.comment) {
+      const end = s.indexOf("-->", i);
+      if (end < 0) return;
+      st.comment = false;
+      i = end + 3;
+      continue;
+    }
+    if (st.raw) {
+      const end = s.toLowerCase().indexOf(`</${st.raw}`, i);
+      if (end < 0) return;
+      st.raw = "";
+      i = end + 2;
+      continue;
+    }
+    if (st.inTag) {
+      for (; i < s.length; i++) {
+        const c = s[i]!;
+        if (st.quote) {
+          if (c === st.quote) st.quote = "";
+        } else if (c === '"' || c === "'") {
+          st.quote = c;
+        } else if (c === ">") {
+          st.inTag = false;
+          // A self-closing `<textarea />` never opens a raw-text region.
+          if (st.pending && s[i - 1] !== "/") st.raw = st.pending;
+          st.pending = "";
+          i++;
+          break;
+        }
+      }
+      continue;
+    }
+    const lt = s.indexOf("<", i);
+    if (lt < 0) return;
+    if (s.startsWith("<!--", lt)) {
+      st.comment = true;
+      i = lt + 4;
+      continue;
+    }
+    const name = /^<\/?([a-zA-Z][^\s/>]*)/.exec(s.slice(lt));
+    if (!name) {
+      // A lone `<` the parser will treat as text.
+      i = lt + 1;
+      continue;
+    }
+    const tag = name[1]!.toLowerCase();
+    st.inTag = true;
+    // A doctype needs no case of its own: the name match fails on `<!`, the
+    // scan steps past it, and a `>` outside a tag is ignored anyway.
+    st.pending = s[lt + 1] !== "/" && RAW_TEXT.test(tag) ? tag : "";
+    i = lt + name[0].length;
+  }
+}
+
 export function buildTemplate(strings: TemplateStringsArray): TemplateCache {
   let s = "";
+  let scanned = 0;
+  const st: ScanState = {
+    inTag: false,
+    quote: "",
+    raw: "",
+    comment: false,
+    pending: "",
+  };
   for (let i = 0; i < strings.length; i++) {
     s += strings[i];
-    if (i < strings.length - 1) s += MARKER;
+    if (i < strings.length - 1) {
+      scan(s, scanned, st);
+      // In a child position the placeholder is a comment, because the parser
+      // moves stray *text* out of <table>, <tbody>, <tr> and friends — which
+      // silently rendered every interpolated row above the table instead of
+      // in it. A comment is left where it was written. In an attribute value,
+      // or inside a raw-text element where `<!--` is not a comment at all, it
+      // stays the bare marker.
+      const atText = !st.inTag && !st.raw && !st.comment;
+      s += atText ? `<!--${MARKER}-->` : MARKER;
+      scanned = s.length;
+    }
   }
   const el = document.createElement("template");
   el.innerHTML = s;
@@ -49,6 +151,10 @@ export function buildDesc(
       } else {
         nodes.push({ type: "text", value: t });
       }
+    } else if (n.nodeType === 8 && (n as Comment).data === MARKER) {
+      const idx = bindings.length;
+      bindings.push({ type: "binding", binding: true });
+      nodes.push({ type: "binding", binding: true, idx });
     }
   }
   return nodes;

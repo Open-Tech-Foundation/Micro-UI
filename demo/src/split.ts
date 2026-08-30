@@ -470,24 +470,26 @@ define("x-split-settle", (el) => {
       <div class="card">
         <h3>Settle up</h3>
 
-        <div class="split-ledger">
-          <div class="split-ledger-head">
-            <span>Person</span><span>Paid</span><span>Share</span><span>Net</span>
-          </div>
-          ${state.people.map((p) => {
-            const t = byId[p.id] ?? { paid: 0, share: 0, net: 0 };
-            return html`
-              <div class="split-ledger-row" key=${p.id}>
-                <span>${p.name}</span>
-                <span>${money(t.paid)}</span>
-                <span>${money(t.share)}</span>
-                <span class="split-net ${t.net > 0 ? "is-up" : t.net < 0 ? "is-down" : ""}">
-                  ${t.net === 0 ? "even" : money(t.net)}
-                </span>
-              </div>
-            `;
-          })}
-        </div>
+        <table class="split-ledger">
+          <thead>
+            <tr><th>Person</th><th>Paid</th><th>Share</th><th>Net</th></tr>
+          </thead>
+          <tbody>
+            ${state.people.map((p) => {
+              const t = byId[p.id] ?? { paid: 0, share: 0, net: 0 };
+              return html`
+                <tr key=${p.id}>
+                  <td>${p.name}</td>
+                  <td>${money(t.paid)}</td>
+                  <td>${money(t.share)}</td>
+                  <td class="split-net ${t.net > 0 ? "is-up" : t.net < 0 ? "is-down" : ""}">
+                    ${t.net === 0 ? "even" : money(t.net)}
+                  </td>
+                </tr>
+              `;
+            })}
+          </tbody>
+        </table>
 
         ${
           transfers.length === 0

@@ -930,28 +930,27 @@ footer code { color: var(--ui-primary); }
   text-align: right;
 }
 
-/* settle up — a grid, not a <table>: an interpolation inside <tbody> is
-   foster-parented out of the table by the HTML parser before the library
-   ever sees it, so the rows would render above the table instead of in it. */
-.split-ledger { font-variant-numeric: tabular-nums; }
-.split-ledger-head, .split-ledger-row {
-  display: grid;
-  grid-template-columns: 1fr repeat(3, minmax(4.5rem, auto));
-  gap: 0.5rem;
+/* settle up */
+.split-ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.split-ledger th, .split-ledger td {
   padding: 0.4rem 0;
   font-size: 0.8rem;
-}
-.split-ledger-head {
-  color: var(--ui-text-muted);
+  text-align: right;
   border-bottom: 1px solid var(--ui-border);
+}
+.split-ledger th:first-child, .split-ledger td:first-child { text-align: left; }
+.split-ledger th {
+  color: var(--ui-text-muted);
   font-size: 0.72rem;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-.split-ledger-row { border-bottom: 1px solid var(--ui-border); }
-.split-ledger-row:last-child { border-bottom: 0; }
-.split-ledger-head span:not(:first-child),
-.split-ledger-row span:not(:first-child) { text-align: right; }
+.split-ledger tbody tr:last-child td { border-bottom: 0; }
 .split-net.is-up { color: var(--ui-success); }
 .split-net.is-down { color: var(--ui-danger); }
 
