@@ -156,7 +156,11 @@ function cloneNode(d: DescNode, values: unknown[], deferDOM: boolean): VNode {
 }
 
 function resolveBinding(val: unknown, deferDOM: boolean): VNode {
-  if (val == null || val === false) {
+  // `false` rendered nothing and `true` rendered the word "true", so
+  // `${a > b}` printed into the page while `${a < b}` did not — the asymmetry
+  // is what made it a trap. A boolean is a condition here, never content;
+  // `${String(flag)}` says so when the word is what you meant.
+  if (val == null || typeof val === "boolean") {
     if (deferDOM) return { type: "text", value: "" };
     return { type: "text", value: "", dom: document.createTextNode("") };
   }

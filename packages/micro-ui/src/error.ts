@@ -23,6 +23,9 @@ export function mountErrorUI(el: HTMLElement, err: unknown): void {
     el.textContent = "";
     const box = document.createElement("div");
     box.setAttribute("data-micro-ui-error", "");
+    // The box replaces whatever the user was looking at. Without this the
+    // change is silent to a screen reader: the content is simply gone.
+    box.setAttribute("role", "alert");
     const pre = document.createElement("pre");
     pre.style.whiteSpace = "pre-wrap";
     pre.style.margin = "0";

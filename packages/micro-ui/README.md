@@ -309,6 +309,13 @@ document. Must be called synchronously inside `setup`. Returning a function
 from it registers a cleanup, run when the element is genuinely removed — a
 move or a re-parent does not count.
 
+"A move" means the element is back in the document by the next microtask —
+`parent.appendChild(node)` and anything else that removes and re-inserts
+synchronously. A gap wider than that, an `await` between the two, is a removal
+followed by a fresh mount: cleanups run, `setup` runs again, and the
+component's state starts over. Virtualised lists and animated re-parenting
+should move the node in one go.
+
 ```js
 define("x-clock", (el) => {
   let now = new Date();
@@ -468,6 +475,11 @@ scripts cannot execute:
 const userInput = '<script>alert("xss")</script>';
 html`<p>${userInput}</p>` // renders as literal text, not markup
 ```
+
+A boolean is a condition, never content: both `true` and `false` render
+nothing, so `${a > b}` does not print the word "true" into the page and
+`${cond && html`...`}` reads the way it looks. Use `${String(flag)}` when the
+word is what you meant. `0`, `""` and `NaN` are values, and render.
 
 Values are displayed exactly as written — they are **not** entity-encoded, so
 `&`, `<`, `>`, `"` and `'` render as themselves:
