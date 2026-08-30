@@ -1,8 +1,7 @@
 import {
-  addListener,
   correctVNodeNS,
   materializeNode,
-  removeListener,
+  setEventHandler,
   setProp,
 } from "./dom.ts";
 import { HTML_NS, SVG_NS } from "./ns.ts";
@@ -365,9 +364,9 @@ function patchEvents(
   old: Record<string, unknown>,
   next: Record<string, unknown>,
 ): void {
-  for (const e in old)
-    if (old[e] != null && (!(e in next) || next[e] !== old[e]))
-      removeListener(el, e, old[e]);
-  for (const e in next)
-    if (next[e] != null && old[e] !== next[e]) addListener(el, e, next[e]);
+  // Writes to a slot the element's one real listener reads on dispatch, so a
+  // fresh closure per render costs a property write instead of a remove plus
+  // an add. See setEventHandler.
+  for (const e in old) if (!(e in next)) setEventHandler(el, e, null);
+  for (const e in next) if (old[e] !== next[e]) setEventHandler(el, e, next[e]);
 }

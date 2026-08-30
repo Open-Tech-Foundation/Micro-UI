@@ -1,4 +1,4 @@
-import { addListener, correctVNodeNS, createEl, setProp } from "./dom.ts";
+import { correctVNodeNS, createEl, setEventHandler, setProp } from "./dom.ts";
 import { materializeRaw } from "./raw.ts";
 import type {
   DescNode,
@@ -130,7 +130,7 @@ function cloneNode(d: DescNode, values: unknown[], deferDOM: boolean): VNode {
     const el = createEl(d.tag, d.ns);
     for (const k in attrs) setProp(el, k, attrs[k]);
     for (const e in events) {
-      if (events[e] != null) addListener(el, e, events[e]);
+      if (events[e] != null) setEventHandler(el, e, events[e]);
     }
     for (const c of children) el.appendChild(c.dom!);
 

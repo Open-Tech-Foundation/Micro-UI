@@ -19,7 +19,7 @@ export function correctVNodeNS(node: VNode, parentNS: string | null): void {
         const newEl = createEl(tag, expected);
         for (const k in node.attrs) setProp(newEl, k, node.attrs[k]);
         for (const e in node.events) {
-          if (node.events[e] != null) addListener(newEl, e, node.events[e]);
+          if (node.events[e] != null) setEventHandler(newEl, e, node.events[e]);
         }
         for (const c of node.children) {
           if (c.dom) newEl.appendChild(c.dom);
@@ -53,6 +53,59 @@ export function removeListener(
   handler: unknown,
 ): void {
   el.removeEventListener(type, handler as EventListener);
+}
+
+/**
+ * The current handler for each event type on an element.
+ *
+ * A handler written the idiomatic way — `onclick=${() => remove(item.id)}`,
+ * the only way to close over the row it belongs to — is a fresh closure on
+ * every render, so comparing handler identity says "changed" every time. Doing
+ * that literally means a removeEventListener plus an addEventListener per row
+ * per render: 2,000 listener operations to re-render a 1,000-row list, and
+ * nothing about the page has actually changed.
+ *
+ * So the listener is bound once per element and event type and never removed;
+ * it reads the current handler out of this map when the event fires. Updating
+ * a handler is then a plain property write.
+ */
+const eventSlots: WeakMap<Element, Record<string, unknown>> = new WeakMap<
+  Element,
+  Record<string, unknown>
+>();
+
+/**
+ * Point `el`'s `type` events at `handler`, binding a real listener the first
+ * time. A nullish handler empties the slot; the listener stays, inert, because
+ * re-binding costs more than the branch it saves.
+ */
+export function setEventHandler(
+  el: Element,
+  type: string,
+  handler: unknown,
+): void {
+  let slots = eventSlots.get(el);
+  if (!slots) {
+    slots = {};
+    eventSlots.set(el, slots);
+    // `slots` is captured, not looked up again — the map lookup would run on
+    // every dispatch for no benefit.
+  }
+  const bound = type in slots;
+  slots[type] = handler;
+  if (bound) return;
+  const owner = slots;
+  addListener(el, type, function dispatch(this: Element, e: Event) {
+    const h = owner[type];
+    if (typeof h === "function") {
+      (h as (this: Element, e: Event) => void).call(el, e);
+    } else if (
+      h &&
+      typeof (h as EventListenerObject).handleEvent === "function"
+    ) {
+      (h as EventListenerObject).handleEvent(e);
+    }
+  });
 }
 
 function setElProp(el: Element, k: string, v: unknown): void {
@@ -191,7 +244,7 @@ export function materializeNode(
     const el = createEl(node.tag, node.ns);
     for (const k in node.attrs) setProp(el, k, node.attrs[k]);
     for (const e in node.events) {
-      if (node.events[e] != null) addListener(el, e, node.events[e]);
+      if (node.events[e] != null) setEventHandler(el, e, node.events[e]);
     }
     const childParentNS =
       node.ns === SVG_NS && node.tag === "foreignobject" ? HTML_NS : node.ns;
