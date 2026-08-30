@@ -49,6 +49,15 @@ function text(ul) {
   return [...ul.children].map((n) => n.textContent).join(",");
 }
 
+// assert.deepEqual compares two *distinct* DOM nodes as equal — their own
+// enumerable properties are both empty — so node identity has to be asserted
+// element by element with strict equality.
+function sameNodes(actual, expected, msg) {
+  assert.equal(actual.length, expected.length, `${msg}: row count`);
+  for (let i = 0; i < expected.length; i++)
+    assert.equal(actual[i], expected[i], `${msg}: row ${i} is not the same node`);
+}
+
 // Deterministic PRNG — a failing shuffle has to be reproducible.
 function rng(seed) {
   let s = seed >>> 0;
@@ -103,7 +112,7 @@ test("keyed: changing only row content moves nothing", async () => {
   moves.restore();
 
   assert.equal(moves.calls, 0);
-  assert.deepEqual([...ul.children], before, "same nodes, in place");
+  sameNodes([...ul.children], before, "same nodes, in place");
   assert.equal(text(ul), "b1,b2,b3,b4,b5");
 });
 
@@ -149,7 +158,7 @@ test("keyed: appending rows does not move the rows already there", async () => {
   moves.restore();
 
   assert.equal(text(ul), "1,2,3,4,5");
-  assert.deepEqual([...ul.children].slice(0, 3), before);
+  sameNodes([...ul.children].slice(0, 3), before, "existing rows untouched");
   assert.equal(moves.calls, 2, "only the two new rows are inserted");
 });
 
@@ -165,7 +174,7 @@ test("keyed: prepending a row moves nothing that was already there", async () =>
   moves.restore();
 
   assert.equal(text(ul), "1,2,3,4");
-  assert.deepEqual([...ul.children].slice(1), before);
+  sameNodes([...ul.children].slice(1), before, "existing rows untouched");
   assert.equal(moves.calls, 1);
 });
 
@@ -353,4 +362,80 @@ test("keyed: emptying and refilling a large list", async () => {
   assert.equal(ul.children.length, 200);
   assert.equal(ul.children[0].textContent, "1000");
   assert.equal(ul.children[199].textContent, "1199");
+});
+
+// ── the same-order fast path ───────────────────────────────────────────────
+// It is deliberately unobservable: it must reach exactly the DOM the general
+// path would. These tests pin the cases where it could quietly diverge.
+
+test("keyed: fast path updates content of unkeyed rows in a keyed list", async () => {
+  const items = { current: [1, 2, 3] };
+  const row = (i) =>
+    i === 2 ? html`<li>${`u${i}`}</li>` : html`<li key=${i}>${`k${i}`}</li>`;
+  const { ul, rerender } = await mountList(items, row);
+  const before = [...ul.children];
+  assert.equal(text(ul), "k1,u2,k3");
+
+  items.current = [1, 2, 3];
+  const moves = countMoves(ul);
+  rerender();
+  await tick();
+  moves.restore();
+
+  assert.equal(moves.calls, 0);
+  sameNodes([...ul.children], before, "unkeyed rows kept their nodes");
+});
+
+test("keyed: fast path replaces a row whose tag changed, in place", async () => {
+  const items = { current: [1, 2, 3] };
+  let heavy = false;
+  const row = (i) =>
+    heavy && i === 2 ? html`<b key=${i}>${i}</b>` : html`<li key=${i}>${i}</li>`;
+  const { ul, rerender } = await mountList(items, row);
+  const first = ul.children[0];
+  assert.equal(ul.children[1].tagName, "LI");
+
+  heavy = true;
+  rerender();
+  await tick();
+
+  assert.equal(ul.children.length, 3, "replaced, not duplicated");
+  assert.equal(ul.children[1].tagName, "B");
+  assert.equal(text(ul), "1,2,3");
+  assert.equal(ul.children[0], first, "its neighbours were left alone");
+});
+
+test("keyed: fast path is skipped when a stray node appears mid-list", async () => {
+  const items = { current: [1, 2, 3] };
+  const { ul, rerender } = await mountList(items);
+  const stray = document.createElement("li");
+  stray.textContent = "stray";
+  ul.insertBefore(stray, ul.children[1]);
+
+  items.current = [1, 2, 3, 4];
+  rerender();
+  await tick();
+
+  // The library does not own the stray, so it stays; its own rows are correct
+  // and in order around it.
+  assert.equal(
+    [...ul.children].filter((n) => n !== stray).map((n) => n.textContent).join(","),
+    "1,2,3,4",
+  );
+});
+
+test("keyed: duplicate keys in a stable list keep both rows and update them", async () => {
+  const items = { current: [{ id: 1, v: "a" }, { id: 1, v: "b" }, { id: 2, v: "c" }] };
+  const row = (i) => html`<li key=${i.id}>${i.v}</li>`;
+  const { ul, rerender } = await mountList(items, row);
+  const before = [...ul.children];
+  assert.equal(text(ul), "a,b,c");
+
+  items.current = items.current.map((i) => ({ ...i, v: i.v.toUpperCase() }));
+  rerender();
+  await tick();
+
+  assert.equal(ul.children.length, 3);
+  assert.equal(text(ul), "A,B,C");
+  sameNodes([...ul.children], before, "no row was rebuilt");
 });

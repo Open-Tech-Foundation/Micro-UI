@@ -170,6 +170,32 @@ function getKey(n: VNode): string | null | undefined {
   return n.type === "element" ? n.key : undefined;
 }
 
+/**
+ * True when every row is already where it belongs: same count, same keys
+ * pairwise, each one still this parent's child, in that order, with nothing
+ * else in between. One walk, no allocation, and it bails on the first
+ * mismatch — a reorder usually stops within a few rows, and a row added or
+ * removed fails the length check before the walk starts.
+ */
+function inPlace(
+  oldCh: VNode[],
+  newCh: VNode[],
+  parent: HTMLElement | Element | DocumentFragment,
+): boolean {
+  let dom: Node | null = parent.firstChild;
+  for (let i = 0; i < oldCh.length; i++) {
+    const o = oldCh[i]!;
+    if (o.dom !== dom) return false;
+    const ka = getKey(o);
+    const kb = getKey(newCh[i]!);
+    if (ka == null || kb == null) {
+      if (ka != null || kb != null) return false;
+    } else if (String(ka) !== String(kb)) return false;
+    dom = dom.nextSibling;
+  }
+  return dom === null;
+}
+
 function patchKeyed(
   oldCh: VNode[],
   newCh: VNode[],
@@ -178,6 +204,20 @@ function patchKeyed(
   const oldLen = oldCh.length;
   const newLen = newCh.length;
   const parentNS = getParentNS(parent);
+
+  // The ordinary re-render — the rows are the same rows, only their content
+  // changed — needs none of the bookkeeping below, so it does none of it. The
+  // general path would reach the same conclusion after two maps and four
+  // arrays: match every row to itself, remove nothing, move nothing.
+  if (oldLen === newLen && inPlace(oldCh, newCh, parent)) {
+    for (let i = 0; i < newLen; i++) {
+      const n = newCh[i]!;
+      if (n.type === "element" || n.type === "fragment")
+        correctVNodeNS(n, parentNS);
+      reconcile(oldCh[i]!, n, parent);
+    }
+    return;
+  }
 
   // key -> index in oldCh. A duplicate key keeps the last node; the shadowed
   // one stays unmatched and is removed with the rest below.
