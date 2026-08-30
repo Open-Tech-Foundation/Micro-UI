@@ -74,6 +74,55 @@ for (const [themeName, theme] of [
   ["light", LIGHT],
   ["dark", DARK],
 ]) {
+  test(`a11y: ${themeName} text meets WCAG AA on both surfaces`, () => {
+    for (const t of ["--ui-text", "--ui-text-secondary", "--ui-text-muted"]) {
+      for (const bg of ["--ui-surface", "--ui-background"]) {
+        const r = contrast(theme[t], theme[bg]);
+        assert.ok(
+          r >= AA_TEXT,
+          `${t} on ${bg} is ${r.toFixed(2)}:1, needs ${AA_TEXT}:1 (${themeName})`,
+        );
+      }
+    }
+  });
+
+  test(`a11y: ${themeName} filled surfaces meet WCAG AA against their label`, () => {
+    // One foreground token serves every accent fill; it flips with the theme
+    // because the fills do. Four rules used to hardcode `white`, which is
+    // exactly backwards in dark mode.
+    const fg = theme["--ui-text-on-accent"];
+    assert.ok(fg, "--ui-text-on-accent must be defined");
+    for (const fill of [
+      "--ui-primary",
+      "--ui-success",
+      "--ui-warning",
+      "--ui-danger",
+      "--ui-info",
+    ]) {
+      const r = contrast(fg, theme[fill]);
+      assert.ok(
+        r >= AA_TEXT,
+        `label on ${fill} is ${r.toFixed(2)}:1, needs ${AA_TEXT}:1 (${themeName})`,
+      );
+    }
+  });
+
+  test(`a11y: ${themeName} hover states stay legible too`, () => {
+    const fg = theme["--ui-text-on-accent"];
+    for (const fill of [
+      "--ui-primary-hover",
+      "--ui-success-hover",
+      "--ui-warning-hover",
+      "--ui-info-hover",
+    ]) {
+      const r = contrast(fg, theme[fill]);
+      assert.ok(
+        r >= AA_TEXT,
+        `label on ${fill} is ${r.toFixed(2)}:1, needs ${AA_TEXT}:1 (${themeName})`,
+      );
+    }
+  });
+
   test(`a11y: ${themeName} focus ring is visible against adjacent colours`, () => {
     // WCAG 2.2 SC 2.4.11 Focus Appearance.
     for (const bg of ["--ui-surface", "--ui-background", "--ui-surface-muted"]) {
@@ -139,6 +188,18 @@ test("a11y: a forced-colors block exists and covers focus", () => {
 test("a11y: the switch draws its ring on the track, since its input is invisible", () => {
   assert.match(components, /\.ui-switch input:focus-visible \+ \.ui-switch-track/);
   assert.match(components, /\.ui-switch input\s*\{[^}]*opacity:\s*0/);
+});
+
+test("a11y: no rule hardcodes a foreground colour on a themed fill", () => {
+  // `color: white` on a fill that lightens in dark mode inverts the contrast.
+  // The tooltip was the worst: its background is --ui-text, which is near-white
+  // in dark, so white-on-white.
+  const hardcoded = [...all.matchAll(/color:\s*(white|#fff(?:fff)?)\s*;/gi)];
+  assert.equal(
+    hardcoded.length,
+    0,
+    `use a token that flips with the theme (--ui-text-on-accent / --ui-surface); found ${hardcoded.length}`,
+  );
 });
 
 test("a11y: reduced motion is still honoured", () => {

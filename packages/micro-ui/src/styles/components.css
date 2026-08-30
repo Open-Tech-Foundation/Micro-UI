@@ -146,7 +146,7 @@
 
 .ui-btn-danger {
   background: var(--ui-danger);
-  color: white;
+  color: var(--ui-text-on-accent);
 }
 
 .ui-btn-danger:hover {
@@ -155,7 +155,7 @@
 
 .ui-btn-success {
   background: var(--ui-success);
-  color: white;
+  color: var(--ui-text-on-accent);
 }
 
 .ui-btn-success:hover {
@@ -810,7 +810,7 @@
 
 .ui-page.is-active {
   background: var(--ui-primary);
-  color: white;
+  color: var(--ui-text-on-accent);
 }
 
 
@@ -997,7 +997,7 @@
   border-radius: var(--ui-radius-md);
 
   background: var(--ui-text);
-  color: white;
+  color: var(--ui-surface);
 
   font-size: var(--ui-font-xs);
 

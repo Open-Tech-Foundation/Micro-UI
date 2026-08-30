@@ -17,27 +17,28 @@
 
   --ui-text: #0f172a;
   --ui-text-secondary: #475569;
-  --ui-text-muted: #94a3b8;
+  --ui-text-muted: #64748b;
   --ui-text-disabled: #cbd5e1;
 
   --ui-border: #e2e8f0;
   --ui-border-hover: #cbd5e1;
   --ui-border-focus: #818cf8;
 
-  --ui-primary: #6366f1;
-  --ui-primary-hover: #4f46e5;
-  --ui-primary-active: #4338ca;
+  --ui-primary: #4f46e5;
+  --ui-primary-hover: #4338ca;
+  --ui-primary-active: #3730a3;
   --ui-primary-soft: #eef2ff;
   --ui-primary-text: #4338ca;
   --ui-primary-foreground: #ffffff;
+  --ui-text-on-accent: #ffffff;
 
-  --ui-success: #16a34a;
-  --ui-success-hover: #15803d;
+  --ui-success: #15803d;
+  --ui-success-hover: #166534;
   --ui-success-soft: #f0fdf4;
   --ui-success-text: #166534;
 
-  --ui-warning: #d97706;
-  --ui-warning-hover: #b45309;
+  --ui-warning: #b45309;
+  --ui-warning-hover: #92400e;
   --ui-warning-soft: #fffbeb;
   --ui-warning-text: #92400e;
 
@@ -46,8 +47,8 @@
   --ui-danger-soft: #fef2f2;
   --ui-danger-text: #991b1b;
 
-  --ui-info: #0284c7;
-  --ui-info-hover: #0369a1;
+  --ui-info: #0369a1;
+  --ui-info-hover: #075985;
   --ui-info-soft: #f0f9ff;
   --ui-info-text: #075985;
 
@@ -137,7 +138,7 @@
 
     --ui-text: #fafafa;
     --ui-text-secondary: #a1a1aa;
-    --ui-text-muted: #71717a;
+    --ui-text-muted: #8b8b95;
     --ui-text-disabled: #52525b;
 
     --ui-border: #27272a;
@@ -150,6 +151,7 @@
     --ui-primary-soft: #1e1b4b;
     --ui-primary-text: #c7d2fe;
     --ui-primary-foreground: #18181b;
+  --ui-text-on-accent: #18181b;
 
     --ui-success: #22c55e;
     --ui-success-hover: #16a34a;
@@ -199,7 +201,7 @@
 
   --ui-text: #fafafa;
   --ui-text-secondary: #a1a1aa;
-  --ui-text-muted: #71717a;
+  --ui-text-muted: #8b8b95;
   --ui-text-disabled: #52525b;
 
   --ui-border: #27272a;
@@ -212,6 +214,7 @@
   --ui-primary-soft: #1e1b4b;
   --ui-primary-text: #c7d2fe;
   --ui-primary-foreground: #18181b;
+  --ui-text-on-accent: #18181b;
 
   --ui-success: #22c55e;
   --ui-success-hover: #16a34a;
@@ -260,27 +263,28 @@
 
   --ui-text: #0f172a;
   --ui-text-secondary: #475569;
-  --ui-text-muted: #94a3b8;
+  --ui-text-muted: #64748b;
   --ui-text-disabled: #cbd5e1;
 
   --ui-border: #e2e8f0;
   --ui-border-hover: #cbd5e1;
   --ui-border-focus: #818cf8;
 
-  --ui-primary: #6366f1;
-  --ui-primary-hover: #4f46e5;
-  --ui-primary-active: #4338ca;
+  --ui-primary: #4f46e5;
+  --ui-primary-hover: #4338ca;
+  --ui-primary-active: #3730a3;
   --ui-primary-soft: #eef2ff;
   --ui-primary-text: #4338ca;
   --ui-primary-foreground: #ffffff;
+  --ui-text-on-accent: #ffffff;
 
-  --ui-success: #16a34a;
-  --ui-success-hover: #15803d;
+  --ui-success: #15803d;
+  --ui-success-hover: #166534;
   --ui-success-soft: #f0fdf4;
   --ui-success-text: #166534;
 
-  --ui-warning: #d97706;
-  --ui-warning-hover: #b45309;
+  --ui-warning: #b45309;
+  --ui-warning-hover: #92400e;
   --ui-warning-soft: #fffbeb;
   --ui-warning-text: #92400e;
 
@@ -289,8 +293,8 @@
   --ui-danger-soft: #fef2f2;
   --ui-danger-text: #991b1b;
 
-  --ui-info: #0284c7;
-  --ui-info-hover: #0369a1;
+  --ui-info: #0369a1;
+  --ui-info-hover: #075985;
   --ui-info-soft: #f0f9ff;
   --ui-info-text: #075985;
 
