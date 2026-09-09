@@ -41,11 +41,11 @@ export default function HomePage() {
           </div>
           <div className="hero-note"><span>⌘</span> No build step required for the core</div>
         </div>
-        <div className="hero-art" aria-label="Micro-UI runtime illustration">
+        <div className="hero-art" role="img" aria-label="Micro-UI build queue micro-app preview">
           <div className="orbit orbit--one" />
           <div className="orbit orbit--two" />
           <div className="orbit orbit--three" />
-          <div className="hero-orb"><span>μ</span></div>
+          <x-micro-ui-hero-preview />
           <div className="code-chip code-chip--top">html<span>`...`</span></div>
           <div className="code-chip code-chip--right">update<span>(el)</span></div>
           <div className="code-chip code-chip--bottom">define<span>(tag)</span></div>

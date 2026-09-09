@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "otfw dev",
-    "build": "otfw build",
+    "build": "otfw build --ssg",
     "build:ssg": "otfw build --ssg",
     "test": "bun test"
   },

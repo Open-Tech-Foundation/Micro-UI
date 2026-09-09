@@ -4,6 +4,7 @@ const DEMO_TAGS = [
   "x-micro-ui-motion-lab",
   "x-micro-ui-canvas-pad",
   "x-micro-ui-gradient-mixer",
+  "x-micro-ui-hero-preview",
 ];
 
 async function registerMicroUiDemos() {
@@ -253,6 +254,50 @@ async function registerMicroUiDemos() {
             <p class="micro-demo-caption">Two native color inputs and one range derive the preview and CSS string.</p>
           </section>
         `;
+    });
+  }
+
+  if (!customElements.get(DEMO_TAGS[5])) {
+    define(DEMO_TAGS[5], (el) => {
+      let tasks = [
+        { id: 1, label: "Keep the API clear", done: true },
+        { id: 2, label: "Ship one interaction", done: true },
+        { id: 3, label: "Let the browser work", done: false },
+      ];
+
+      const toggleTask = (id) => {
+        tasks = tasks.map((task) => (task.id === id ? { ...task, done: !task.done } : task));
+        update(el);
+      };
+
+      return () => {
+        const completed = tasks.filter((task) => task.done).length;
+        const progress = Math.round((completed / tasks.length) * 100);
+
+        return html`
+          <div class="hero-mini-app">
+            <div class="hero-mini-app__header">
+              <span class="hero-mini-app__window"><i /><i /><i /></span>
+              <span>micro-app / queue</span>
+              <strong>LIVE</strong>
+            </div>
+            <div class="hero-mini-app__title">Build queue</div>
+            <div class="hero-mini-app__progress"><span style=${`width:${progress}%`} /></div>
+            <div class="hero-mini-app__stats"><span>${tasks.length} tasks</span><strong>${progress}%</strong></div>
+            <ul class="hero-mini-app__tasks">
+              ${tasks.map((task) => html`
+                <li key=${task.id}>
+                  <button type="button" aria-label=${`${task.done ? "Mark incomplete" : "Complete"}: ${task.label}`} onclick=${() => toggleTask(task.id)}>
+                    <span class=${task.done ? "is-done" : "is-active"}>${task.done ? "✓" : "•"}</span>
+                    <span>${task.label}</span>
+                  </button>
+                </li>
+              `)}
+            </ul>
+            <span class="hero-mini-app__caption">Micro-UI micro-app · live preview</span>
+          </div>
+        `;
+      };
     });
   }
 }

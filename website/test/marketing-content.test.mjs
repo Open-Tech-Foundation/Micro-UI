@@ -18,6 +18,11 @@ test("the marketing homepage presents Micro-UI and the live app", async () => {
   expect(showcase).toContain("x-micro-ui-motion-lab");
   expect(showcase).toContain("x-micro-ui-canvas-pad");
   expect(showcase).toContain("x-micro-ui-gradient-mixer");
+  expect(showcase).toContain("x-micro-ui-hero-preview");
+  expect(showcase).toContain("hero-mini-app");
+  expect(showcase).toContain("Build queue");
+  expect(showcase).toContain("Micro-UI micro-app · live preview");
+  expect(showcase).toContain("toggleTask");
   expect(showcase).toContain("Easing lab");
   expect(showcase).toContain("Pause animation");
   expect(showcase).toContain("motion-control-icon");
@@ -74,6 +79,7 @@ test("the standalone website uses the OTF Web toolchain", async () => {
   expect(pkg.dependencies["@opentf/web-docs"]).toBe("latest");
   expect(pkg.devDependencies["@opentf/web-cli"]).toBe("latest");
   expect(pkg.dependencies["@opentf/micro-ui"]).toBe("file:../packages/micro-ui");
+  expect(pkg.scripts.build).toBe("otfw build --ssg");
   expect(pkg.scripts["build:ssg"]).toBe("otfw build --ssg");
 });
 
