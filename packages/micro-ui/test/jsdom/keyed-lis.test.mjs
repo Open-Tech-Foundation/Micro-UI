@@ -767,3 +767,70 @@ test("keyed: mixed lists survive external mutations and preserve keyed identity"
     }
   }
 });
+
+test("keyed: numeric and string keys collide without leaking rows", async () => {
+  const items = {
+    current: [
+      { id: "number-one", key: 1, kind: "number" },
+      { id: "string-one", key: "1", kind: "string" },
+      { id: "boolean-true", key: true, kind: "boolean" },
+      { id: "string-true", key: "true", kind: "string" },
+      { id: "number-two", key: 2, kind: "number" },
+      { id: "unkeyed", key: null, kind: "null" },
+    ],
+  };
+  const row = (item) => html`<li key=${item.key} data-id=${item.id} data-kind=${item.kind} data-key=${item.key}>${item.id}</li>`;
+  const { ul, rerender } = await mountList(items, row);
+  const assertRows = (label) => {
+    assert.deepEqual(
+      [...ul.children].map((node) => [
+        node.getAttribute("data-id"),
+        node.getAttribute("data-kind"),
+        node.textContent,
+      ]),
+      items.current.map((item) => [item.id, item.kind, item.id]),
+      label,
+    );
+    assert.equal(ul.children.length, items.current.length, `${label}: count`);
+  };
+
+  assertRows("initial collisions");
+
+  items.current = [
+    items.current[1],
+    items.current[0],
+    items.current[3],
+    items.current[2],
+    items.current[5],
+    items.current[4],
+  ];
+  rerender();
+  await tick();
+  assertRows("reordered collisions");
+
+  items.current = [
+    items.current[1],
+    items.current[2],
+    items.current[5],
+    items.current[4],
+  ];
+  rerender();
+  await tick();
+  assertRows("removed collisions");
+
+  items.current = [];
+  rerender();
+  await tick();
+  assertRows("cleared collisions");
+
+  items.current = [
+    { id: "false-string", key: "false", kind: "string" },
+    { id: "false-boolean", key: false, kind: "boolean" },
+    { id: "one-string", key: "1", kind: "string" },
+    { id: "one-number", key: 1, kind: "number" },
+    { id: "readded-unkeyed", key: null, kind: "null" },
+  ];
+  rerender();
+  await tick();
+  assertRows("re-added collisions");
+});
