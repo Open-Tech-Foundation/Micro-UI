@@ -9,7 +9,6 @@
     "test": "node --test test/marketing-content.test.mjs"
   },
   "dependencies": {
-    "@opentf/micro-ui": "file:../packages/micro-ui",
     "@opentf/web": "latest",
     "@opentf/web-docs": "latest"
   },

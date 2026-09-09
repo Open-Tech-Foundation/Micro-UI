@@ -42,9 +42,6 @@ importers:
 
   website:
     dependencies:
-      '@opentf/micro-ui':
-        specifier: file:../packages/micro-ui
-        version: link:../packages/micro-ui
       '@opentf/web':
         specifier: latest
         version: 0.28.0

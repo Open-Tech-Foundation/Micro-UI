@@ -27,9 +27,8 @@ test("the marketing homepage presents Micro-UI and the live app", async () => {
   expect(page).toContain("Build micro apps that feel");
   expect(page).toContain("a small functional runtime");
   expect(page).not.toContain("a tiny functional runtime");
-  expect(showcase).toContain("@opentf/micro-ui");
-  expect(showcase).toContain('import { define, html, onReady, update } from "@opentf/micro-ui";');
-  expect(showcase).not.toContain('await import("@opentf/micro-ui")');
+  expect(showcase).toContain('const MICRO_UI_CDN = "https://esm.sh/@opentf/micro-ui?min";');
+  expect(showcase).toContain("await import(MICRO_UI_CDN)");
   expect(showcase).toContain("x-micro-ui-build-queue");
   expect(showcase).toContain("x-micro-ui-focus-timer");
   expect(showcase).toContain("x-micro-ui-motion-lab");
@@ -95,7 +94,7 @@ test("the standalone website uses the OTF Web toolchain", async () => {
   expect(pkg.dependencies["@opentf/web"]).toBe("latest");
   expect(pkg.dependencies["@opentf/web-docs"]).toBe("latest");
   expect(pkg.devDependencies["@opentf/web-cli"]).toBe("latest");
-  expect(pkg.dependencies["@opentf/micro-ui"]).toBe("file:../packages/micro-ui");
+  expect(pkg.dependencies["@opentf/micro-ui"]).toBe(undefined);
   expect(pkg.scripts.build).toBe("otfw build --ssg");
   expect(pkg.scripts["build:ssg"]).toBe("otfw build --ssg");
 });

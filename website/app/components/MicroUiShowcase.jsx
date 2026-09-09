@@ -1,5 +1,3 @@
-import { define, html, onReady, update } from "@opentf/micro-ui";
-
 const DEMO_TAGS = [
   "x-micro-ui-build-queue",
   "x-micro-ui-focus-timer",
@@ -9,8 +7,12 @@ const DEMO_TAGS = [
   "x-micro-ui-hero-preview",
 ];
 
+const MICRO_UI_CDN = "https://esm.sh/@opentf/micro-ui?min";
+
 async function registerMicroUiDemos() {
   if (DEMO_TAGS.every((tag) => customElements.get(tag))) return;
+
+  const { define, html, onReady, update } = await import(MICRO_UI_CDN);
 
   if (!customElements.get(DEMO_TAGS[0])) {
     define(DEMO_TAGS[0], (el) => {
