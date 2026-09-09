@@ -134,7 +134,7 @@ async function registerMicroUiDemos() {
             <span class="easing-label">${easing} / ${duration}s</span>
           </div>
           <div class="motion-controls" role="group" aria-label="Animation controls">
-            <button type="button" class=${running ? "is-active" : ""} onclick=${() => { running = !running; update(el); }}>${running ? "Pause" : "Play"}</button>
+            <button type="button" class=${`motion-toggle ${running ? "is-active" : ""}`} aria-label=${running ? "Pause animation" : "Play animation"} title=${running ? "Pause animation" : "Play animation"} onclick=${() => { running = !running; update(el); }}><span class="motion-control-icon" aria-hidden="true">${running ? "Ⅱ" : "▶"}</span><span>${running ? "Pause" : "Play"}</span></button>
             <button type="button" class=${easing === "spring" ? "is-active" : ""} onclick=${() => { easing = "spring"; running = true; update(el); }}>Spring</button>
             <button type="button" class=${easing === "ease" ? "is-active" : ""} onclick=${() => { easing = "ease"; running = true; update(el); }}>Ease</button>
             <button type="button" class=${easing === "steps" ? "is-active" : ""} onclick=${() => { easing = "steps"; running = true; update(el); }}>Steps</button>

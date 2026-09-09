@@ -200,6 +200,10 @@ x-micro-ui-build-queue, x-micro-ui-focus-timer, x-micro-ui-motion-lab, x-micro-u
 .motion-controls, .sketch-controls { display: flex; align-items: center; gap: 7px; }
 .motion-controls button, .sketch-controls button { padding: 8px 10px; border: 1px solid #416456; border-radius: 6px; color: #bdebd0; background: #163b34; font: 10px var(--mono); cursor: pointer; }
 .motion-controls button.is-active, .motion-controls button:hover { border-color: #8af2b8; color: #102d29; background: #8af2b8; }
+.motion-controls .motion-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 72px; height: 32px; padding: 8px 10px; font-size: 10px; line-height: 1; }
+.motion-control-icon { display: block; transform: translateX(.5px); }
+.motion-speed { display: flex; align-items: center; gap: 8px; margin-top: 16px; color: #bdebd0; font: 10px var(--mono); text-transform: uppercase; }
+.motion-speed input { min-width: 0; flex: 1; accent-color: #8af2b8; }
 @keyframes micro-easing-spring { 0% { left: 0; } 65% { left: 92%; } 78% { left: 78%; } 88% { left: 94%; } 100% { left: 88%; } }
 @keyframes micro-easing-ease { from { left: 0; } to { left: 92%; } }
 @keyframes micro-easing-steps { from { left: 0; } to { left: 92%; } }

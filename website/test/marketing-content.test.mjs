@@ -6,6 +6,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 test("the marketing homepage presents Micro-UI and the live app", async () => {
   const page = await read("app/page.jsx");
   const showcase = await read("app/components/MicroUiShowcase.jsx");
+  const styles = await read("app/global.css");
 
   expect(page).toContain("MicroAppsGallery");
   expect(page).toContain("Build small apps that feel");
@@ -16,6 +17,9 @@ test("the marketing homepage presents Micro-UI and the live app", async () => {
   expect(showcase).toContain("x-micro-ui-canvas-pad");
   expect(showcase).toContain("x-micro-ui-gradient-mixer");
   expect(showcase).toContain("Easing lab");
+  expect(showcase).toContain("Pause animation");
+  expect(showcase).toContain("motion-control-icon");
+  expect(styles).toContain(".motion-speed");
   expect(showcase).toContain("Sketchpad");
   expect(showcase).toContain("Gradient mixer");
   expect(showcase).toContain("brushSize");
