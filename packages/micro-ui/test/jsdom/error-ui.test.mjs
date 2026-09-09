@@ -11,9 +11,8 @@ function uniqueTag(p) {
 function tick() {
   return new Promise((r) => queueMicrotask(r));
 }
-// devMode is page-global by design — one app, one setting — and bun ignores
-// the ?query on dynamic imports, so every suite in this process shares it.
-// Each case therefore sets the mode it needs rather than assuming a default.
+// devMode is page-global by design — one app, one setting. Each case therefore
+// sets the mode it needs rather than assuming a default.
 let n = 0;
 function fresh() {
   return import(`../../src/index.ts?err-ui-${Date.now()}-${n++}`);

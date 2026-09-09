@@ -653,7 +653,6 @@ reaching past it to the underlying tool is the usual way to lose an afternoon (s
 | pnpm | workspace dependencies | `corepack enable` |
 | `tsr` | every task below | `curl -fsSL https://raw.githubusercontent.com/Open-Tech-Foundation/tsr/main/install.sh \| bash` |
 | `esdev` | `build` and `demo` | `curl -fsSL https://raw.githubusercontent.com/Open-Tech-Foundation/ES-Runtime/main/install.sh \| bash` |
-| `bun` | the test suite | `curl -fsSL https://bun.sh/install \| bash` |
 | chromium *(optional)* | `tsr test:browser`, which skips without it | your package manager, or set `CHROME_BIN` |
 
 `tsr` and `esdev` are standalone binaries, not npm dependencies — they land in
@@ -678,7 +677,7 @@ run without running it.
 | Task | What it does |
 |------|--------------|
 | `tsr check` | The gate: `typecheck` + `lint` + `fmt:check` + `test` + `test:browser`. Run it before every commit. |
-| `tsr test` | The jsdom suite — `bun test`, 572 tests across 24 files today. |
+| `tsr test` | The jsdom suite — Node's built-in test runner, 572 tests across 24 files today. |
 | `tsr test:browser` | `test.html` in a real browser, over the DevTools protocol. Skips if no browser is installed. |
 | `tsr typecheck` | `tsc --noEmit` over `packages/*`. |
 | `tsr lint` | Biome lint. |
@@ -725,8 +724,8 @@ CHANGELOG.md      curated by hand; release notes are generated from it
 ```sh
 tsr test                                       # everything
 cd packages/micro-ui
-bun test test/jsdom/keyed-lis.test.mjs         # one file
-bun test test/jsdom -t "swapping two rows"     # one test, by name
+node --experimental-strip-types --test test/jsdom/keyed-lis.test.mjs         # one file
+node --experimental-strip-types --test --test-name-pattern "swapping two rows" test/jsdom # one test, by name
 ```
 
 Every test file imports `./setup.mjs` **first**: it builds a jsdom window and puts
@@ -737,14 +736,11 @@ then imports the library with a cache-busting query
 custom element name can only be defined once per registry, and tests must not
 collide.
 
-**The cache-busting query does not buy you a fresh module instance.** Under the
-bun in use, every `src/index.ts?whatever` resolves to the same module, so
-everything at module scope — `devMode` above all — is shared by the whole run. A
-test that depends on dev mode must call `mount(host, tag, { dev: true })` itself,
-and one that depends on it being *off* must pass `{ dev: false }`. Assuming the
-default is a bet on which file ran first: `template.adversarial.test.mjs` made
-that bet, passed for months in the full suite, and failed the moment its file was
-run on its own.
+Node's native ESM loader treats each cache-busting query as a separate module
+instance, so every test file gets isolated module state. A test that depends on
+dev mode should still call `mount(host, tag, { dev: true })` itself, and one that
+depends on it being *off* should pass `{ dev: false }` explicitly. That makes the
+test's contract clear and keeps it independent of runner defaults.
 
 Write the test so it fails against the bug. Asserting the final DOM often passes
 either way: `keyed-lis.test.mjs` counts `insertBefore` calls, and

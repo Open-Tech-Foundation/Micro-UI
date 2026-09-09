@@ -13,7 +13,7 @@ dir = "demo"
 
 # Public marketing site — `tsr website` starts the OTF Web dev server.
 [tasks.website]
-run = "bun run dev"
+run = "pnpm run dev"
 dir = "website"
 
 # ------------------------------------------------------------------ build
@@ -61,10 +61,10 @@ dir = "packages/micro-ui"
 packages = ["packages/*"]
 run = "tsc --noEmit"
 
-# The whole suite runs under bun against a real DOM via jsdom. There is only
+# The whole suite runs under Node against a real DOM via jsdom. There is only
 # one suite — the FakeDOM harness it used to share this task with is gone.
 [tasks.test]
-run = "bun test test/jsdom/*.test.mjs"
+run = "pnpm test"
 dir = "packages/micro-ui"
 
 # test.html, driven through CDP in whatever chromium or chrome is installed.
@@ -73,7 +73,7 @@ dir = "packages/micro-ui"
 # passes without one. Needs dist/, which is what test.html imports.
 [tasks."test:browser"]
 deps = ["build:js"]
-run = "bun test/browser/run.mjs"
+run = "pnpm run test:browser"
 dir = "packages/micro-ui"
 
 # ------------------------------------------------------------------ lint / fmt (Biome)

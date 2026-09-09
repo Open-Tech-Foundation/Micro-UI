@@ -1,6 +1,8 @@
 packages:
   - "packages/*"
   - "demo"
+  - "website"
 allowBuilds:
+  '@opentf/web-compiler': true
   esbuild: true
   lightningcss-cli: true

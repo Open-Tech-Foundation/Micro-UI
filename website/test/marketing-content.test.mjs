@@ -1,7 +1,22 @@
-import { test, expect } from "bun:test";
+import test from "node:test";
+import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
+
+const expect = (value) => ({
+  toContain(expected) {
+    assert.ok(value.includes(expected), `Expected value to contain ${JSON.stringify(expected)}`);
+  },
+  toBe(expected) {
+    assert.strictEqual(value, expected);
+  },
+  not: {
+    toContain(expected) {
+      assert.ok(!value.includes(expected), `Expected value not to contain ${JSON.stringify(expected)}`);
+    },
+  },
+});
 
 test("the marketing homepage presents Micro-UI and the live app", async () => {
   const page = await read("app/page.jsx");

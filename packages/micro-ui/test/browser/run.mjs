@@ -7,11 +7,12 @@
 // <img> does not re-request, a <video> does not restart, a <canvas> keeps its
 // pixels, focus and caret survive, scroll position holds.
 //
-// No new dependencies: bun serves the files and speaks CDP to a browser that
+// No new dependencies: Node serves the files and speaks CDP to a browser that
 // is already on the machine. Skips with a clear message when there is none,
 // so `tsr check` still passes on a box without one.
 import { execSync, spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
+import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { dirname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,10 +23,10 @@ const PAGE = "test.html";
 
 const BROWSERS = [
   process.env.CHROME_BIN,
-  "chromium",
-  "chromium-browser",
   "google-chrome",
   "google-chrome-stable",
+  "chromium",
+  "chromium-browser",
 ].filter(Boolean);
 
 function findBrowser() {
@@ -53,18 +54,36 @@ const MIME = {
 };
 
 function serve() {
-  return Bun.serve({
-    port: 0,
-    fetch(req) {
-      const path = normalize(decodeURIComponent(new URL(req.url).pathname));
-      if (path.includes("..")) return new Response("no", { status: 403 });
-      const file = join(repoRoot, path === "/" ? `/${PAGE}` : path);
-      if (!existsSync(file)) return new Response("not found", { status: 404 });
-      const ext = file.slice(file.lastIndexOf("."));
-      return new Response(readFileSync(file), {
-        headers: { "content-type": MIME[ext] ?? "application/octet-stream" },
-      });
-    },
+  const server = createServer((req, res) => {
+    const path = normalize(decodeURIComponent(new URL(req.url ?? "/", "http://localhost").pathname));
+    if (path.includes("..")) {
+      res.writeHead(403);
+      res.end("no");
+      return;
+    }
+
+    const file = join(repoRoot, path === "/" ? `/${PAGE}` : path);
+    if (!existsSync(file)) {
+      res.writeHead(404);
+      res.end("not found");
+      return;
+    }
+
+    const ext = file.slice(file.lastIndexOf("."));
+    res.writeHead(200, { "content-type": MIME[ext] ?? "application/octet-stream" });
+    res.end(readFileSync(file));
+  });
+
+  return new Promise((resolve, reject) => {
+    const onError = (error) => {
+      server.off("error", onError);
+      reject(error);
+    };
+    server.once("error", onError);
+    server.listen(0, "127.0.0.1", () => {
+      server.off("error", onError);
+      resolve({ server, port: server.address().port });
+    });
   });
 }
 
@@ -110,7 +129,7 @@ async function main() {
     return;
   }
 
-  const server = serve();
+  const server = await serve();
   const url = `http://127.0.0.1:${server.port}/${PAGE}`;
   const port = 9333 + (process.pid % 500);
   const proc = spawn(
@@ -136,7 +155,7 @@ async function main() {
     try {
       proc.kill();
     } catch {}
-    server.stop(true);
+    server.server.close();
   };
 
   try {

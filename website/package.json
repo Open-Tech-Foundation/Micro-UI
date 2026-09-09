@@ -6,7 +6,7 @@
     "dev": "otfw dev",
     "build": "otfw build --ssg",
     "build:ssg": "otfw build --ssg",
-    "test": "bun test"
+    "test": "node --test test/marketing-content.test.mjs"
   },
   "dependencies": {
     "@opentf/micro-ui": "file:../packages/micro-ui",

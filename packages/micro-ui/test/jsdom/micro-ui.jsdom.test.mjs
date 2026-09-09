@@ -1,4 +1,5 @@
-// Real-DOM tests for Micro-UI, run with `bun test` (native TS) on jsdom.
+// Real-DOM tests for Micro-UI, run with Node's test runner and native TS
+// stripping on jsdom.
 // Every test that previously ran against the in-house FakeDOM helper
 // (test/helpers/dom.mjs) now runs against a real DOM here.
 import test from "node:test";

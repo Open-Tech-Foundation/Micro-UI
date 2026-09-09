@@ -37,6 +37,10 @@
     "ai-agents"
   ],
   "author": "Open Tech Foundation",
+  "scripts": {
+    "test": "node --experimental-strip-types --test test/jsdom/*.test.mjs",
+    "test:browser": "node test/browser/run.mjs"
+  },
   "devDependencies": {
     "@opentf/esrun-types": "latest",
     "jsdom": "^25.0.0"
