@@ -1,0 +1,47 @@
+---
+title: Lifecycle
+description: Run post-render work, clean it up, and isolate component errors.
+---
+
+# Lifecycle
+
+## `onReady(callback)`
+
+`onReady` runs once the component has rendered and is in the document. Return a function to register cleanup, which runs when the element is genuinely removed.
+
+```js
+define("x-clock", (el) => {
+  let now = new Date();
+
+  onReady(() => {
+    const id = setInterval(() => {
+      now = new Date();
+      update(el);
+    }, 1000);
+
+    return () => clearInterval(id);
+  });
+
+  return () => html`<time>${now.toLocaleTimeString()}</time>`;
+});
+```
+
+A move or synchronous re-parent does not count as removal. The element must be back in the document by the next microtask. An `await` between removal and re-insertion is a real removal followed by a fresh mount.
+
+Each callback is isolated: one that throws is reported through `onError` with the `ready` phase and does not stop other callbacks or their cleanups.
+
+## `onError(handler)`
+
+`onError` receives the element, the `Error`, and the phase: `setup`, `ready`, `render`, or `reconcile`.
+
+```js
+define("x-risky", (el) => {
+  onError((target, err, phase) => {
+    console.error(`Error in ${phase}:`, err);
+  });
+
+  return () => html`<p>${mightThrow()}</p>`;
+});
+```
+
+Every component is its own error boundary. A failed component is replaced with an error box while the surrounding page and sibling components continue running.

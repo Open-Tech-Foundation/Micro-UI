@@ -1,0 +1,28 @@
+---
+title: Quick start
+description: Build a counter custom element with Micro-UI in one file.
+---
+
+# Quick start
+
+This complete example defines a custom element, keeps its count in ordinary JavaScript, and explicitly updates the element after a click:
+
+```html
+<script type="module">
+  import { define, html, update } from "https://esm.sh/@opentf/micro-ui?min";
+
+  define("x-counter", (el, props) => {
+    let count = Number(props.count || 0);
+
+    return () => html`
+      <button onclick=${() => { count++; update(el); }}>
+        Count: ${count}
+      </button>
+    `;
+  });
+</script>
+
+<x-counter count="0"></x-counter>
+```
+
+The same element can be placed inside a page rendered by OTF Web, React, Astro, a server template, or plain HTML. The host owns the page; the custom element owns this interaction.

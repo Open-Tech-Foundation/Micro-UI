@@ -1,0 +1,56 @@
+---
+title: store
+description: Share state between Micro-UI components with the optional store.
+---
+
+# `store`
+
+The optional store is a simple key-value store. It does not trigger DOM updates by itself; connect it to components with `store.subscribe`.
+
+## Get and set
+
+```js
+store.set("counter", 0);
+store.get("counter"); // 0
+store.set("counter", 1);
+```
+
+## Nested paths
+
+Set a nested value by dot-separated path. The object tree is cloned immutably:
+
+```js
+store.set("form", { name: "", email: "" });
+store.set("form", "Ada", { path: "name" });
+store.get("form", { path: "name" }); // "Ada"
+```
+
+Arrays are cloned as arrays, so numeric segments address list items while the container stays a list:
+
+```js
+store.set("todos", { items: ["a", "b", "c"] });
+store.set("todos", "z", { path: "items.0" });
+store.get("todos").items; // ["z", "b", "c"]
+```
+
+## Subscribe
+
+`store.subscribe` returns an unsubscribe function. Call it inside `onReady` so the component cleans it up when removed:
+
+```js
+define("x-counter", (el) => {
+  onReady(() => store.subscribe("counter", () => update(el)));
+  return () => html`<span>${store.get("counter")}</span>`;
+});
+```
+
+## Delete and clear
+
+```js
+store.del("counter");
+store.del("form", { path: "name" });
+store.del("todos", { path: "items.1" });
+store.clear();
+```
+
+`store.clear()` resets every key to `undefined` and notifies all subscribers. Existing subscriptions stay live.

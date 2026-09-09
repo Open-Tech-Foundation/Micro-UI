@@ -1,0 +1,32 @@
+---
+title: Overview
+description: A small functional JavaScript UI library for lightweight interactive micro-apps.
+---
+
+# Micro-UI
+
+A small functional JavaScript UI library for AI agents to generate lightweight, interactive micro-apps.
+
+## Features
+
+- **Lightweight** — zero dependencies, no build step. The core is about 7.1 KB gzipped; the optional `store` brings the package to about 7.8 KB.
+- **Simple state management** — use plain variables or the built-in `store` for shared state.
+- **Smooth updates** — changes are batched and applied efficiently, without flicker or jank.
+- **Form-friendly** — inputs, video, canvas, focus, and scroll position survive re-renders.
+- **Stable lists** — reorder, add, or remove items without losing element state.
+- **Dynamic attributes** — bind classes, styles, and properties with simple template expressions.
+- **Secure by default** — interpolated content is inserted as text, never parsed as HTML.
+- **Fault tolerant** — one broken component does not crash the rest of the app.
+- **AI-ready** — a minimal API surface that agents can generate without a toolchain.
+
+## How it works
+
+Micro-UI parses each `html` template once and caches the resulting static description on the template literal. Re-renders only re-evaluate the `${...}` bindings rather than rebuilding the description of the whole tree.
+
+Rendering produces a small virtual tree, which is diffed against the previous one and applied to the DOM. It is deliberately minimal: there is no compiler, signals, fiber, or scheduler, and there is one reconciliation root per custom element rather than one app-wide tree.
+
+## Where it fits
+
+Micro-UI is designed for a focused interaction inside a larger page. Let the host framework own routing, layouts, and data loading; mount a Micro-UI custom element where a small, stateful tool belongs.
+
+The [live examples](/#demo) show five different interactions running inside this OTF Web site.

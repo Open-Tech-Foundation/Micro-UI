@@ -1,0 +1,33 @@
+---
+title: mount, update, and flush
+description: Mount a custom element and control when pending updates are applied.
+---
+
+# `mount`, `update`, and `flush`
+
+## `mount(el, tag, options?)`
+
+`mount` clears the host, creates `<tag>` inside it, and returns the new element:
+
+```js
+const app = mount(document.getElementById("app"), "x-app");
+```
+
+Pass `{ dev: true }` while developing to show component error messages in the page and enable diagnostics for class/style bindings and live store subscriptions:
+
+```js
+mount(document.getElementById("app"), "x-app", { dev: true });
+```
+
+## `update(el)`
+
+`update(el)` requests a re-render. Calls are batched, so an event can update ordinary state and request a single DOM flush.
+
+## `flush()`
+
+`flush()` processes pending updates synchronously:
+
+```js
+update(el);
+flush();
+```

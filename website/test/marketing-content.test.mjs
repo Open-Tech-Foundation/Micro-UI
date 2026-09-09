@@ -7,16 +7,55 @@ test("the marketing homepage presents Micro-UI and the live app", async () => {
   const page = await read("app/page.jsx");
   const showcase = await read("app/components/MicroUiShowcase.jsx");
 
-  expect(page).toContain("MicroUiShowcase");
+  expect(page).toContain("MicroAppsGallery");
   expect(page).toContain("Build small apps that feel");
   expect(showcase).toContain("@opentf/micro-ui");
-  expect(showcase).toContain("x-micro-ui-playground");
+  expect(showcase).toContain("x-micro-ui-build-queue");
+  expect(showcase).toContain("x-micro-ui-focus-timer");
+  expect(showcase).toContain("x-micro-ui-motion-lab");
+  expect(showcase).toContain("x-micro-ui-canvas-pad");
+  expect(showcase).toContain("x-micro-ui-gradient-mixer");
+  expect(showcase).toContain("Easing lab");
+  expect(showcase).toContain("Sketchpad");
+  expect(showcase).toContain("Gradient mixer");
+  expect(showcase).toContain("brushSize");
   expect(showcase).toContain("key=${item.id}");
+});
+
+test("the homepage links to dedicated docs and does not show the old source CTA", async () => {
+  const page = await read("app/page.jsx");
+  const layout = await read("app/layout.jsx");
+  const docs = await read("app/docs/page.mdx");
+  const installation = await read("app/docs/getting-started/installation/page.mdx");
+  const docsMeta = await read("app/docs/_meta.js");
+  const docsLayout = await read("app/docs/layout.jsx");
+  const styles = await read("app/global.css");
+  const index = await read("index.html");
+  const config = await read("otfw.config.js");
+
+  expect(page).toContain('href="/docs"');
+  expect(page).not.toContain("Read the source");
+  expect(layout).toContain('from "@opentf/web-docs"');
+  expect(layout).toContain("<Navbar config={config.docs}");
+  expect(docs).toContain("## Features");
+  expect(installation).toContain("@opentf/micro-ui");
+  expect(docsMeta).toContain('"getting-started": "Getting started"');
+  expect(docsLayout).toContain('from "@opentf/web-docs"');
+  expect(docsLayout).toContain("<DocsLayout");
+  expect(styles).toContain("position: fixed !important");
+  expect(styles).toContain("padding-top: var(--otfw-navbar-height)");
+  expect(styles).toContain('@import "@opentf/web-docs/theme"');
+  expect(styles).toContain('[data-theme="dark"]');
+  expect(styles).toContain("micro-app-card--canvas");
+  expect(index).toContain('localStorage.getItem("theme")');
+  expect(config).not.toContain('label: "Live Apps"');
+  expect(config).toContain('from "@opentf/web-docs/config"');
 });
 
 test("the standalone website uses the OTF Web toolchain", async () => {
   const pkg = JSON.parse(await read("package.json"));
   expect(pkg.dependencies["@opentf/web"]).toBe("latest");
+  expect(pkg.dependencies["@opentf/web-docs"]).toBe("latest");
   expect(pkg.devDependencies["@opentf/web-cli"]).toBe("latest");
   expect(pkg.dependencies["@opentf/micro-ui"]).toBe("file:../packages/micro-ui");
   expect(pkg.scripts["build:ssg"]).toBe("otfw build --ssg");

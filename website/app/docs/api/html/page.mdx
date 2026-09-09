@@ -1,0 +1,49 @@
+---
+title: html and helpers
+description: Render templates, trusted HTML, conditional classes, and dynamic styles.
+---
+
+# `html`
+
+The `html` tagged template produces a renderable tree. It supports text, attributes, events, keyed lists, conditionals, and nesting. Text interpolations become text nodes and are never parsed as markup.
+
+```js
+html`<button onclick=${handler} class="btn ${active}">Click</button>`
+```
+
+An `on*` attribute must be an interpolated function, not a string of code:
+
+```js
+html`<button onclick=${() => doThing()}>ok</button>` // handler
+html`<button onclick="doThing()">no</button>`        // throws
+```
+
+A tag name cannot be interpolated because each template is parsed once and cached:
+
+```js
+html`<${tag}>hi</${tag}>` // literal text, not a dynamic tag
+```
+
+## `html.raw`
+
+`html.raw` is the trusted HTML opt-in. The result is treated as markup and parsed with `innerHTML`, so never pass user-controlled input to it:
+
+```js
+html.raw`<b>${trustedMarkup}</b>`
+```
+
+## `cx(...)` and `sx(...)`
+
+Use `cx` and `sx` to turn the conditional shapes you reach for into the strings the DOM expects:
+
+```js
+import { cx, sx } from "@opentf/micro-ui";
+
+html`<button class=${cx("ui-btn", active && "is-active", { "is-busy": busy })}>`
+// class="ui-btn is-active"
+
+html`<div style=${sx({ color: "red", marginTop: "8px" }, hidden && { display: "none" })}>`
+// style="color: red; margin-top: 8px; display: none"
+```
+
+`cx` accepts strings, arrays, and nested `{ name: on }` objects. `sx` accepts strings, arrays, and `{ prop: value }` objects, kebab-cases camelCase keys, preserves custom properties, and keeps `0` while dropping nullish, `false`, or empty values.

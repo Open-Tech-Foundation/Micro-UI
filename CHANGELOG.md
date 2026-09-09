@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added a standalone OTF Web marketing site under `website/`, including an SSG-safe interactive Micro-UI build-queue app, responsive marketing content, favicon, and content checks. `tasks.toml` now includes the site as a workspace member and exposes `tsr website` for local development.
+- Added a multi-page MDX documentation tree under `website/app/docs/`, using the official OTF Web docs layout, navigation metadata, and README-derived API and getting-started content.
+- Added five distinct live Micro-UI examples to the public site: a keyed build queue, lifecycle timer, easing playground, canvas sketchpad, and gradient mixer.
 - `test/jsdom/keyed-lis.test.mjs` now fuzzes the keyed reconciler with six deterministic seeds and 720 generated transitions covering insertion, removal, movement, swaps, duplicate keys, clearing and re-adding rows. Each result is compared with a model-only naive DOM rebuild, and row instances carry unique labels so stale, missing, duplicated or wrongly ordered nodes are observable.
 - The keyed-list fuzzing also covers mixed keyed/unkeyed rows, attribute and tag edits, external detach/reorder mutations, and keyed DOM-node identity across 400 more deterministic transitions.
 - `test/jsdom/nested-reconciler.test.mjs` fuzzes nested keyed lists through 360 deterministic transitions, including outer and inner insert/remove/reorder operations, HTML/SVG/`foreignObject` shape changes, namespace correctness, and outer/inner DOM identity.
@@ -26,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `demo/src/split-math.ts` and `demo/src/split-math.test.ts` — the domain logic lives apart from the components with no DOM in it, under 17 tests run by `esdev test`: parsing rejects `1.2.3`/`12.345`/`-5` and survives the `Number("11.07") * 100 = 1106.9999999999998` case, every split of 1–200 cents between 1–7 people sums back to the original, net balances sum to zero, a payer who is not a participant is owed the whole amount, a deleted person's share is dropped rather than charged to a ghost, and settling clears every balance in no more than `people - 1` transfers.
 
 ### Changed
+- The public website now uses the official OTF Web theme tokens for light/dark mode, keeps the shared navbar fixed, removes the extra Live Apps navigation item, and gives each live example its own visual theme and interaction model.
 - A boolean in a text position renders nothing, whichever one it is. `false` already did and `true` printed the word "true", so `${a > b}` put itself into the page while `${a < b}` did not — the asymmetry is what made it a trap, since a boolean in a template is a condition, not content. `${String(flag)}` prints the word when that is what was meant. `0`, `""` and `NaN` are values and still render.
 
 ### Fixed

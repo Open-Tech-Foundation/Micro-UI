@@ -1,0 +1,49 @@
+---
+title: Composition
+description: Compose custom elements with attributes, object properties, callbacks, and keyed lists.
+---
+
+# Composition
+
+Micro-UI components are standard custom elements. A parent can pass strings as attributes and objects or callbacks as DOM properties:
+
+```js
+define("x-child", (el, props) => {
+  return () => html`<span>${props.name}</span>`;
+});
+
+define("x-parent", (el) => {
+  let name = "World";
+  return () => html`<x-child name=${name}></x-child>`;
+});
+```
+
+## Object and callback properties
+
+Non-string bindings become DOM properties on the child. The value is set before the child’s setup runs, so it is immediately available:
+
+```js
+define("x-row", (el) => {
+  return () => html`<li>${el.item.label}</li>`;
+});
+
+define("x-list", () => () => html`
+  <ul>${rows.map((row) =>
+    html`<x-row item=${row} save=${() => remove(row.id)}></x-row>`
+  )}</ul>
+`);
+```
+
+Objects and arrays are compared by identity: hand the child a new object when its contents change. A callback is read when it is called, not when the child renders, so a fresh callback closure updates the property without forcing a child render.
+
+Attribute names beginning with `on` are event bindings, not callback props. Use a name such as `save`, not `onsave`, when the child should call the callback.
+
+## Keyed lists
+
+Give rows that can move a stable `key`. The reconciler keeps inputs, focus, and child component identity with the item rather than its position:
+
+```js
+html`<ul>${rows.map((row) => html`
+  <li key=${row.id}>${row.label}</li>
+`)}</ul>`
+```

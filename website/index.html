@@ -6,6 +6,15 @@
     <meta name="theme-color" content="#10131a" />
     <title>Micro-UI — Small apps, shipped fast</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script>
+      (() => {
+        try {
+          const mode = localStorage.getItem("theme");
+          const dark = mode === "dark" || (mode !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+        } catch {}
+      })();
+    </script>
     <link rel="stylesheet" href="/app/global.css" />
   </head>
   <body>

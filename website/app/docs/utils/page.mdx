@@ -1,0 +1,56 @@
+---
+title: Micro-UI Utils
+description: Use the framework-free CSS utility and component layer shipped with Micro-UI.
+---
+
+# Micro-UI Utils
+
+Micro-UI Utils is a small, semantic, framework-free CSS utility and component layer for Micro-UI apps. It has no Tailwind or Bootstrap dependency and requires no build step.
+
+```js
+import "@opentf/micro-ui/styles.css";
+```
+
+## Split imports
+
+Pay only for the layers you use:
+
+```js
+import "@opentf/micro-ui/styles/tokens.css";
+import "@opentf/micro-ui/styles/base.css";
+import "@opentf/micro-ui/styles/components.css";
+```
+
+Or load the full bundle from a CDN:
+
+```html
+<link rel="stylesheet" href="https://unpkg.com/@opentf/micro-ui/dist/styles.min.css">
+```
+
+## Class reference
+
+| Category | Classes |
+| --- | --- |
+| Layout | `ui-container`, `ui-stack`, `ui-row`, `ui-grid`, `ui-grid-2/3/4`, `ui-wrap`, `ui-center`, `ui-between`, `ui-grow` |
+| Spacing | `ui-gap-{1,2,3,4,5,6,8,10,12}`, `ui-p-{0,2,3,4,5,6,8}`, `ui-px-{4,6}`, `ui-py-{2,4,6}`, `ui-mt-{2,4,6,8}`, `ui-mb-{2,4,6,8}` |
+| Typography | `ui-title`, `ui-heading`, `ui-text`, `ui-muted`, `ui-label`, `ui-caption`, `ui-error-text`, `ui-link` |
+| Buttons | `ui-btn`, `ui-btn-primary`, `ui-btn-secondary`, `ui-btn-ghost`, `ui-btn-danger`, `ui-btn-success`, `ui-btn-sm`, `ui-btn-lg`, `ui-btn-icon` |
+| Forms | `ui-field`, `ui-input`, `ui-textarea`, `ui-select`, `ui-checkbox`, `ui-radio`, `ui-switch` |
+| Surfaces | `ui-card`, `ui-card-flat`, `ui-card-hover`, `ui-panel`, `ui-section` |
+| Lists and tables | `ui-list`, `ui-list-item`, `ui-list-item-hover`, `ui-table-wrap`, `ui-table`, `ui-table-hover` |
+| Navigation | `ui-tabs`, `ui-tab`, `ui-breadcrumbs`, `ui-pagination` |
+| Dialogs and drawers | `ui-modal`, `ui-dialog`, `ui-dialog-header/body/footer`, `ui-drawer`, `ui-drawer-left/right` |
+| States | `is-active`, `is-disabled`, `is-loading`, `is-invalid`, `is-dragover`, `is-dragging` |
+
+## Theming
+
+Override CSS custom properties in your app:
+
+```css
+:root {
+  --ui-primary: #2563eb;
+  --ui-primary-hover: #1d4ed8;
+}
+```
+
+Dark mode is automatic through `prefers-color-scheme: dark`. An explicit `data-theme="dark"` or `data-theme="light"` wins over the system preference, and themes can be applied to individual containers.

@@ -1,0 +1,45 @@
+---
+title: State and updates
+description: Keep state explicit and update only when an interaction changes it.
+---
+
+# State and updates
+
+Micro-UI does not add automatic reactivity. Keep state in ordinary variables and call `update(el)` after an event changes it:
+
+```js
+define("x-counter", (el) => {
+  let count = 0;
+
+  return () => html`
+    <button onclick=${() => { count++; update(el); }}>
+      ${count}
+    </button>
+  `;
+});
+```
+
+## `update(el)`
+
+`update(el)` triggers a re-render. Multiple calls are batched into a single update. A component that failed during render can be retried with `update()` after the cause is fixed; a `setup` failure cannot be retried because setup runs once per element.
+
+## `flush()`
+
+Use `flush()` when a pending update must be processed synchronously:
+
+```js
+update(el);
+flush(); // the DOM is now up to date
+```
+
+## Attributes and `props`
+
+`props` holds the element’s attributes as strings. It is refreshed from the DOM on every render, so read it inside the render function when you need current values:
+
+```js
+define("x-greeting", (el, props) => {
+  return () => html`<h2>Hello, ${props.name}</h2>`;
+});
+```
+
+An attribute changed from outside is picked up by the next `update()`. Attributes bound from a parent template are patched when the parent re-renders.

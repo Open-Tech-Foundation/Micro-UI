@@ -1,0 +1,44 @@
+---
+title: Security
+description: Understand Micro-UI's text, URL, trusted HTML, and error boundaries.
+---
+
+# Security
+
+## Text is never parsed as HTML
+
+Every `${value}` text interpolation becomes a DOM text node. No HTML parser runs on that path:
+
+```js
+const userInput = '<script>alert("xss")</script>';
+html`<p>${userInput}</p>`; // literal text, not an element
+```
+
+Values are displayed as written. `&`, `<`, `>`, `"`, and `'` are not entity-encoded in the resulting text node.
+
+Both booleans render nothing because a boolean is a condition, not content. Use `${String(flag)}` when the word is what you intend to display.
+
+## Unsafe URL attributes are refused
+
+An `href`, `src`, `action`, `formaction`, `ping`, `srcdoc`, or `xlink:href` whose value would execute script is not set:
+
+```js
+html`<a href=${"javascript:alert(1)"}>click</a>`; // no href
+html`<a href=${"/search?q=javascript:alert(1)"}>`; // fine
+```
+
+`javascript:`, `vbscript:`, and `data:text/html` are refused, including control-character and whitespace variants. `mailto:`, `tel:`, `blob:`, and data images remain allowed.
+
+## Trusted HTML opt-in
+
+Use `html.raw` only for markup you control:
+
+```js
+html.raw`<b>${trustedMarkup}</b>`;
+```
+
+Never pass user-controlled input to `html.raw`.
+
+## Error isolation
+
+Every component is its own boundary. A throwing `setup`, render, reconcile, or `onReady` callback is reported for that component while the surrounding page continues working. Event-handler errors remain ordinary DOM errors and reach `window.onerror`.

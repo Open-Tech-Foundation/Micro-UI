@@ -1,0 +1,34 @@
+---
+title: define(tag, setup)
+description: Register a custom element with a setup function and render function.
+---
+
+# `define(tag, setup)`
+
+`define` registers a custom element. `setup(el, props)` runs once on connect and must return a render function:
+
+```js
+define("x-greeting", (el, props) => {
+  let name = props.name || "World";
+  return () => html`<h2>Hello, ${name}</h2>`;
+});
+```
+
+The tag name must be a lowercase custom-element name containing a dash, such as `x-greeting`. A name can only be registered once per page.
+
+## `props`
+
+`props` is a string map of the element’s attributes. It is the same object for the lifetime of the component and is refreshed from the DOM on every render.
+
+```js
+define("x-greeting", (el, props) => {
+  const initial = props.name; // captured once
+
+  return () => html`
+    <p>Initial: ${initial}</p>
+    <p>Current: ${props.name}</p>
+  `;
+});
+```
+
+Changing an attribute does not automatically re-render. Call `update(el)`, or let a parent re-render its bound child.

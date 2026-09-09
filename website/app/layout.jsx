@@ -1,3 +1,6 @@
+import { Navbar } from "@opentf/web-docs";
+import config from "../otfw.config.js";
+
 export const metadata = {
   titleTemplate: "%s — Micro-UI",
   description:
@@ -11,24 +14,7 @@ export const metadata = {
 export default function WebsiteLayout({ children }) {
   return (
     <div className="site-shell">
-      <header className="site-header">
-        <a className="brand" href="/" aria-label="Micro-UI home">
-          <span className="brand-mark" aria-hidden="true">
-            μ
-          </span>
-          <span>Micro-UI</span>
-        </a>
-        <nav className="site-nav" aria-label="Main navigation">
-          <a href="#why">Why Micro-UI</a>
-          <a href="#demo">Live demo</a>
-          <a href="https://github.com/Open-Tech-Foundation/Micro-UI" target="_blank" rel="noreferrer">
-            GitHub <span aria-hidden="true">↗</span>
-          </a>
-        </nav>
-        <a className="header-cta" href="#start">
-          Get started <span aria-hidden="true">→</span>
-        </a>
-      </header>
+      <Navbar config={config.docs} />
 
       <main>{children}</main>
 

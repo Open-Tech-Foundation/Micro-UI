@@ -1,4 +1,4 @@
-import MicroUiShowcase from "./components/MicroUiShowcase.jsx";
+import MicroAppsGallery from "./components/MicroUiShowcase.jsx";
 
 export const metadata = {
   title: { absolute: "Micro-UI — Small apps, shipped fast" },
@@ -37,7 +37,7 @@ export default function HomePage() {
           </p>
           <div className="hero-actions">
             <a className="button button--primary" href="#demo">Try the live app <span>↓</span></a>
-            <a className="button button--quiet" href="https://github.com/Open-Tech-Foundation/Micro-UI" target="_blank" rel="noreferrer">Read the source <span>↗</span></a>
+            <a className="button button--quiet" href="/docs">Read the docs <span>→</span></a>
           </div>
           <div className="hero-note"><span>⌘</span> No build step required for the core</div>
         </div>
@@ -64,23 +64,12 @@ export default function HomePage() {
       <section className="section wrap" id="demo">
         <div className="section-heading">
           <div>
-            <div className="eyebrow">The useful middle</div>
-            <h2>Not a toy. Not a platform.</h2>
+            <div className="eyebrow">Five small apps</div>
+            <h2>One library. Many useful shapes.</h2>
           </div>
-          <p>Here is a complete little interaction built with Micro-UI: local state, keyed rows, filtering, form handling, and updates that stay explicit.</p>
+          <p>These are real Micro-UI custom elements living inside this OTF Web site. Try each one to see how a small runtime can handle very different product surfaces.</p>
         </div>
-        <div className="demo-layout">
-          <MicroUiShowcase />
-          <div className="demo-explanation">
-            <span className="line-label">01 / Micro-app pattern</span>
-            <h3>Keep the moving parts visible.</h3>
-            <p>The demo is a native custom element. Its state is ordinary JavaScript, its view is a tagged template, and its updates happen where the event occurs.</p>
-            <div className="code-block" aria-label="Micro-UI code example">
-              <code><span className="syntax-purple">define</span>(<span className="syntax-green">&quot;x-build-queue&quot;</span>, (el) =&gt; {'{'}<br />&nbsp;&nbsp;<span className="syntax-purple">return</span> () =&gt; <span className="syntax-purple">html</span><span className="syntax-green">&#96;&lt;ul&gt;...&#96;</span>;<br />{'}'});</code>
-            </div>
-            <a className="text-link" href="https://github.com/Open-Tech-Foundation/Micro-UI#quick-start" target="_blank" rel="noreferrer">See the quick start <span>→</span></a>
-          </div>
-        </div>
+        <MicroAppsGallery />
       </section>
 
       <section className="section section--muted" id="why">

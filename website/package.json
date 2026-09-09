@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@opentf/micro-ui": "file:../packages/micro-ui",
-    "@opentf/web": "latest"
+    "@opentf/web": "latest",
+    "@opentf/web-docs": "latest"
   },
   "devDependencies": {
-    "@opentf/web-cli": "latest"
+    "@opentf/web-cli": "latest",
+    "tailwindcss": "latest"
   },
   "trustedDependencies": [
     "@opentf/web-compiler"
