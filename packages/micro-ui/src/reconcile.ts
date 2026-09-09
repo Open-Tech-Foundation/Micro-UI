@@ -193,6 +193,12 @@ function patchByIndex(
     } else if (!n) {
       if (o.dom?.parentNode === parent) o.dom.remove();
     } else {
+      // An unkeyed child removed externally has no key to reclaim through
+      // patchKeyed, but its positional identity is still ours to restore.
+      // Put it back before reconciling so a tag/type replacement can use the
+      // ordinary replaceChild path as well.
+      if (o.dom?.parentNode === null)
+        parent.insertBefore(o.dom, parent.childNodes[i] ?? null);
       reconcile(o, n, parent);
     }
   }

@@ -314,6 +314,20 @@ test("keyed: the last row, detached from outside, is put back", async () => {
   assert.equal(text(ul), "1,2,3");
 });
 
+test("unkeyed: a detached row is put back at its position", async () => {
+  const items = { current: [1, 2, 3] };
+  const row = (i) => html`<li data-row=${i}>${i}</li>`;
+  const { ul, rerender } = await mountList(items, row);
+  const before = [...ul.children];
+  before[1].remove();
+
+  rerender();
+  await tick();
+
+  assert.equal(text(ul), "1,2,3");
+  sameNodes([...ul.children], before, "detached unkeyed row keeps its node");
+});
+
 test("keyed: a list re-ordered from outside converges on the next render", async () => {
   const items = { current: [1, 2, 3, 4] };
   const { ul, rerender } = await mountList(items);
@@ -571,6 +585,185 @@ test("keyed: random list operations converge on a naive rebuild", async () => {
         expected.innerHTML,
         `seed ${seed}, step ${step}, operation ${operation}`,
       );
+    }
+  }
+});
+
+function mixedItem(serial, keyed = serial % 2 === 0) {
+  return {
+    id: `mixed-${serial}`,
+    key: keyed ? `mixed-key-${serial}` : null,
+    keyed,
+    tag: "li",
+    revision: 0,
+    label: `mixed instance ${serial}`,
+  };
+}
+
+function mixedSignature(ul) {
+  return [...ul.children].map((node) => ({
+    tag: node.tagName,
+    attrs: [...node.attributes]
+      .map((attr) => [attr.name, attr.value])
+      .sort(([a], [b]) => a.localeCompare(b)),
+    text: node.textContent,
+  }));
+}
+
+function rebuildMixedList(items) {
+  const ul = document.createElement("ul");
+  for (const item of items) {
+    const row = document.createElement(item.tag);
+    row.setAttribute("data-row", item.id);
+    row.setAttribute("data-mode", item.keyed ? "keyed" : "plain");
+    row.setAttribute("data-revision", String(item.revision));
+    if (item.keyed) row.setAttribute("data-key", item.key);
+    row.textContent = item.label;
+    ul.appendChild(row);
+  }
+  return ul;
+}
+
+function mixedRow(item) {
+  if (item.keyed) {
+    return item.tag === "strong"
+      ? html`<strong key=${item.key} data-row=${item.id} data-mode="keyed" data-revision=${item.revision} data-key=${item.key}>${item.label}</strong>`
+      : html`<li key=${item.key} data-row=${item.id} data-mode="keyed" data-revision=${item.revision} data-key=${item.key}>${item.label}</li>`;
+  }
+  return item.tag === "strong"
+    ? html`<strong data-row=${item.id} data-mode="plain" data-revision=${item.revision}>${item.label}</strong>`
+    : html`<li data-row=${item.id} data-mode="plain" data-revision=${item.revision}>${item.label}</li>`;
+}
+
+function keyedNodes(ul) {
+  return new Map(
+    [...ul.children]
+      .filter((node) => node.hasAttribute("data-key"))
+      .map((node) => [node.getAttribute("data-key"), node]),
+  );
+}
+
+function applyMixedOperation(items, rand, nextSerial) {
+  let kind = Math.floor(rand() * 6);
+  if (items.length === 0) kind = 0;
+  if (items.length === 1 && (kind === 2 || kind === 3)) kind = 0;
+
+  if (kind === 0) {
+    const item = mixedItem(nextSerial.value++);
+    const at = randomIndex(rand, items.length + 1);
+    items.splice(at, 0, item);
+    return `insert ${item.id} at ${at}`;
+  }
+
+  if (kind === 1) {
+    const at = randomIndex(rand, items.length);
+    const [item] = items.splice(at, 1);
+    return `remove ${item.id} at ${at}`;
+  }
+
+  if (kind === 2) {
+    const from = randomIndex(rand, items.length);
+    const to = randomIndex(rand, items.length);
+    const [item] = items.splice(from, 1);
+    items.splice(to, 0, item);
+    return `move ${item.id} from ${from} to ${to}`;
+  }
+
+  if (kind === 3) {
+    const first = randomIndex(rand, items.length);
+    let second = randomIndex(rand, items.length - 1);
+    if (second >= first) second++;
+    [items[first], items[second]] = [items[second], items[first]];
+    return `swap ${first} and ${second}`;
+  }
+
+  if (kind === 4) {
+    const at = randomIndex(rand, items.length);
+    const item = items[at];
+    item.keyed = !item.keyed;
+    item.key = item.keyed ? `mixed-key-${nextSerial.value++}` : null;
+    item.revision++;
+    return `toggle ${item.id} ${item.keyed ? "keyed" : "plain"}`;
+  }
+
+  const at = randomIndex(rand, items.length);
+  const item = items[at];
+  item.revision++;
+  item.label = `mixed instance ${item.id} revision ${item.revision}`;
+  if (rand() < 0.35) item.tag = item.tag === "li" ? "strong" : "li";
+  return `edit ${item.id} revision ${item.revision}`;
+}
+
+function mutateExternalDOM(ul, rand) {
+  const nodes = [...ul.children];
+  const keyed = nodes.filter((node) => node.hasAttribute("data-key"));
+  if (rand() < 0.4) {
+    const node = nodes[randomIndex(rand, nodes.length)];
+    node.remove();
+    return `external detach ${node.getAttribute("data-row")}`;
+  }
+
+  // An unkeyed list has no identity with which to interpret an external
+  // reorder. Keep that path's useful mutation as detach/reinsert coverage;
+  // keyed rows are the ones whose external move the reconciler can recover.
+  if (keyed.length === 0) {
+    const node = nodes[randomIndex(rand, nodes.length)];
+    node.remove();
+    return `external detach ${node.getAttribute("data-row")}`;
+  }
+
+  const node = keyed[randomIndex(rand, keyed.length)];
+  const at = nodes.indexOf(node);
+  const [selected] = nodes.splice(at, 1);
+  const to = randomIndex(rand, nodes.length + 1);
+  if (to === nodes.length) ul.appendChild(selected);
+  else ul.insertBefore(selected, nodes[to]);
+  return `external move ${selected.getAttribute("data-row")} to ${to}`;
+}
+
+test("keyed: mixed lists survive external mutations and preserve keyed identity", async () => {
+  const seeds = [7355608, 16180339, 9876543, 12344321];
+
+  for (const seed of seeds) {
+    const rand = rng(seed);
+    const model = [0, 1, 2, 3, 4].map((serial) => mixedItem(serial));
+    const items = { current: model };
+    const nextSerial = { value: 5 };
+    const { ul, rerender } = await mountList(items, mixedRow);
+    const operations = [];
+
+    for (let step = 0; step < 100; step++) {
+      const before = keyedNodes(ul);
+      const operation =
+        rand() < 0.28
+          ? mutateExternalDOM(ul, rand)
+          : applyMixedOperation(model, rand, nextSerial);
+      operations.push(operation);
+      items.current = model;
+      rerender();
+      await tick();
+
+      const expected = rebuildMixedList(model);
+      assert.deepEqual(
+        mixedSignature(ul),
+        mixedSignature(expected),
+        `seed ${seed}, step ${step}, operation ${operation}; recent: ${operations.slice(-8).join(" | ")}`,
+      );
+      const actual = keyedNodes(ul);
+      for (const item of model) {
+        const previous = before.get(item.key);
+        if (
+          item.keyed &&
+          previous &&
+          previous.tagName.toLowerCase() === item.tag
+        ) {
+          assert.equal(
+            actual.get(item.key),
+            previous,
+            `seed ${seed}, step ${step}, keyed identity for ${item.key}`,
+          );
+        }
+      }
     }
   }
 });

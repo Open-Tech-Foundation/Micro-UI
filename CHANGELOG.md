@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `test/jsdom/keyed-lis.test.mjs` now fuzzes the keyed reconciler with six deterministic seeds and 720 generated transitions covering insertion, removal, movement, swaps, duplicate keys, clearing and re-adding rows. Each result is compared with a model-only naive DOM rebuild, and row instances carry unique labels so stale, missing, duplicated or wrongly ordered nodes are observable.
+- The keyed-list fuzzing also covers mixed keyed/unkeyed rows, attribute and tag edits, external detach/reorder mutations, and keyed DOM-node identity across 400 more deterministic transitions.
+
+### Fixed
+- `patchByIndex` now restores an unkeyed child that was externally detached before reconciling it. Previously it patched the detached node but left it absent from the parent.
 
 ## [0.11.0] - 2026-08-30
 
