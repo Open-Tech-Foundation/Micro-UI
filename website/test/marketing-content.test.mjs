@@ -28,6 +28,8 @@ test("the marketing homepage presents Micro-UI and the live app", async () => {
   expect(page).toContain("a small functional runtime");
   expect(page).not.toContain("a tiny functional runtime");
   expect(showcase).toContain("@opentf/micro-ui");
+  expect(showcase).toContain('import { define, html, onReady, update } from "@opentf/micro-ui";');
+  expect(showcase).not.toContain('await import("@opentf/micro-ui")');
   expect(showcase).toContain("x-micro-ui-build-queue");
   expect(showcase).toContain("x-micro-ui-focus-timer");
   expect(showcase).toContain("x-micro-ui-motion-lab");
