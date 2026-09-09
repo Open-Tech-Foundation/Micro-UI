@@ -54,6 +54,7 @@ test("the homepage links to dedicated docs and does not show the old source CTA"
   const layout = await read("app/layout.jsx");
   const docs = await read("app/docs/page.mdx");
   const installation = await read("app/docs/getting-started/installation/page.mdx");
+  const installationTabs = await read("app/components/InstallationTabs.jsx");
   const docsMeta = await read("app/docs/_meta.js");
   const docsLayout = await read("app/docs/layout.jsx");
   const styles = await read("app/global.css");
@@ -70,6 +71,14 @@ test("the homepage links to dedicated docs and does not show the old source CTA"
   expect(layout).toContain("<Navbar config={config.docs}");
   expect(docs).toContain("## Features");
   expect(installation).toContain("@opentf/micro-ui");
+  expect(installation).toContain('import InstallationTabs from "../../../components/InstallationTabs.jsx";');
+  expect(installation).toContain("<InstallationTabs />");
+  expect(installationTabs).toContain('import { CodeBlock, Tabs } from "@opentf/web-docs";');
+  expect(installationTabs).toContain('label: "pnpm"');
+  expect(installationTabs).toContain('label: "npm"');
+  expect(installationTabs).toContain('label: "yarn"');
+  expect(installationTabs).toContain('label: "bun"');
+  expect(installationTabs).toContain('code="pnpm add @opentf/micro-ui"');
   expect(docsMeta).toContain('"getting-started": "Getting started"');
   expect(docsLayout).toContain('from "@opentf/web-docs"');
   expect(docsLayout).toContain("<DocsLayout");

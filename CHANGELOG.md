@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Converted the workspace test and browser tooling to pnpm-managed Node scripts, added the website to the pnpm workspace, and removed the separate website lockfile.
 - Browser tests now prefer the installed Google Chrome executable before Chromium when `CHROME_BIN` is not set.
 - The website showcase now loads Micro-UI from its documented esm.sh CDN entry so hosted builds do not depend on the monorepo's local package path.
+- The installation guide now uses the official OTF Web `Tabs` and `CodeBlock` components for package-manager commands with copy buttons.
+- Added links to the public Micro-UI site and documentation in the main README.
 
 ### Fixed
 - `patchByIndex` now restores an unkeyed child that was externally detached before reconciling it. Previously it patched the detached node but left it absent from the parent.

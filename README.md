@@ -6,6 +6,8 @@
 
 A small runtime for AI-generated micro-apps
 
+[Visit the Micro-UI site](https://micro-ui.opentechf.org/) · [Read the docs](https://micro-ui.opentechf.org/docs)
+
 ![Micro-UI Screenshot](Screenshot.png)
 
 </div>
