@@ -30,7 +30,7 @@ export default function HomePage() {
     <>
       <section className="hero wrap">
         <div className="hero-copy">
-          <div className="eyebrow"><span className="eyebrow-dot" /> Open Tech Foundation</div>
+          <div className="eyebrow"><span className="eyebrow-dot" /> Alpha</div>
           <h1>Build small apps that feel <em>surprisingly complete.</em></h1>
           <p className="hero-lede">
             Micro-UI is a tiny functional runtime for interactive tools, prototypes, and AI-generated apps — with the DOM kept close and the API kept clear.
@@ -93,20 +93,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section wrap start-section" id="start">
-        <div className="start-card">
-          <div>
-            <div className="eyebrow">Start with one file</div>
-            <h2>Make the first version real.</h2>
-            <p>Install Micro-UI, define a custom element, and ship an interaction before the architecture meeting starts.</p>
-          </div>
-          <div className="install-block">
-            <span className="install-prompt">$</span>
-            <code>npm i @opentf/micro-ui</code>
-            <button type="button" aria-label="Copy install command" onclick={() => navigator.clipboard?.writeText("npm i @opentf/micro-ui")}>Copy</button>
-          </div>
-        </div>
-      </section>
     </>
   );
 }

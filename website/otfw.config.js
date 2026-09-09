@@ -7,7 +7,6 @@ export default defineDocsConfig({
   docs: {
     title: "Micro-UI",
     version: "v0.11.0",
-    logo: "/favicon.svg",
     github: "https://github.com/Open-Tech-Foundation/Micro-UI",
     nav: [
       { label: "Home", href: "/" },

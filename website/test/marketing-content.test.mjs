@@ -34,7 +34,11 @@ test("the homepage links to dedicated docs and does not show the old source CTA"
   const config = await read("otfw.config.js");
 
   expect(page).toContain('href="/docs"');
+  expect(page).toContain("> Alpha</div>");
+  expect(page).not.toContain("Open Tech Foundation</div>");
   expect(page).not.toContain("Read the source");
+  expect(page).not.toContain("Start with one file");
+  expect(page).not.toContain("Make the first version real.");
   expect(layout).toContain('from "@opentf/web-docs"');
   expect(layout).toContain("<Navbar config={config.docs}");
   expect(docs).toContain("## Features");
@@ -49,6 +53,12 @@ test("the homepage links to dedicated docs and does not show the old source CTA"
   expect(styles).toContain("micro-app-card--canvas");
   expect(index).toContain('localStorage.getItem("theme")');
   expect(config).not.toContain('label: "Live Apps"');
+  expect(config).not.toContain('logo: "/favicon.svg"');
+  expect(layout).toContain('src="/otf-logo.svg"');
+  expect(layout).toContain("© Open Tech Foundation");
+  expect(layout).toContain("Built with");
+  expect(layout).toContain("site-footer-badge-mark");
+  expect(layout).not.toContain("Last updated on September 9, 2026");
   expect(config).toContain('from "@opentf/web-docs/config"');
 });
 

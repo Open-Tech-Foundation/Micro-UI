@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `test/jsdom/nested-reconciler.test.mjs` fuzzes nested keyed lists through 360 deterministic transitions, including outer and inner insert/remove/reorder operations, HTML/SVG/`foreignObject` shape changes, namespace correctness, and outer/inner DOM identity.
 - Keyed-list coverage now pins numeric/string and boolean/string key coercion collisions, including reorder, removal, clear, re-add, and mixed unkeyed rows without stale-node leaks.
 
+### Changed
+- Removed the redundant “Start with one file” installation section from the marketing homepage; the live examples and docs remain the primary entry points.
+
 ### Fixed
 - `patchByIndex` now restores an unkeyed child that was externally detached before reconciling it. Previously it patched the detached node but left it absent from the parent.
 
