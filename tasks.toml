@@ -3,13 +3,18 @@
 # Inspect without executing: `tsr <task> --dry-run`  •  List: `tsr --list`  •  Edit: `tsr --config`
 
 [workspace]
-members = ["packages/*", "demo"]
+members = ["packages/*", "demo", "website"]
 
 # ------------------------------------------------------------------ demo
 # Live demo workbench — `esdev start` defaults to http://localhost:5173
 [tasks.demo]
 run = "esdev start"
 dir = "demo"
+
+# Public marketing site — `tsr website` starts the OTF Web dev server.
+[tasks.website]
+run = "bun run dev"
+dir = "website"
 
 # ------------------------------------------------------------------ build
 [tasks.build]

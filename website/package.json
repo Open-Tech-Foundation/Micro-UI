@@ -1,0 +1,21 @@
+{
+  "name": "micro-ui-website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "otfw dev",
+    "build": "otfw build",
+    "build:ssg": "otfw build --ssg",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@opentf/micro-ui": "file:../packages/micro-ui",
+    "@opentf/web": "latest"
+  },
+  "devDependencies": {
+    "@opentf/web-cli": "latest"
+  },
+  "trustedDependencies": [
+    "@opentf/web-compiler"
+  ]
+}

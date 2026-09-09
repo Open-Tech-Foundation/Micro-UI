@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added a standalone OTF Web marketing site under `website/`, including an SSG-safe interactive Micro-UI build-queue app, responsive marketing content, favicon, and content checks. `tasks.toml` now includes the site as a workspace member and exposes `tsr website` for local development.
 - `test/jsdom/keyed-lis.test.mjs` now fuzzes the keyed reconciler with six deterministic seeds and 720 generated transitions covering insertion, removal, movement, swaps, duplicate keys, clearing and re-adding rows. Each result is compared with a model-only naive DOM rebuild, and row instances carry unique labels so stale, missing, duplicated or wrongly ordered nodes are observable.
 - The keyed-list fuzzing also covers mixed keyed/unkeyed rows, attribute and tag edits, external detach/reorder mutations, and keyed DOM-node identity across 400 more deterministic transitions.
 - `test/jsdom/nested-reconciler.test.mjs` fuzzes nested keyed lists through 360 deterministic transitions, including outer and inner insert/remove/reorder operations, HTML/SVG/`foreignObject` shape changes, namespace correctness, and outer/inner DOM identity.
