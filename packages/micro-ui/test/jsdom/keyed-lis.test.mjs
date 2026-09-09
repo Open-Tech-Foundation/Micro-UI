@@ -439,3 +439,138 @@ test("keyed: duplicate keys in a stable list keep both rows and update them", as
   assert.equal(text(ul), "A,B,C");
   sameNodes([...ul.children], before, "no row was rebuilt");
 });
+
+// A model-only oracle. It deliberately does not use Micro-UI or the DOM nodes
+// produced by the component, so it can catch a stale, missing, duplicated or
+// misordered row even when the reconciler's own VNode state says otherwise.
+function rebuildList(items) {
+  const ul = document.createElement("ul");
+  for (const item of items) {
+    const li = document.createElement("li");
+    li.setAttribute("data-row", item.id);
+    li.setAttribute("data-key", item.key);
+    li.textContent = item.label;
+    ul.appendChild(li);
+  }
+  return ul;
+}
+
+function fuzzItem(serial, key) {
+  return {
+    id: `row-${serial}`,
+    key,
+    label: `instance ${serial} / ${key}`,
+  };
+}
+
+function randomIndex(rand, length) {
+  return Math.floor(rand() * length);
+}
+
+function applyFuzzOperation(items, rand, nextSerial) {
+  let kind = Math.floor(rand() * 8);
+  if (items.length === 0 && kind !== 0 && kind !== 7) kind = 7;
+  if (items.length === 1 && (kind === 2 || kind === 3)) kind = 0;
+
+  if (kind === 0) {
+    const duplicate = items.length > 0 && rand() < 0.4;
+    const key = duplicate
+      ? items[randomIndex(rand, items.length)].key
+      : `key-${nextSerial.value}`;
+    const item = fuzzItem(nextSerial.value++, key);
+    const at = randomIndex(rand, items.length + 1);
+    items.splice(at, 0, item);
+    return `insert ${item.id}(${key}) at ${at}`;
+  }
+
+  if (kind === 1) {
+    const at = randomIndex(rand, items.length);
+    const [item] = items.splice(at, 1);
+    return `remove ${item.id}(${item.key}) at ${at}`;
+  }
+
+  if (kind === 2) {
+    const from = randomIndex(rand, items.length);
+    const to = randomIndex(rand, items.length);
+    const [item] = items.splice(from, 1);
+    items.splice(to, 0, item);
+    return `move ${item.id} from ${from} to ${to}`;
+  }
+
+  if (kind === 3) {
+    const first = randomIndex(rand, items.length);
+    let second = randomIndex(rand, items.length - 1);
+    if (second >= first) second++;
+    [items[first], items[second]] = [items[second], items[first]];
+    return `swap ${first} and ${second}`;
+  }
+
+  if (kind === 4) {
+    if (items.length < 2) {
+      const key = items.length === 1 ? items[0].key : `key-${nextSerial.value}`;
+      const item = fuzzItem(nextSerial.value++, key);
+      items.push(item);
+      return `duplicate-insert ${item.id}(${key})`;
+    }
+    const target = randomIndex(rand, items.length);
+    let source = randomIndex(rand, items.length - 1);
+    if (source >= target) source++;
+    const before = items[target].key;
+    items[target] = { ...items[target], key: items[source].key };
+    return `duplicate ${items[target].id}: ${before} -> ${items[source].key}`;
+  }
+
+  if (kind === 5) {
+    items.length = 0;
+    return "clear";
+  }
+
+  if (kind === 6) {
+    const from = randomIndex(rand, items.length);
+    const [item] = items.splice(from, 1);
+    const to = randomIndex(rand, items.length + 1);
+    items.splice(to, 0, item);
+    return `remove/re-add ${item.id} from ${from} to ${to}`;
+  }
+
+  const count = 1 + randomIndex(rand, 4);
+  for (let i = 0; i < count; i++) {
+    const key = `key-${nextSerial.value}`;
+    items.push(fuzzItem(nextSerial.value++, key));
+  }
+  return `re-add ${count} fresh rows`;
+}
+
+test("keyed: random list operations converge on a naive rebuild", async () => {
+  const seeds = [20260909, 31415926, 8675309, 42424242, 11235813, 27182818];
+
+  for (const seed of seeds) {
+    const rand = rng(seed);
+    const model = [
+      fuzzItem(0, "key-0"),
+      fuzzItem(1, "key-1"),
+      fuzzItem(2, "key-2"),
+    ];
+    const items = { current: model };
+    const nextSerial = { value: 3 };
+    const { ul, rerender } = await mountList(
+      items,
+      (item) =>
+        html`<li key=${item.key} data-row=${item.id} data-key=${item.key}>${item.label}</li>`,
+    );
+
+    for (let step = 0; step < 120; step++) {
+      const operation = applyFuzzOperation(model, rand, nextSerial);
+      items.current = model;
+      rerender();
+      await tick();
+
+      const expected = rebuildList(model);
+      assert.equal(
+        ul.innerHTML,
+        expected.innerHTML,
+        `seed ${seed}, step ${step}, operation ${operation}`,
+      );
+    }
+  }
+});

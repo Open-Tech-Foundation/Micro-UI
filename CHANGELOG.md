@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `test/jsdom/keyed-lis.test.mjs` now fuzzes the keyed reconciler with six deterministic seeds and 720 generated transitions covering insertion, removal, movement, swaps, duplicate keys, clearing and re-adding rows. Each result is compared with a model-only naive DOM rebuild, and row instances carry unique labels so stale, missing, duplicated or wrongly ordered nodes are observable.
+
 ## [0.11.0] - 2026-08-30
 
 ### Added
@@ -313,4 +316,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 - Added dedicated **Security** section to README covering HTML escaping, `html.raw` opt-in, and error isolation.
 - Documented all public APIs in README: `define`, `html`, `html.raw`, `update`, `flush`, `mount`, `onReady`, `onError`.
-
