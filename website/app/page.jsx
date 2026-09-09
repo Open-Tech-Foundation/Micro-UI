@@ -3,7 +3,7 @@ import MicroAppsGallery from "./components/MicroUiShowcase.jsx";
 export const metadata = {
   title: { absolute: "Micro-UI — Small apps, shipped fast" },
   description:
-    "A tiny, functional UI runtime for AI-generated micro-apps that stay close to the DOM.",
+    "A small, functional UI runtime for AI-generated micro-apps that stay close to the DOM.",
   canonical: "/",
 };
 
@@ -31,9 +31,9 @@ export default function HomePage() {
       <section className="hero wrap">
         <div className="hero-copy">
           <div className="eyebrow"><span className="eyebrow-dot" /> Alpha</div>
-          <h1>Build small apps that feel <em>surprisingly complete.</em></h1>
+          <h1>Build micro apps that feel <em>surprisingly complete.</em></h1>
           <p className="hero-lede">
-            Micro-UI is a tiny functional runtime for interactive tools, prototypes, and AI-generated apps — with the DOM kept close and the API kept clear.
+            Micro-UI is a small functional runtime for interactive tools, prototypes, and AI-generated apps — with the DOM kept close and the API kept clear.
           </p>
           <div className="hero-actions">
             <a className="button button--primary" href="#demo">Try the live app <span>↓</span></a>

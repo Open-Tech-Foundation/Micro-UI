@@ -9,7 +9,9 @@ test("the marketing homepage presents Micro-UI and the live app", async () => {
   const styles = await read("app/global.css");
 
   expect(page).toContain("MicroAppsGallery");
-  expect(page).toContain("Build small apps that feel");
+  expect(page).toContain("Build micro apps that feel");
+  expect(page).toContain("a small functional runtime");
+  expect(page).not.toContain("a tiny functional runtime");
   expect(showcase).toContain("@opentf/micro-ui");
   expect(showcase).toContain("x-micro-ui-build-queue");
   expect(showcase).toContain("x-micro-ui-focus-timer");
@@ -80,5 +82,6 @@ test("the public shell declares its favicon", async () => {
   const favicon = await read("public/favicon.svg");
 
   expect(index).toContain('href="/favicon.svg"');
-  expect(favicon).toContain("#ff6b35");
+  expect(favicon).toContain("Open Tech Foundation logo");
+  expect(favicon).toContain("rgb(255,133,27)");
 });

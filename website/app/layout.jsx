@@ -4,7 +4,7 @@ import config from "../otfw.config.js";
 export const metadata = {
   titleTemplate: "%s — Micro-UI",
   description:
-    "A tiny, fault-tolerant UI runtime for AI-generated micro-apps.",
+    "A small, fault-tolerant UI runtime for AI-generated micro-apps.",
   openGraph: {
     siteName: "Micro-UI",
     type: "website",

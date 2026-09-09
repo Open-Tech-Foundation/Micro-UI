@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Removed the redundant “Start with one file” installation section from the marketing homepage; the live examples and docs remain the primary entry points.
 - Updated the easing lab control with accessible play/pause icons and labels, plus spacing above its duration slider.
+- Refined the marketing language to distinguish the small runtime from its micro apps, and changed the browser favicon to the official OTF logo.
 
 ### Fixed
 - `patchByIndex` now restores an unkeyed child that was externally detached before reconciling it. Previously it patched the detached node but left it absent from the parent.
