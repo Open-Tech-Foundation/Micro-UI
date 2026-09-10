@@ -84,6 +84,8 @@ test("the homepage links to dedicated docs and does not show the old source CTA"
   expect(docsLayout).toContain("<DocsLayout");
   expect(styles).toContain("position: fixed !important");
   expect(styles).toContain("padding-top: var(--otfw-navbar-height)");
+  expect(styles).toContain(".site-shell { min-height: 100vh; overflow: clip; }");
+  expect(styles).not.toContain(".site-shell { min-height: 100vh; overflow: hidden; }");
   expect(styles).toContain('@import "@opentf/web-docs/theme"');
   expect(styles).toContain('[data-theme="dark"]');
   expect(styles).toContain("micro-app-card--canvas");
