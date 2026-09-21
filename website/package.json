@@ -3,11 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "otfw dev",
-    "build": "otfw build --ssg",
-    "build:ssg": "otfw build --ssg",
-    "test": "node --test test/marketing-content.test.mjs",
-    "test:e2e": "pnpm run build && node --test test/docs-sidebar.e2e.test.mjs"
+    "build": "otfw build --ssg"
   },
   "dependencies": {
     "@opentf/web": "latest",

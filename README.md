@@ -679,14 +679,18 @@ run without running it.
 
 | Task | What it does |
 |------|--------------|
-| `tsr check` | The gate: `typecheck` + `lint` + `fmt:check` + `test` + `test:browser`. Run it before every commit. |
-| `tsr test` | The jsdom suite — Node's built-in test runner, 572 tests across 24 files today. |
+| `tsr check` | The gate: `typecheck` + `lint` + `fmt:check` + `test` + `test:demo` + `test:website` + `test:browser`. Run it before every commit. |
+| `tsr test` | The DOM suite — esdev's test runner against esdev's native DOM (`esdev test --dom`), 600+ tests across 30 files today. |
+| `tsr test:demo` | The demo's split-math suite — pure logic, plain `esdev test` with no DOM flag. |
+| `tsr test:website` | The website content suite — static checks against the marketing sources, plain `esdev test`. |
+| `tsr test:website:e2e` | The built docs site in a real browser, over the DevTools protocol. Builds first (`website:build`); skips if no browser is installed. |
 | `tsr test:browser` | `test.html` in a real browser, over the DevTools protocol. Skips if no browser is installed. |
 | `tsr typecheck` | `tsc --noEmit` over `packages/*`. |
 | `tsr lint` | Biome lint. |
 | `tsr fmt` / `tsr fmt:check` | Biome format — `fmt` rewrites files, `fmt:check` only reports. |
 | `tsr build` | Types, `dist/index.js`, `dist/index.min.js`, both CSS bundles, and the package README. |
 | `tsr demo` | The demo workbench on <http://localhost:5173>. |
+| `tsr website` | The marketing site's dev server. `tsr website:build` writes its static build. |
 | `tsr ci` | `check` then `build` — what GitHub Actions runs on every PR. |
 
 ### Repo layout
@@ -694,7 +698,7 @@ run without running it.
 ```
 packages/micro-ui/
   src/            the library — ~1,700 lines, zero dependencies
-  test/jsdom/     the entire test suite
+  test/dom/       the entire test suite (esdev's `--dom` runner)
   docs/           CSS utility reference
   dist/           build output (git-ignored, not committed)
 demo/src/         demo apps, one file per feature area
@@ -725,25 +729,26 @@ CHANGELOG.md      curated by hand; release notes are generated from it
 ### Tests
 
 ```sh
-tsr test                                       # everything
+tsr test                                       # the DOM suite
+tsr test:demo                                  # the demo's split-math suite
+tsr test:website                               # the website content suite
 cd packages/micro-ui
-node --experimental-strip-types --test test/jsdom/keyed-lis.test.mjs         # one file
-node --experimental-strip-types --test --test-name-pattern "swapping two rows" test/jsdom # one test, by name
+esdev test --dom --file=test/dom/keyed-lis.test.mjs                          # one file
+tsr test -- "packages/micro-ui/test/dom" "swapping two rows"                 # one test, by name
 ```
 
-Every test file imports `./setup.mjs` **first**: it builds a jsdom window and puts
-`document`, `customElements`, `HTMLElement` and friends on `globalThis` before the
-library is loaded, because the library reaches for them at module scope. Each file
-then imports the library with a cache-busting query
-(`../../src/index.ts?keyed-lis-${Date.now()}`) and generates random tag names — a
-custom element name can only be defined once per registry, and tests must not
-collide.
+Every test file imports only what it uses from `runtime:test` and the library
+(`../../src/index.ts`). esdev's `--dom` flag installs its test-only DOM
+globals — `document`, `customElements`, `HTMLElement` and friends — before
+each file runs, so the library, which reaches for them at module scope, loads
+straight in with no harness. Each file generates random tag names — a custom
+element name can only be defined once per registry, and tests must not collide.
 
-Node's native ESM loader treats each cache-busting query as a separate module
-instance, so every test file gets isolated module state. A test that depends on
-dev mode should still call `mount(host, tag, { dev: true })` itself, and one that
-depends on it being *off* should pass `{ dev: false }` explicitly. That makes the
-test's contract clear and keeps it independent of runner defaults.
+Each test file runs in its own process, so every one gets isolated module
+state. A test that depends on dev mode should still call
+`mount(host, tag, { dev: true })` itself, and one that depends on it being
+*off* should pass `{ dev: false }` explicitly. That makes the test's contract
+clear and keeps it independent of runner defaults.
 
 Write the test so it fails against the bug. Asserting the final DOM often passes
 either way: `keyed-lis.test.mjs` counts `insertBefore` calls, and
@@ -769,8 +774,8 @@ the respective bugs actually lived.
 ### Before you open a PR
 
 - `tsr check` is green.
-- The change has a test. Unit tests for logic, a jsdom test under
-  `packages/micro-ui/test/jsdom/` for anything user-facing, plus the edge and error
+- The change has a test. Unit tests for logic, a DOM test under
+  `packages/micro-ui/test/dom/` for anything user-facing, plus the edge and error
   cases.
 - `CHANGELOG.md` has an entry under `## [Unreleased]`, saying what broke and why —
   the release notes are generated from it verbatim.

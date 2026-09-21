@@ -13,7 +13,14 @@ dir = "demo"
 
 # Public marketing site — `tsr website` starts the OTF Web dev server.
 [tasks.website]
-run = "pnpm run dev"
+run = "otfw dev"
+dir = "website"
+
+# Static build of the marketing site. Not part of `build` (that ships the npm
+# package); needed by `test:website:e2e`, which drives the built docs pages in
+# a real browser. `dist/` is git-ignored.
+[tasks."website:build"]
+run = "otfw build --ssg"
 dir = "website"
 
 # ------------------------------------------------------------------ build
@@ -61,19 +68,43 @@ dir = "packages/micro-ui"
 packages = ["packages/*"]
 run = "tsc --noEmit"
 
-# The whole suite runs under Node against a real DOM via jsdom. There is only
-# one suite — the FakeDOM harness it used to share this task with is gone.
+# The whole DOM suite runs natively under esdev (`esdev test --dom`) against a
+# real DOM — no jsdom and no harness. It runs from the repo root (no `dir`) so
+# the filesystem jail covers the monorepo README and tasks.toml too.
 [tasks.test]
-run = "pnpm test"
-dir = "packages/micro-ui"
+run = "esdev test --dom packages/micro-ui/test/dom"
+
+# The split-math suite lives beside its source and is pure logic, so it runs
+# without the DOM flag. Nothing else in demo/ has tests.
+[tasks."test:demo"]
+run = "esdev test"
+dir = "demo"
+
+# The website content suite — static checks against the marketing sources, so
+# plain `esdev test` with no DOM flag. The browser-driven docs check below is
+# a node script (like `test:browser`), not an esdev file, so it is never
+# picked up here.
+[tasks."test:website"]
+run = "esdev test"
+dir = "website"
+
+# The docs sidebar check drives the built site through CDP in whatever
+# chromium or chrome is installed. It covers what static checks cannot — the
+# sidebar actually staying pinned while the page scrolls — and skips with a
+# message when the machine has no browser or `website/dist/` has not been
+# built, so `check` still passes without either.
+[tasks."test:website:e2e"]
+deps = ["website:build"]
+run = "node --test test/docs-sidebar.e2e.mjs"
+dir = "website"
 
 # test.html, driven through CDP in whatever chromium or chrome is installed.
-# It covers what jsdom cannot model — real paint, real scrolling, real media —
-# and skips with a message when the machine has no browser, so `check` still
-# passes without one. Needs dist/, which is what test.html imports.
+# It covers what the DOM suite cannot model — real paint, real scrolling, real
+# media — and skips with a message when the machine has no browser, so `check`
+# still passes without one. Needs dist/, which is what test.html imports.
 [tasks."test:browser"]
 deps = ["build:js"]
-run = "pnpm run test:browser"
+run = "node test/browser/run.mjs"
 dir = "packages/micro-ui"
 
 # ------------------------------------------------------------------ lint / fmt (Biome)
@@ -88,7 +119,7 @@ run = "biome check"
 
 # ------------------------------------------------------------------ ci
 [tasks.check]
-deps = ["typecheck", "lint", "fmt:check", "test", "test:browser"]
+deps = ["typecheck", "lint", "fmt:check", "test", "test:demo", "test:website", "test:browser"]
 
 [tasks.ci]
 deps = ["check", "build"]
