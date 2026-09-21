@@ -92,20 +92,23 @@ dir = "website"
 # chromium or chrome is installed. It covers what static checks cannot — the
 # sidebar actually staying pinned while the page scrolls — and skips with a
 # message when the machine has no browser or `website/dist/` has not been
-# built, so `check` still passes without either.
+# built, so `check` still passes without either. Like `test:browser` it is an
+# esdev-run driver script, not an esdev test file: the assertions run inside a
+# real browser, where layout and scrolling exist.
 [tasks."test:website:e2e"]
 deps = ["website:build"]
-run = "node --test test/docs-sidebar.e2e.mjs"
+run = "esdev test/docs-sidebar.e2e.mjs"
 dir = "website"
 
 # test.html, driven through CDP in whatever chromium or chrome is installed.
 # It covers what the DOM suite cannot model — real paint, real scrolling, real
 # media — and skips with a message when the machine has no browser, so `check`
 # still passes without one. Needs dist/, which is what test.html imports.
+# Runs from the repo root (no `dir`): the filesystem jail follows the working
+# directory, and test.html lives at the root while dist/ lives in packages/.
 [tasks."test:browser"]
 deps = ["build:js"]
-run = "node test/browser/run.mjs"
-dir = "packages/micro-ui"
+run = "esdev packages/micro-ui/test/browser/run.mjs"
 
 # ------------------------------------------------------------------ lint / fmt (Biome)
 [tasks.lint]

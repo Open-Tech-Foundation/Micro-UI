@@ -1,94 +1,105 @@
-import test from "node:test";
-import assert from "node:assert/strict";
-import { execFileSync, spawn } from "node:child_process";
-import { createServer } from "node:http";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { dirname, extname, join, normalize } from "node:path";
-import { fileURLToPath } from "node:url";
+// Drives the built docs site in a real browser and checks that the docs
+// sidebar stays pinned while the page scrolls.
+//
+// The website content suite (`test:website`) pins the sources statically —
+// markup, styles, config. What it cannot check is the actual behaviour: the
+// sidebar sticking depends on layout and scrolling, which no test DOM models.
+// So this drives the real thing: esdev serves `website/dist/` (`runtime:http`)
+// and speaks CDP to a browser already on the machine (`runtime:system` spawns
+// it, the `WebSocket` global drives it). Skips with a clear message when there
+// is no browser or the site has not been built (`tsr website:build`), so the
+// task still passes on a box without either.
+import { exists, file, makeTempDir, mkdir, remove } from "runtime:fs";
+import { serve } from "runtime:http";
+import {
+  dirname,
+  extname,
+  fromFileURL,
+  join,
+  normalize,
+} from "runtime:path";
+import { env, exit } from "runtime:process";
+import { Command } from "runtime:system";
 
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+const repoRoot = join(dirname(fromFileURL(import.meta.url)), "..");
 const distRoot = join(repoRoot, "dist");
+
+const envString = (key) => {
+  const value = env[key];
+  return typeof value === "string" && value !== "" ? value : undefined;
+};
+
 const browserCandidates = [
-  process.env.CHROME_BIN,
+  envString("CHROME_BIN"),
   "google-chrome",
   "google-chrome-stable",
   "chromium",
   "chromium-browser",
 ].filter(Boolean);
 
-function findBrowser() {
+async function findBrowser() {
   for (const candidate of browserCandidates) {
     if (candidate.includes("/")) {
-      if (existsSync(candidate)) return candidate;
+      if (await exists(candidate)) return candidate;
       continue;
     }
     try {
-      execFileSync("which", [candidate], { stdio: "ignore" });
-      return candidate;
+      const result = await new Command(candidate, {
+        args: ["--version"],
+        stdout: "null",
+        stderr: "null",
+      }).output();
+      if (result.success) return candidate;
     } catch {}
   }
   return null;
 }
 
-function serve() {
-  const mime = {
-    ".css": "text/css",
-    ".html": "text/html",
-    ".js": "text/javascript",
-    ".json": "application/json",
-    ".svg": "image/svg+xml",
-  };
-  const server = createServer((request, response) => {
+const MIME = {
+  ".css": "text/css",
+  ".html": "text/html",
+  ".js": "text/javascript",
+  ".json": "application/json",
+  ".svg": "image/svg+xml",
+};
+
+async function startServer() {
+  const server = serve({ hostname: "127.0.0.1", port: 0 }, async (request) => {
     const requestPath = normalize(
-      decodeURIComponent(new URL(request.url ?? "/", "http://localhost").pathname),
+      decodeURIComponent(new URL(request.url, "http://localhost").pathname),
     );
-    if (requestPath.split("/").includes("..")) {
-      response.writeHead(403);
-      response.end("forbidden");
-      return;
-    }
+    if (requestPath.split("/").includes(".."))
+      return new Response("forbidden", { status: 403 });
 
-    const relativePath = requestPath === "/" || requestPath.endsWith("/")
-      ? `${requestPath}index.html`
-      : requestPath;
-    const file = join(distRoot, relativePath);
-    if (!existsSync(file)) {
-      response.writeHead(404);
-      response.end("not found");
-      return;
-    }
+    const relativePath =
+      requestPath === "/" || requestPath.endsWith("/")
+        ? `${requestPath}index.html`
+        : requestPath;
+    const name = join(distRoot, relativePath);
+    if (!(await exists(name))) return new Response("not found", { status: 404 });
 
-    let contents = readFileSync(file);
-    if (extname(file) === ".html") {
-      const html = contents.toString();
-      const stylesheetLink = html.match(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"[^>]*>/);
+    let body = await file(name).bytes();
+    let contentType = MIME[extname(name)] ?? "application/octet-stream";
+    if (extname(name) === ".html") {
+      const html = new TextDecoder().decode(body);
+      const stylesheetLink = html.match(
+        /<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"[^>]*>/,
+      );
       if (stylesheetLink) {
-        const stylesheetHref = stylesheetLink[1];
-        const stylesheet = readFileSync(join(distRoot, stylesheetHref));
+        const stylesheet = await file(
+          join(distRoot, stylesheetLink[1]),
+        ).text();
         // Keep this layout test independent of the test server's stylesheet MIME handling.
-        contents = Buffer.from(
+        body = new TextEncoder().encode(
           html.replace(stylesheetLink[0], `<style>${stylesheet}</style>`),
         );
+        contentType = "text/html";
       }
     }
-    response.statusCode = 200;
-    response.setHeader("Content-Length", contents.byteLength);
-    response.setHeader("Content-Type", mime[extname(file)] ?? "application/octet-stream");
-    response.end(contents);
+    return new Response(body, { headers: { "content-type": contentType } });
   });
-
-  return new Promise((resolve, reject) => {
-    const onError = (error) => {
-      server.off("error", onError);
-      reject(error);
-    };
-    server.once("error", onError);
-    server.listen(0, "127.0.0.1", () => {
-      server.off("error", onError);
-      resolve({ server, port: server.address().port });
-    });
-  });
+  const { port } = await server.addr;
+  return { server, port };
 }
 
 async function connect(wsUrl) {
@@ -105,7 +116,9 @@ async function connect(wsUrl) {
     const pending = waiting.get(message.id);
     if (!pending) return;
     waiting.delete(message.id);
-    message.error ? pending.reject(new Error(message.error.message)) : pending.resolve(message.result);
+    message.error
+      ? pending.reject(new Error(message.error.message))
+      : pending.resolve(message.result);
   };
 
   return {
@@ -122,20 +135,38 @@ async function connect(wsUrl) {
   };
 }
 
-const browser = findBrowser();
-const skipReason = !browser
-  ? "browser E2E test requires Google Chrome or Chromium"
-  : !existsSync(join(distRoot, "docs/api/mount/index.html"))
-    ? "run `tsr website:build` before the docs browser test"
-    : false;
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
 
-test("docs sidebar remains pinned while the page scrolls", { skip: skipReason }, async () => {
-  const { server, port: serverPort } = await serve();
-  const profile = mkdtempSync(join(tmpdir(), "micro-ui-docs-e2e-"));
-  const debugPort = 9400 + (process.pid % 500);
-  const chrome = spawn(
-    browser,
-    [
+async function main() {
+  const browser = await findBrowser();
+  if (!browser) {
+    console.log(
+      "docs e2e SKIPPED: browser E2E test requires Google Chrome or Chromium.",
+    );
+    return;
+  }
+  if (!(await exists(join(distRoot, "docs/api/mount/index.html")))) {
+    console.log(
+      "docs e2e SKIPPED: run `tsr website:build` before the docs browser test.",
+    );
+    return;
+  }
+
+  const { server, port: serverPort } = await startServer();
+  // A unique profile per run, inside the repo's jail so it can be cleaned up.
+  // (Chrome creates far worse than broken symlinks in a profile; the
+  // gitignore keeps it out of the tree either way.)
+  const profilesDir = join(repoRoot, "test", ".chrome-profiles");
+  await mkdir(profilesDir, { recursive: true });
+  const profile = await makeTempDir({
+    dir: profilesDir,
+    prefix: "micro-ui-docs-e2e-",
+  });
+  const debugPort = 9400 + Math.floor(Math.random() * 500);
+  const chrome = await new Command(browser, {
+    args: [
       "--headless=new",
       "--disable-gpu",
       "--no-sandbox",
@@ -146,8 +177,9 @@ test("docs sidebar remains pinned while the page scrolls", { skip: skipReason },
       `--user-data-dir=${profile}`,
       `http://127.0.0.1:${serverPort}/docs/api/mount/`,
     ],
-    { stdio: "ignore" },
-  );
+    stdout: "null",
+    stderr: "null",
+  }).spawn();
 
   let connection;
   try {
@@ -155,11 +187,15 @@ test("docs sidebar remains pinned while the page scrolls", { skip: skipReason },
     for (let attempt = 0; attempt < 100 && !target; attempt += 1) {
       await new Promise((resolve) => setTimeout(resolve, 100));
       try {
-        const targets = await (await fetch(`http://127.0.0.1:${debugPort}/json/list`)).json();
-        target = targets.find((item) => item.type === "page" && item.webSocketDebuggerUrl);
+        const targets = await (
+          await fetch(`http://127.0.0.1:${debugPort}/json/list`)
+        ).json();
+        target = targets.find(
+          (item) => item.type === "page" && item.webSocketDebuggerUrl,
+        );
       } catch {}
     }
-    assert.ok(target, "Chrome did not expose the docs page");
+    assert(target, "Chrome did not expose the docs page");
 
     connection = await connect(target.webSocketDebuggerUrl);
     await connection.send("Emulation.setDeviceMetricsOverride", {
@@ -195,15 +231,37 @@ test("docs sidebar remains pinned while the page scrolls", { skip: skipReason },
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
-    assert.equal(layout.ready, true, `the docs layout did not render at ${layout.url}`);
-    assert.equal(layout.position, "sticky", JSON.stringify(layout));
-    assert.equal(layout.shellOverflow, "clip");
-    assert.ok(layout.pageScrollY > 0, `the docs page did not scroll: ${JSON.stringify(layout)}`);
-    assert.ok(Math.abs(layout.after - layout.before) <= 1, `sidebar moved from ${layout.before}px to ${layout.after}px`);
+    assert(
+      layout.ready === true,
+      `the docs layout did not render at ${layout.url}`,
+    );
+    assert(
+      layout.position === "sticky",
+      `sidebar position is ${layout.position}: ${JSON.stringify(layout)}`,
+    );
+    assert(layout.shellOverflow === "clip", JSON.stringify(layout));
+    assert(
+      layout.pageScrollY > 0,
+      `the docs page did not scroll: ${JSON.stringify(layout)}`,
+    );
+    assert(
+      Math.abs(layout.after - layout.before) <= 1,
+      `sidebar moved from ${layout.before}px to ${layout.after}px`,
+    );
+    console.log("docs e2e (docs sidebar pinned): 1 passed, 0 failed");
   } finally {
     connection?.close();
-    chrome.kill();
-    server.close();
-    rmSync(profile, { recursive: true, force: true });
+    try {
+      await chrome.kill();
+    } catch {}
+    await server.stop();
+    await remove(profile, { recursive: true });
   }
-});
+}
+
+try {
+  await main();
+} catch (error) {
+  console.error(`docs e2e FAILED: ${error.message}`);
+  exit(1);
+}

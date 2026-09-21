@@ -1,43 +1,52 @@
 // Runs test.html in a real browser and reports its result.
 //
-// The jsdom suite covers everything jsdom can model, which is most of it —
-// DOM identity, focus, selection ranges, scrollTop and media properties. What
-// it cannot model is a browser actually painting, scrolling and playing, and
-// those are exactly the guarantees test.html was written to check: that an
-// <img> does not re-request, a <video> does not restart, a <canvas> keeps its
-// pixels, focus and caret survive, scroll position holds.
+// The esdev DOM suite covers everything a test DOM can model, which is most
+// of it — DOM identity, focus, selection ranges, scrollTop and media
+// properties. What it cannot model is a browser actually painting, scrolling
+// and playing, and those are exactly the guarantees test.html was written to
+// check: that an <img> does not re-request, a <video> does not restart, a
+// <canvas> keeps its pixels, focus and caret survive, scroll position holds.
 //
-// No new dependencies: Node serves the files and speaks CDP to a browser that
-// is already on the machine. Skips with a clear message when there is none,
-// so `tsr check` still passes on a box without one.
-import { execSync, spawn } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import { createServer } from "node:http";
-import { tmpdir } from "node:os";
-import { dirname, join, normalize } from "node:path";
-import { fileURLToPath } from "node:url";
+// No new dependencies: esdev serves the files (`runtime:http`) and speaks CDP
+// to a browser that is already on the machine (`runtime:system` spawns it,
+// the `WebSocket` global drives it). Skips with a clear message when there is
+// none, so `tsr check` still passes on a box without one.
+import { exists, file } from "runtime:fs";
+import { serve } from "runtime:http";
+import { dirname, fromFileURL, join, normalize } from "runtime:path";
+import { env, exit } from "runtime:process";
+import { Command } from "runtime:system";
 
-const here = dirname(fileURLToPath(import.meta.url));
+const here = dirname(fromFileURL(import.meta.url));
 const repoRoot = join(here, "..", "..", "..", "..");
 const PAGE = "test.html";
 
+const envString = (key) => {
+  const value = env[key];
+  return typeof value === "string" && value !== "" ? value : undefined;
+};
+
 const BROWSERS = [
-  process.env.CHROME_BIN,
+  envString("CHROME_BIN"),
   "google-chrome",
   "google-chrome-stable",
   "chromium",
   "chromium-browser",
 ].filter(Boolean);
 
-function findBrowser() {
+async function findBrowser() {
   for (const bin of BROWSERS) {
     if (bin.includes("/")) {
-      if (existsSync(bin)) return bin;
+      if (await exists(bin)) return bin;
       continue;
     }
     try {
-      execSync(`command -v ${bin}`, { stdio: "ignore" });
-      return bin;
+      const result = await new Command(bin, {
+        args: ["--version"],
+        stdout: "null",
+        stderr: "null",
+      }).output();
+      if (result.success) return bin;
     } catch {}
   }
   return null;
@@ -53,38 +62,23 @@ const MIME = {
   ".png": "image/png",
 };
 
-function serve() {
-  const server = createServer((req, res) => {
-    const path = normalize(decodeURIComponent(new URL(req.url ?? "/", "http://localhost").pathname));
-    if (path.includes("..")) {
-      res.writeHead(403);
-      res.end("no");
-      return;
-    }
+async function startServer() {
+  const server = serve({ hostname: "127.0.0.1", port: 0 }, async (request) => {
+    const path = normalize(
+      decodeURIComponent(new URL(request.url, "http://localhost").pathname),
+    );
+    if (path.includes("..")) return new Response("no", { status: 403 });
 
-    const file = join(repoRoot, path === "/" ? `/${PAGE}` : path);
-    if (!existsSync(file)) {
-      res.writeHead(404);
-      res.end("not found");
-      return;
-    }
+    const name = join(repoRoot, path === "/" ? `/${PAGE}` : path);
+    if (!(await exists(name))) return new Response("not found", { status: 404 });
 
-    const ext = file.slice(file.lastIndexOf("."));
-    res.writeHead(200, { "content-type": MIME[ext] ?? "application/octet-stream" });
-    res.end(readFileSync(file));
-  });
-
-  return new Promise((resolve, reject) => {
-    const onError = (error) => {
-      server.off("error", onError);
-      reject(error);
-    };
-    server.once("error", onError);
-    server.listen(0, "127.0.0.1", () => {
-      server.off("error", onError);
-      resolve({ server, port: server.address().port });
+    const ext = name.slice(name.lastIndexOf("."));
+    return new Response(await file(name).bytes(), {
+      headers: { "content-type": MIME[ext] ?? "application/octet-stream" },
     });
   });
+  const { port } = await server.addr;
+  return { server, port };
 }
 
 async function cdp(wsUrl) {
@@ -115,12 +109,12 @@ async function cdp(wsUrl) {
 
 async function main() {
   const dist = join(repoRoot, "packages/micro-ui/dist/index.js");
-  if (!existsSync(dist)) {
+  if (!(await exists(dist))) {
     console.error("dist/index.js is missing — run `tsr build:js` first.");
-    process.exit(1);
+    exit(1);
   }
 
-  const browser = findBrowser();
+  const browser = await findBrowser();
   if (!browser) {
     console.log(
       "browser tests SKIPPED: no chromium or chrome found.\n" +
@@ -129,35 +123,40 @@ async function main() {
     return;
   }
 
-  const server = await serve();
-  const url = `http://127.0.0.1:${server.port}/${PAGE}`;
-  const port = 9333 + (process.pid % 500);
-  const proc = spawn(
-    browser,
-    [
+  const { server, port: serverPort } = await startServer();
+  const url = `http://127.0.0.1:${serverPort}/${PAGE}`;
+  const port = 9333 + Math.floor(Math.random() * 500);
+  // Outside the repo on purpose (Chrome creates the directory itself, so the
+  // filesystem jail never comes into it). Chrome leaves broken symlinks in a
+  // profile (SingletonLock and friends) that a file walker trips over — which
+  // is how a project learns to ignore its own warnings.
+  const profile = join(
+    envString("TMPDIR") ?? envString("TEMP") ?? "/tmp",
+    "micro-ui-browser-test-profile",
+  );
+  const proc = await new Command(browser, {
+    args: [
       "--headless=new",
       "--disable-gpu",
       "--no-sandbox",
       "--no-first-run",
       "--disable-dev-shm-usage",
       `--remote-debugging-port=${port}`,
-      // Outside the repo on purpose. Chrome leaves broken symlinks in a
-      // profile (SingletonLock and friends), and Biome walks the tree and
-      // warns about every one of them — two warnings on every `tsr lint`,
-      // which is how a project learns to ignore its own warnings.
-      "--user-data-dir=" + join(tmpdir(), "micro-ui-browser-test-profile"),
+      `--user-data-dir=${profile}`,
       url,
     ],
-    { stdio: "ignore" },
-  );
+    stdout: "null",
+    stderr: "null",
+  }).spawn();
 
-  const cleanup = () => {
+  const cleanup = async () => {
     try {
-      proc.kill();
+      await proc.kill();
     } catch {}
-    server.server.close();
+    await server.stop();
   };
 
+  let failed = false;
   try {
     // Wait for the debugging endpoint, then find the page target.
     let target = null;
@@ -209,10 +208,11 @@ async function main() {
     console.log(
       `browser (${browser}): ${result.passed} passed, ${result.failed} failed`,
     );
-    if (result.failed > 0) process.exitCode = 1;
+    failed = result.failed > 0;
   } finally {
-    cleanup();
+    await cleanup();
   }
+  if (failed) exit(1);
 }
 
 await main();
