@@ -28,7 +28,8 @@ test("the marketing homepage presents Micro-UI and the live app", async () => {
   expect(showcase).toContain("kanban-cols");
   expect(showcase).toContain("kanban-col-icon");
   expect(showcase).toContain("dropCard");
-  expect(showcase).toContain("ondrop");
+  expect(showcase).toContain("onpointerdown");
+  expect(showcase).toContain("setPointerCapture");
   expect(showcase).toContain("01 / Kanban");
   expect(showcase).toContain("Micro-UI micro-app · live preview");
   expect(showcase).toContain("toggleTask");

@@ -24,6 +24,7 @@ async function registerMicroUiDemos() {
       let nextId = 6;
       let dragging = null;
       let dropCol = null;
+      let downAt = null;
       let columns = [
         {
           id: "now",
@@ -58,6 +59,53 @@ async function registerMicroUiDemos() {
         draft = "";
         update(el);
       };
+      // Pointer-based dragging: one code path for mouse, touch, and pen.
+      // HTML5 drag-and-drop never fires on touch screens, so the card tracks
+      // the pointer itself. touch-action: pan-y (in CSS) keeps vertical page
+      // scroll working; a horizontal move past 8px becomes a drag.
+      const colAt = (x, y) => {
+        const cols = el.querySelectorAll(".kanban-col");
+        for (const c of cols) {
+          const b = c.getBoundingClientRect();
+          if (x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) {
+            const idx = [...cols].indexOf(c);
+            return columns[idx].id;
+          }
+        }
+        return null;
+      };
+      const onCardDown = (event, id) => {
+        // Capture keeps the move/up stream coming even off-element. It throws
+        // for a pointer that is not active; the drag still works, only less
+        // forgiving outside the card — so a failed capture never aborts it.
+        try {
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+        } catch {
+          /* keep going without capture */
+        }
+        downAt = { id, x: event.clientX, y: event.clientY };
+      };
+      const onCardMove = (event) => {
+        if (!downAt) return;
+        if (dragging === null) {
+          if (Math.hypot(event.clientX - downAt.x, event.clientY - downAt.y) < 8) return;
+          dragging = downAt.id;
+        }
+        const over = colAt(event.clientX, event.clientY);
+        if (over !== dropCol) {
+          dropCol = over;
+          update(el);
+        }
+      };
+      const onCardUp = () => {
+        if (dragging !== null && dropCol !== null) dropCard(dropCol);
+        downAt = null;
+        if (dragging !== null || dropCol !== null) {
+          dragging = null;
+          dropCol = null;
+          update(el);
+        }
+      };
       const dropCard = (colId) => {
         if (dragging === null) return;
         const id = dragging;
@@ -89,16 +137,16 @@ async function registerMicroUiDemos() {
           </form>
           <div class="kanban-cols">
             ${columns.map((col) => html`
-              <div class=${`kanban-col ${dropCol === col.id ? "is-drop" : ""}`} key=${col.id}
-                ondragover=${(event) => { event.preventDefault(); if (dropCol !== col.id) { dropCol = col.id; update(el); } }}
-                ondrop=${(event) => { event.preventDefault(); dropCard(col.id); }}>
+              <div class=${`kanban-col ${dropCol === col.id ? "is-drop" : ""}`} key=${col.id}>
                 <div class="kanban-col-head"><span class="kanban-col-icon" style=${`color:${col.tone}`} aria-hidden="true">${col.icon}</span><span>${col.title}</span><em>${col.cards.length}</em></div>
                 <ul class="kanban-list">
                   ${col.cards.length
                     ? col.cards.map((card) => html`
-                        <li key=${card.id} draggable="true" class=${dragging === card.id ? "is-dragging" : ""}
-                          ondragstart=${(event) => { dragging = card.id; event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", String(card.id)); }}
-                          ondragend=${() => { dragging = null; dropCol = null; update(el); }}>
+                        <li key=${card.id} class=${dragging === card.id ? "is-dragging" : ""}
+                          onpointerdown=${(event) => onCardDown(event, card.id)}
+                          onpointermove=${onCardMove}
+                          onpointerup=${onCardUp}
+                          onpointercancel=${onCardUp}>
                           <span>${card.label}</span>
                         </li>
                       `)
