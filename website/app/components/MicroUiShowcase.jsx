@@ -111,6 +111,14 @@ async function registerMicroUiDemos() {
         const id = dragging;
         const at = columns.findIndex((c) => c.cards.some((k) => k.id === id));
         if (at === -1) return;
+        // Dropping back onto the origin column is a no-op: without this the
+        // remove-branch below matches first and the card is destroyed.
+        if (columns[at].id === colId) {
+          dragging = null;
+          dropCol = null;
+          update(el);
+          return;
+        }
         const card = columns[at].cards.find((k) => k.id === id);
         columns = columns.map((c) => {
           if (c.id === columns[at].id) return { ...c, cards: c.cards.filter((k) => k.id !== id) };
