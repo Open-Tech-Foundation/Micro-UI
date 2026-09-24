@@ -793,6 +793,72 @@ function assert(testId, condition, msg) {
   assert("test19", window.__xss === undefined, "Clicking the refused link ran nothing");
 }
 
+// ── Test 20: Scroll position survives re-renders ───────────────────
+// esdev's test DOM has no layout engine, so a scroll offset set there clamps
+// straight back to 0 — the offset half of this contract can only live where
+// there is real scrolling. (test/dom/dom-identity.test.mjs pins the other
+// half: the scroller must be the same node after the re-render.)
+
+{
+  const section = document.createElement("div");
+  section.id = "test20";
+  section.className = "test";
+  section.innerHTML = '<span class="label">20. Scroll position survives re-renders</span>';
+  results.appendChild(section);
+
+  let n20 = 0;
+  let triggerUpdate20;
+
+  define("t20-scroll", (el) => {
+    triggerUpdate20 = () => update(el);
+    return () => html`<div class="pane" style="height:60px;overflow-y:scroll"><b>${n20}</b><p style="height:300px;margin:0">long content</p></div>`;
+  });
+
+  const el = document.createElement("t20-scroll");
+  results.appendChild(el);
+  await customElements.whenDefined("t20-scroll");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const pane = el.querySelector(".pane");
+  pane.scrollTop = 40;
+  n20 = 1;
+  triggerUpdate20();
+  await new Promise(r => requestAnimationFrame(r));
+
+  assert("test20", el.querySelector(".pane") === pane, "Scroller not rebuilt");
+  assert("test20", pane.scrollTop === 40, `Pane offset kept: ${pane.scrollTop}`);
+
+  // The keyed-list variant: one row's text changes, the rows stay put and so
+  // does the list's offset.
+  let items20 = [
+    { id: 1, v: "a" },
+    { id: 2, v: "b" },
+    { id: 3, v: "c" },
+  ];
+  let triggerUpdate20b;
+
+  define("t20-list", (el2) => {
+    triggerUpdate20b = () => update(el2);
+    return () => html`<ul class="rows" style="height:60px;overflow-y:scroll;margin:0;padding:0;list-style:none">${items20.map((i) => html`<li key=${i.id} style="height:30px">${i.v}</li>`)}</ul>`;
+  });
+
+  const el2 = document.createElement("t20-list");
+  results.appendChild(el2);
+  await customElements.whenDefined("t20-list");
+  await new Promise(r => requestAnimationFrame(r));
+
+  const ul = el2.querySelector(".rows");
+  const rows = [...ul.children];
+  ul.scrollTop = 30;
+  items20 = items20.map((i) => (i.id === 2 ? { ...i, v: "B" } : i));
+  triggerUpdate20b();
+  await new Promise(r => requestAnimationFrame(r));
+
+  assert("test20", ul.scrollTop === 30, `List offset kept: ${ul.scrollTop}`);
+  assert("test20", rows.every((row, i) => ul.children[i] === row), "Rows are the same nodes");
+  assert("test20", ul.children[1].textContent === "B", "Changed row re-rendered");
+}
+
 // ── Summary ────────────────────────────────────────────────────────
 
 await new Promise(r => setTimeout(r, 200));

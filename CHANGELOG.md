@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added links to the public Micro-UI site and documentation in the main README.
 
 ### Fixed
+- The scroll-identity tests now assert where their subject exists. esdev's test DOM has no layout engine, so a `scrollTop` set there clamps back to 0 and the two offset assertions failed under `esdev test --dom` (red CI). `test/dom/dom-identity.test.mjs` keeps the node-identity half — the scroller and its rows must be the same nodes after the re-render — and `test.html` gains test 20, which pins the offset half in a real browser (pane and keyed-list variants, 60 → 65 assertions). No library code changed: the offsets were always preserved, only the test location was wrong.
 - `patchByIndex` now restores an unkeyed child that was externally detached before reconciling it. Previously it patched the detached node but left it absent from the parent.
 - The docs sidebar now stays fixed while the page content scrolls. The marketing shell used `overflow: hidden`, which made the ancestor a scroll container and prevented the docs theme's sticky sidebar from sticking to the viewport; `overflow: clip` preserves the shell's clipping without capturing the page scroll.
 

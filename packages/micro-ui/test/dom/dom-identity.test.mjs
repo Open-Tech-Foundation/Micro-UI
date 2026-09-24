@@ -5,10 +5,12 @@
 //
 // What holds it up is DOM identity — the reconciler patches nodes in place and
 // never rebuilds them — plus not *moving* a node needlessly, since re-inserting
-// an element blurs it. jsdom models both: activeElement, selection ranges,
-// scrollTop and media properties all behave, and insertBefore drops focus just
-// as a browser does. What it cannot model is paint, real scrolling and real
-// playback; those still want a browser (test.html at the repo root).
+// an element blurs it. esdev's test DOM models identity, focus, selection and
+// media properties, and insertBefore drops focus just as a browser does. What
+// it cannot model is layout: without it a scroll offset clamps straight back
+// to 0, so the offset half of the scroll contract lives in test.html (test 20)
+// at the repo root, where there is real scrolling. What it also cannot model
+// is paint and real playback; those still want a browser too.
 import { test, assert, assertEquals } from "runtime:test";
 
 const { define, html, update } = await import("../../src/index.ts");
@@ -158,14 +160,14 @@ test("identity: scroll position survives a re-render", async () => {
       html`<div class="pane"><b>${String(n)}</b><p>long content</p></div>`,
   );
   const pane = el.querySelector(".pane");
-  pane.scrollTop = 120;
 
   n = 1;
   rerender();
   await tick();
 
   assert(el.querySelector(".pane") === pane, "the scroller was not rebuilt");
-  assertEquals(pane.scrollTop, 120);
+  // The offset itself is pinned in test.html (test 20): without layout this
+  // DOM clamps scrollTop back to 0, so asserting a value here can only fail.
 });
 
 test("identity: a scrolled list is not rebuilt when one row changes", async () => {
@@ -180,13 +182,13 @@ test("identity: a scrolled list is not rebuilt when one row changes", async () =
   );
   const ul = el.querySelector("ul");
   const rows = [...ul.children];
-  ul.scrollTop = 64;
 
   items = items.map((i) => (i.id === 2 ? { ...i, v: "B" } : i));
   rerender();
   await tick();
 
-  assertEquals(ul.scrollTop, 64);
+  // The list's offset is pinned in test.html (test 20), where there is real
+  // scrolling to hold it. Here only node identity is observable.
   for (let i = 0; i < rows.length; i++)
     assert(ul.children[i] === rows[i], `row ${i} is the same node`);
 });
