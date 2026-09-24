@@ -234,7 +234,8 @@ x-micro-ui-kanban, x-micro-ui-canvas-pad, x-micro-ui-gradient-mixer, x-micro-ui-
 .kanban-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
 .kanban-list li { display: grid; align-content: center; min-height: 56px; padding: 8px 9px; border: 1px solid #303740; border-radius: 8px; background: #252b33; font-size: 12px; cursor: grab; touch-action: pan-y; }
 .kanban-list li:active { cursor: grabbing; }
-.kanban-list li.is-dragging { opacity: .45; cursor: grabbing; }
+.kanban-list li.is-dragging { position: relative; z-index: 5; opacity: .92; cursor: grabbing; box-shadow: 0 14px 28px rgba(0,0,0,.45); }
+.kanban-demo.is-dragging, .kanban-demo.is-dragging * { cursor: grabbing !important; }
 .kanban-list li > span:first-child { display: block; color: #e4e8eb; line-height: 1.45; }
 .kanban-empty { color: #8e989f !important; font: 11px var(--mono); }
 .kanban-demo .micro-demo-kicker { color: #f4839b; }

@@ -83,22 +83,43 @@ async function registerMicroUiDemos() {
         } catch {
           /* keep going without capture */
         }
-        downAt = { id, x: event.clientX, y: event.clientY };
+        downAt = {
+          id,
+          x: event.clientX,
+          y: event.clientY,
+          el: event.currentTarget,
+        };
       };
       const onCardMove = (event) => {
         if (!downAt) return;
+        let started = false;
         if (dragging === null) {
           if (Math.hypot(event.clientX - downAt.x, event.clientY - downAt.y) < 8) return;
           dragging = downAt.id;
+          started = true;
         }
         const over = colAt(event.clientX, event.clientY);
-        if (over !== dropCol) {
+        // The card itself follows the cursor: translate from the grab point.
+        // Set imperatively — the li carries no style binding, so reconciling
+        // leaves it alone, and it is cleared on release below.
+        downAt.el.style.transform =
+          `translate(${event.clientX - downAt.x}px, ${event.clientY - downAt.y}px)`;
+        // Render on activation even mid-column: that is what paints the
+        // is-dragging cursor and the origin column highlight. Without it the
+        // class only appears after crossing into another column.
+        if (started || over !== dropCol) {
           dropCol = over;
           update(el);
         }
       };
+      const clearGhost = () => {
+        if (downAt?.el?.isConnected) downAt.el.style.transform = "";
+      };
       const onCardUp = () => {
         if (dragging !== null && dropCol !== null) dropCard(dropCol);
+        // The moved node keeps its identity across the re-render, so an
+        // uncleared transform would stick to it in its new column.
+        clearGhost();
         downAt = null;
         if (dragging !== null || dropCol !== null) {
           dragging = null;
@@ -131,7 +152,7 @@ async function registerMicroUiDemos() {
       };
 
       return () => html`
-        <section class="micro-demo-card kanban-demo" aria-label="Kanban micro-app">
+        <section class=${`micro-demo-card kanban-demo ${dragging !== null ? "is-dragging" : ""}`} aria-label="Kanban micro-app">
           <div class="micro-demo-topline">
             <div>
               <span class="micro-demo-kicker">Keyed lists</span>
