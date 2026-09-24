@@ -1,10 +1,9 @@
 const DEMO_TAGS = [
-  "x-micro-ui-build-queue",
-  "x-micro-ui-focus-timer",
-  "x-micro-ui-motion-lab",
+  "x-micro-ui-kanban",
   "x-micro-ui-canvas-pad",
   "x-micro-ui-gradient-mixer",
   "x-micro-ui-gravity-lab",
+  "x-micro-ui-poll-board",
   "x-micro-ui-hero-preview",
 ];
 
@@ -17,141 +16,100 @@ async function registerMicroUiDemos() {
 
   if (!customElements.get(DEMO_TAGS[0])) {
     define(DEMO_TAGS[0], (el) => {
-      let filter = "all";
+      // ── Kanban: keyed cards moving across columns ──────────────────────
+      // One keyed list per column; a card moving ‹ › keeps its node while its
+      // parent changes, which is the reconciler behavior this card exists to
+      // show. New cards land in Now.
       let draft = "";
-      let nextId = 4;
-      let items = [
-        { id: 1, label: "Ship a focused interaction", done: true },
-        { id: 2, label: "Keep the bundle easy to understand", done: false },
-        { id: 3, label: "Let the browser do the work", done: false },
+      let nextId = 6;
+      let columns = [
+        {
+          id: "now",
+          title: "Now",
+          cards: [
+            { id: 1, label: "Ship a focused interaction" },
+            { id: 2, label: "Keep the bundle easy to understand" },
+          ],
+        },
+        {
+          id: "next",
+          title: "Next",
+          cards: [
+            { id: 3, label: "Let the browser do the work" },
+            { id: 4, label: "Write the release notes" },
+          ],
+        },
+        { id: "done", title: "Done", cards: [{ id: 5, label: "Define the API" }] },
       ];
 
-      const visibleItems = () =>
-        items.filter((item) => filter === "all" || (filter === "done" ? item.done : !item.done));
-
-      const addItem = () => {
+      const count = () => columns.reduce((n, c) => n + c.cards.length, 0);
+      const addCard = () => {
         const label = draft.trim();
         if (!label) return;
-        items = [...items, { id: nextId++, label, done: false }];
+        columns = columns.map((c) =>
+          c.id === "now" ? { ...c, cards: [...c.cards, { id: nextId++, label }] } : c,
+        );
         draft = "";
         update(el);
       };
-
-      const toggleItem = (id) => {
-        items = items.map((item) => (item.id === id ? { ...item, done: !item.done } : item));
+      const moveCard = (id, dir) => {
+        const at = columns.findIndex((c) => c.cards.some((k) => k.id === id));
+        const to = at + dir;
+        if (at === -1 || to < 0 || to >= columns.length) return;
+        const card = columns[at].cards.find((k) => k.id === id);
+        columns = columns.map((c, i) => {
+          if (i === at) return { ...c, cards: c.cards.filter((k) => k.id !== id) };
+          if (i === to) return { ...c, cards: [...c.cards, card] };
+          return c;
+        });
+        update(el);
+      };
+      const removeCard = (id) => {
+        columns = columns.map((c) => ({ ...c, cards: c.cards.filter((k) => k.id !== id) }));
         update(el);
       };
 
-      const removeItem = (id) => {
-        items = items.filter((item) => item.id !== id);
-        update(el);
-      };
-
-      return () => {
-        const visible = visibleItems();
-        const completed = items.filter((item) => item.done).length;
-
-        return html`
-          <section class="micro-demo-card" aria-label="Build queue micro-app">
-            <div class="micro-demo-topline">
-              <div>
-                <span class="micro-demo-kicker">Keyed list</span>
-                <h3>Build queue</h3>
+      return () => html`
+        <section class="micro-demo-card kanban-demo" aria-label="Kanban micro-app">
+          <div class="micro-demo-topline">
+            <div>
+              <span class="micro-demo-kicker">Keyed lists</span>
+              <h3>Kanban</h3>
+            </div>
+            <span class="micro-demo-count">${count()} cards</span>
+          </div>
+          <form class="micro-demo-form" onsubmit=${(event) => { event.preventDefault(); addCard(); }}>
+            <input aria-label="New card" placeholder="Add a card to Now..." value=${draft} oninput=${(event) => { draft = event.currentTarget.value; }} />
+            <button type="submit">Add</button>
+          </form>
+          <div class="kanban-cols">
+            ${columns.map((col, ci) => html`
+              <div class="kanban-col" key=${col.id}>
+                <div class="kanban-col-head"><span>${col.title}</span><em>${col.cards.length}</em></div>
+                <ul class="kanban-list">
+                  ${col.cards.length
+                    ? col.cards.map((card) => html`
+                        <li key=${card.id}>
+                          <span>${card.label}</span>
+                          <span class="kanban-moves">
+                            <button type="button" aria-label=${`Move ${card.label} left`} disabled=${ci === 0} onclick=${() => moveCard(card.id, -1)}>‹</button>
+                            <button type="button" aria-label=${`Move ${card.label} right`} disabled=${ci === columns.length - 1} onclick=${() => moveCard(card.id, 1)}>›</button>
+                            <button type="button" aria-label=${`Remove ${card.label}`} onclick=${() => removeCard(card.id)}>×</button>
+                          </span>
+                        </li>
+                      `)
+                    : html`<li class="kanban-empty">Empty.</li>`}
+                </ul>
               </div>
-              <span class="micro-demo-count">${completed}/${items.length}</span>
-            </div>
-            <form class="micro-demo-form" onsubmit=${(event) => { event.preventDefault(); addItem(); }}>
-              <input aria-label="New build queue item" placeholder="Add a small task..." value=${draft} oninput=${(event) => { draft = event.currentTarget.value; }} />
-              <button type="submit">Add</button>
-            </form>
-            <div class="micro-demo-filters" role="group" aria-label="Filter build queue">
-              ${["all", "active", "done"].map((name) => html`
-                <button type="button" class=${filter === name ? "is-active" : ""} aria-pressed=${filter === name} onclick=${() => { filter = name; update(el); }}>${name}</button>
-              `)}
-            </div>
-            <ul class="micro-demo-list">
-              ${visible.length
-                ? visible.map((item) => html`
-                    <li class=${item.done ? "is-done" : ""} key=${item.id}>
-                      <button class="micro-demo-check" type="button" aria-label=${item.done ? `Mark ${item.label} active` : `Complete ${item.label}`} onclick=${() => toggleItem(item.id)}>${item.done ? "✓" : ""}</button>
-                      <span>${item.label}</span>
-                      <button class="micro-demo-remove" type="button" aria-label=${`Remove ${item.label}`} onclick=${() => removeItem(item.id)}>×</button>
-                    </li>
-                  `)
-                : html`<li class="micro-demo-empty">Nothing in this view yet.</li>`}
-            </ul>
-          </section>
-        `;
-      };
+            `)}
+          </div>
+        </section>
+      `;
     });
   }
 
   if (!customElements.get(DEMO_TAGS[1])) {
     define(DEMO_TAGS[1], (el) => {
-      let seconds = 25 * 60;
-      let running = false;
-
-      onReady(() => {
-        const timer = setInterval(() => {
-          if (!running || seconds === 0) return;
-          seconds -= 1;
-          if (seconds === 0) running = false;
-          update(el);
-        }, 1000);
-        return () => clearInterval(timer);
-      });
-
-      const clock = () => `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
-
-      return () => html`
-        <section class="micro-demo-card timer-demo" aria-label="Focus timer micro-app">
-          <div class="micro-demo-topline">
-            <div><span class="micro-demo-kicker">Lifecycle + updates</span><h3>Focus timer</h3></div>
-            <span class="micro-demo-count">${running ? "running" : "paused"}</span>
-          </div>
-          <div class="timer-face">${clock()}</div>
-          <div class="timer-actions">
-            <button type="button" class="timer-primary" onclick=${() => { running = !running; update(el); }}>${running ? "Pause" : "Start"}</button>
-            <button type="button" onclick=${() => { seconds = 25 * 60; running = false; update(el); }}>Reset</button>
-          </div>
-          <p class="micro-demo-caption">The interval is cleaned up when this element leaves the page.</p>
-        </section>
-      `;
-    });
-  }
-
-  if (!customElements.get(DEMO_TAGS[2])) {
-    define(DEMO_TAGS[2], (el) => {
-      let running = true;
-      let easing = "spring";
-      let duration = 2.2;
-
-      return () => html`
-        <section class="micro-demo-card motion-demo" aria-label="Easing lab micro-app">
-          <div class="micro-demo-topline">
-            <div><span class="micro-demo-kicker">Animation + state</span><h3>Easing lab</h3></div>
-            <span class="micro-demo-count">${running ? "playing" : "paused"}</span>
-          </div>
-          <div class=${`easing-stage easing-${easing} ${running ? "is-running" : ""}`} style=${`--easing-duration:${duration}s`}>
-            <div class="easing-ruler"><i /><i /><i /><i /><i /></div>
-            <div class="easing-track"><span class="easing-ball" /></div>
-            <span class="easing-label">${easing} / ${duration}s</span>
-          </div>
-          <div class="motion-controls" role="group" aria-label="Animation controls">
-            <button type="button" class=${`motion-toggle ${running ? "is-active" : ""}`} aria-label=${running ? "Pause animation" : "Play animation"} title=${running ? "Pause animation" : "Play animation"} onclick=${() => { running = !running; update(el); }}><span class="motion-control-icon" aria-hidden="true">${running ? "Ⅱ" : "▶"}</span><span>${running ? "Pause" : "Play"}</span></button>
-            <button type="button" class=${easing === "spring" ? "is-active" : ""} onclick=${() => { easing = "spring"; running = true; update(el); }}>Spring</button>
-            <button type="button" class=${easing === "ease" ? "is-active" : ""} onclick=${() => { easing = "ease"; running = true; update(el); }}>Ease</button>
-            <button type="button" class=${easing === "steps" ? "is-active" : ""} onclick=${() => { easing = "steps"; running = true; update(el); }}>Steps</button>
-          </div>
-          <label class="motion-speed">Duration <input type="range" min="1" max="4" step=".1" value=${duration} oninput=${(event) => { duration = Number(event.currentTarget.value); update(el); }} /></label>
-          <p class="micro-demo-caption">Swap easing curves and duration while the host keeps the animation local.</p>
-        </section>
-      `;
-    });
-  }
-
-  if (!customElements.get(DEMO_TAGS[3])) {
-    define(DEMO_TAGS[3], (el) => {
       let strokes = 0;
       let color = "#ff9672";
       let brushSize = 4;
@@ -235,8 +193,8 @@ async function registerMicroUiDemos() {
     });
   }
 
-  if (!customElements.get(DEMO_TAGS[4])) {
-    define(DEMO_TAGS[4], (el) => {
+  if (!customElements.get(DEMO_TAGS[2])) {
+    define(DEMO_TAGS[2], (el) => {
       let start = "#ff6b35";
       let end = "#536dfe";
       let angle = 135;
@@ -260,8 +218,8 @@ async function registerMicroUiDemos() {
     });
   }
 
-  if (!customElements.get(DEMO_TAGS[5])) {
-    define(DEMO_TAGS[5], (el) => {
+  if (!customElements.get(DEMO_TAGS[3])) {
+    define(DEMO_TAGS[3], (el) => {
       // ── Gravity lab: real-time particle physics on canvas ──────────────
       // Semi-implicit Euler at a fixed 120 Hz step with an accumulator, so the
       // simulation runs at the same speed on 60 Hz and 120 Hz displays.
@@ -276,10 +234,9 @@ async function registerMicroUiDemos() {
       const rand = (min, max) => min + Math.random() * (max - min);
 
       let gravity = 900;
-      let restitution = 0.86;
+      const restitution = 0.86;
+      const trails = true;
       let running = true;
-      let trails = true;
-      let attract = "off";
       let fps = 0;
       let particles = [];
 
@@ -305,17 +262,9 @@ async function registerMicroUiDemos() {
       };
       resetParticles(42);
 
-      const stepWorld = (pointer) => {
+      const stepWorld = () => {
         for (const p of particles) {
           p.vy += gravity * STEP;
-          if (attract !== "off" && pointer) {
-            const dx = pointer.x - p.x;
-            const dy = pointer.y - p.y;
-            const d = Math.hypot(dx, dy) || 1;
-            const pull = (attract === "attract" ? 1 : -1) * 90000 / Math.max(d * d, 900);
-            p.vx += (dx / d) * pull * STEP;
-            p.vy += (dy / d) * pull * STEP;
-          }
           const drag = 1 - 0.12 * STEP;
           p.vx *= drag;
           p.vy *= drag;
@@ -424,16 +373,12 @@ async function registerMicroUiDemos() {
           acc += dt;
           let n = 0;
           while (acc >= STEP && n < 5) {
-            stepWorld(dragged ? null : pointer);
+            stepWorld();
             acc -= STEP;
             n += 1;
           }
-          if (trails) {
-            context.fillStyle = "rgba(10, 20, 16, 0.28)";
-            context.fillRect(0, 0, W, H);
-          } else {
-            context.clearRect(0, 0, W, H);
-          }
+          context.fillStyle = "rgba(16, 20, 24, 0.28)";
+          context.fillRect(0, 0, W, H);
           for (const p of particles) {
             context.beginPath();
             context.arc(p.x, p.y, p.r, 0, Math.PI * 2);
@@ -441,7 +386,7 @@ async function registerMicroUiDemos() {
             context.fill();
           }
         };
-        context.fillStyle = "#0a1410";
+        context.fillStyle = "#101418";
         context.fillRect(0, 0, W, H);
         raf = requestAnimationFrame(frame);
 
@@ -454,11 +399,6 @@ async function registerMicroUiDemos() {
         };
       });
 
-      const setCount = (n) => {
-        resetParticles(Math.min(140, Math.max(0, n)));
-        update(el);
-      };
-
       return () => html`
         <section class="micro-demo-card physics-demo" aria-label="Gravity lab micro-app">
           <div class="micro-demo-topline">
@@ -468,25 +408,85 @@ async function registerMicroUiDemos() {
           <canvas class="gravity-canvas" width="520" height="200" aria-label="Particle physics sandbox. Drag to fling, click to burst."></canvas>
           <div class="physics-controls" role="group" aria-label="Simulation controls">
             <button type="button" class=${running ? "is-active" : ""} aria-pressed=${running} onclick=${() => { running = !running; update(el); }}>${running ? "Pause" : "Run"}</button>
-            <button type="button" class=${trails ? "is-active" : ""} aria-pressed=${trails} onclick=${() => { trails = !trails; update(el); }}>Trails</button>
             <button type="button" onclick=${() => { spawn(W / 2, 40, true); update(el); }}>Burst</button>
-            <button type="button" onclick=${() => setCount(particles.length + 12)}>+12</button>
-            <button type="button" onclick=${() => setCount(particles.length - 12)}>−12</button>
             <button type="button" onclick=${() => { resetParticles(42); update(el); }}>Reset</button>
           </div>
-          <div class="physics-modes" role="group" aria-label="Pointer force">
-            ${["off", "attract", "repel"].map((mode) => html`<button type="button" class=${attract === mode ? "is-active" : ""} aria-pressed=${attract === mode} onclick=${() => { attract = mode; update(el); }}>${mode}</button>`)}
-          </div>
           <label class="physics-slider">Gravity <input type="range" min="0" max="2000" step="50" value=${gravity} oninput=${(event) => { gravity = Number(event.currentTarget.value); update(el); }} /><output>${gravity}</output></label>
-          <label class="physics-slider">Bounce <input type="range" min="10" max="99" value=${Math.round(restitution * 100)} oninput=${(event) => { restitution = Number(event.currentTarget.value) / 100; update(el); }} /><output>${Math.round(restitution * 100)}%</output></label>
           <p class="micro-demo-caption">Drag a particle to fling it, click empty space for a burst — integrated live at 120 Hz.</p>
         </section>
       `;
     });
   }
 
-  if (!customElements.get(DEMO_TAGS[6])) {
-    define(DEMO_TAGS[6], (el) => {
+  if (!customElements.get(DEMO_TAGS[4])) {
+    define(DEMO_TAGS[4], (el) => {
+      // ── Poll board: votes, derived bars, live ranks ────────────────────
+      // Every vote re-sorts the options, so the keyed rows visibly move while
+      // keeping their nodes; the bars and percentages derive from the total.
+      let draft = "";
+      let nextId = 5;
+      let options = [
+        { id: 1, label: "Realtime canvas", votes: 12 },
+        { id: 2, label: "Form toolkit", votes: 8 },
+        { id: 3, label: "DevTools panel", votes: 5 },
+        { id: 4, label: "Docs search", votes: 3 },
+      ];
+
+      const total = () => options.reduce((n, o) => n + o.votes, 0);
+      const ranked = () => [...options].sort((a, b) => b.votes - a.votes);
+
+      const castVote = (id) => {
+        options = options.map((o) => (o.id === id ? { ...o, votes: o.votes + 1 } : o));
+        update(el);
+      };
+      const addOption = () => {
+        const label = draft.trim();
+        if (!label || options.length >= 6) return;
+        options = [...options, { id: nextId++, label, votes: 0 }];
+        draft = "";
+        update(el);
+      };
+
+      return () => {
+        const votes = total();
+        return html`
+          <section class="micro-demo-card poll-demo" aria-label="Poll board micro-app">
+            <div class="micro-demo-topline">
+              <div><span class="micro-demo-kicker">Votes + derived bars</span><h3>Poll board</h3></div>
+              <span class="micro-demo-count">${votes} votes</span>
+            </div>
+            <p class="poll-question">What should we build next?</p>
+            <ul class="poll-list">
+              ${ranked().map((o, rank) => {
+                const pct = votes ? Math.round((o.votes / votes) * 100) : 0;
+                return html`
+                  <li key=${o.id}>
+                    <div class="poll-row">
+                      <span class="poll-rank" aria-hidden="true">${rank + 1}</span>
+                      <span class="poll-label">${o.label}</span>
+                      <span class="poll-pct">${pct}%</span>
+                      <button type="button" aria-label=${`Vote for ${o.label}`} onclick=${() => castVote(o.id)}>+1</button>
+                    </div>
+                    <div class="poll-track" role="img" aria-label=${`${o.label}: ${o.votes} votes, ${pct} percent`}>
+                      <span class="poll-fill" style=${`width:${pct}%`} />
+                    </div>
+                  </li>
+                `;
+              })}
+            </ul>
+            <form class="micro-demo-form" onsubmit=${(event) => { event.preventDefault(); addOption(); }}>
+              <input aria-label="New poll option" placeholder="Add an option..." value=${draft} oninput=${(event) => { draft = event.currentTarget.value; }} />
+              <button type="submit">Add</button>
+            </form>
+            <p class="micro-demo-caption">Tap +1 — bars, percentages, and ranks update live.</p>
+          </section>
+        `;
+      };
+    });
+  }
+
+  if (!customElements.get(DEMO_TAGS[5])) {
+    define(DEMO_TAGS[5], (el) => {
       let tasks = [
         { id: 1, label: "Keep the API clear", done: true },
         { id: 2, label: "Ship one interaction", done: true },
@@ -535,7 +535,7 @@ async function registerMicroUiDemos() {
 if (typeof window !== "undefined") void registerMicroUiDemos();
 
 export function MicroUiShowcase() {
-  return <x-micro-ui-build-queue />;
+  return <x-micro-ui-kanban />;
 }
 
 // Every gallery app lives inside an OS-style window frame: traffic lights and
@@ -557,41 +557,35 @@ export function AppWindow({ title, children }) {
 export default function MicroAppsGallery() {
   return (
     <div className="micro-apps-grid">
-      <article className="micro-app-card micro-app-card--wide micro-app-card--queue">
-        <AppWindow title="Build queue">
+      <article className="micro-app-card micro-app-card--wide micro-app-card--kanban">
+        <AppWindow title="Kanban">
           <MicroUiShowcase />
         </AppWindow>
-        <div className="micro-app-caption"><strong>01 / Build queue</strong><span>Keyed lists · filtering · forms</span></div>
-      </article>
-      <article className="micro-app-card micro-app-card--timer">
-        <AppWindow title="Focus timer">
-          <x-micro-ui-focus-timer />
-        </AppWindow>
-        <div className="micro-app-caption"><strong>02 / Focus timer</strong><span>Lifecycle · intervals · cleanup</span></div>
-      </article>
-      <article className="micro-app-card micro-app-card--motion">
-        <AppWindow title="Easing lab">
-          <x-micro-ui-motion-lab />
-        </AppWindow>
-        <div className="micro-app-caption"><strong>03 / Easing lab</strong><span>Animation · curves · range input</span></div>
+        <div className="micro-app-caption"><strong>01 / Kanban</strong><span>Keyed cards · columns · moves</span></div>
       </article>
       <article className="micro-app-card micro-app-card--canvas">
         <AppWindow title="Sketchpad">
           <x-micro-ui-canvas-pad />
         </AppWindow>
-        <div className="micro-app-caption"><strong>04 / Sketchpad</strong><span>Canvas · brushes · color palette</span></div>
+        <div className="micro-app-caption"><strong>02 / Sketchpad</strong><span>Canvas · brushes · color palette</span></div>
       </article>
       <article className="micro-app-card micro-app-card--gradient">
         <AppWindow title="Gradient mixer">
           <x-micro-ui-gradient-mixer />
         </AppWindow>
-        <div className="micro-app-caption"><strong>05 / Gradient mixer</strong><span>Color inputs · ranges · derived CSS</span></div>
+        <div className="micro-app-caption"><strong>03 / Gradient mixer</strong><span>Color inputs · ranges · derived CSS</span></div>
       </article>
       <article className="micro-app-card micro-app-card--physics">
         <AppWindow title="Gravity lab">
           <x-micro-ui-gravity-lab />
         </AppWindow>
-        <div className="micro-app-caption"><strong>06 / Gravity lab</strong><span>Real physics · canvas loop · fling</span></div>
+        <div className="micro-app-caption"><strong>04 / Gravity lab</strong><span>Real physics · canvas loop · fling</span></div>
+      </article>
+      <article className="micro-app-card micro-app-card--poll">
+        <AppWindow title="Poll board">
+          <x-micro-ui-poll-board />
+        </AppWindow>
+        <div className="micro-app-caption"><strong>05 / Poll board</strong><span>Votes · live bars · ranks</span></div>
       </article>
     </div>
   );

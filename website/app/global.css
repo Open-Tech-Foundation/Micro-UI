@@ -132,18 +132,6 @@ h1 em, h2 em { color: var(--orange); font-style: normal; }
 .micro-demo-form input { min-width: 0; flex: 1; padding: 11px 12px; border: 1px solid #3a424b; border-radius: 8px; outline: none; color: #f3f5f7; background: #252b33; font-size: 12px; }
 .micro-demo-form input:focus { border-color: #ff7950; box-shadow: 0 0 0 3px rgba(255,107,53,.14); }
 .micro-demo-form button { padding: 0 13px; border: 0; border-radius: 8px; color: #24140e; background: #ff9672; font-size: 11px; font-weight: 800; cursor: pointer; }
-.micro-demo-filters { display: flex; gap: 5px; margin: 19px 0 12px; }
-.micro-demo-filters button { padding: 6px 10px; border: 1px solid transparent; border-radius: 6px; color: #929ba5; background: transparent; font: 10px var(--mono); text-transform: capitalize; cursor: pointer; }
-.micro-demo-filters button:hover, .micro-demo-filters button.is-active { border-color: #454e58; color: #f3f5f7; background: #2a313a; }
-.micro-demo-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
-.micro-demo-list li { display: flex; align-items: center; gap: 10px; min-height: 43px; padding: 8px 9px; border: 1px solid #303740; border-radius: 8px; color: #e4e8eb; background: #252b33; font-size: 12px; }
-.micro-demo-list li.is-done { color: #8e989f; }
-.micro-demo-list li.is-done > span { text-decoration: line-through; }
-.micro-demo-check, .micro-demo-remove { flex: 0 0 auto; border: 0; cursor: pointer; }
-.micro-demo-check { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 1px solid #68727c; border-radius: 6px; color: #1d2229; background: transparent; font-size: 12px; }
-.is-done .micro-demo-check { border-color: #ff9672; background: #ff9672; }
-.micro-demo-remove { margin-left: auto; padding: 3px 5px; color: #707a84; background: transparent; font-size: 17px; line-height: 1; }
-.micro-demo-remove:hover { color: #ff9672; }
 .micro-demo-empty { justify-content: center; color: #8e989f !important; font: 11px var(--mono); }
 
 .section--muted { background: #f0f1ed; }
@@ -183,7 +171,7 @@ h1 em, h2 em { color: var(--orange); font-style: normal; }
 .micro-apps-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .micro-app-card { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
 .micro-app-card--wide { grid-column: 1 / -1; }
-x-micro-ui-build-queue, x-micro-ui-focus-timer, x-micro-ui-motion-lab, x-micro-ui-canvas-pad, x-micro-ui-gradient-mixer, x-micro-ui-gravity-lab { display: block; }
+x-micro-ui-kanban, x-micro-ui-canvas-pad, x-micro-ui-gradient-mixer, x-micro-ui-gravity-lab, x-micro-ui-poll-board { display: block; }
 .micro-app-card .micro-demo-card { height: 100%; box-shadow: none; }
 
 /* Each gallery app sits in an OS-style window: traffic lights and a title bar
@@ -201,56 +189,54 @@ x-micro-ui-build-queue, x-micro-ui-focus-timer, x-micro-ui-motion-lab, x-micro-u
 .micro-app-caption strong { font-size: 12px; letter-spacing: -.02em; }
 .micro-app-caption span { color: var(--muted); font: 10px var(--mono); text-align: right; }
 .micro-demo-caption { margin: 16px 0 0; color: #8e989f; font: 10px/1.5 var(--mono); }
-.timer-face { padding: 21px 0 17px; color: #fff; font: 500 clamp(42px, 7vw, 58px)/1 var(--mono); letter-spacing: -.08em; text-align: center; }
-.timer-actions { display: flex; gap: 7px; }
-.timer-actions button { flex: 1; padding: 10px; border: 1px solid #3a424b; border-radius: 7px; color: #d9dee2; background: #252b33; font-size: 11px; cursor: pointer; }
-.timer-actions button:hover { border-color: #ff9672; }.timer-actions .timer-primary { border-color: #ff9672; color: #24140e; background: #ff9672; }
 
 /* Each example has a distinct visual language so the demos feel like separate products. */
-.micro-app-card--queue { background: #fff8f3; border-color: #ffd7c5; }
-.micro-app-card--timer { background: #f5f3ff; border-color: #dcd5ff; }
-.micro-app-card--motion { background: #effbf5; border-color: #c8efd9; }
+.micro-app-card--kanban { background: #fdf1f4; border-color: #f0c4d2; }
 .micro-app-card--canvas { background: #eefaff; border-color: #c5ebf5; }
 .micro-app-card--gradient { background: #fff9e8; border-color: #f0df9e; }
-.micro-app-card--physics { background: #f2f9e4; border-color: #cdeaa4; }
-.micro-app-card--timer .micro-demo-card { border-color: #363257; background: #1d1a36; }
-.micro-app-card--timer .micro-demo-kicker, .micro-app-card--timer .timer-primary { color: #c9bcff; }
-.micro-app-card--timer .timer-primary { border-color: #8d7bff; background: #8d7bff; }
-
-.easing-stage { position: relative; height: 135px; margin: 20px 0 14px; overflow: hidden; border: 1px solid #315047; border-radius: 11px; background: #102d29; }
-.easing-ruler { position: absolute; right: 18px; bottom: 27px; left: 18px; display: flex; justify-content: space-between; border-bottom: 1px solid #75e0ae; }
-.easing-ruler i { width: 1px; height: 8px; background: #75e0ae; }
-.easing-track { position: absolute; right: 18px; bottom: 31px; left: 18px; height: 56px; }
-.easing-ball { position: absolute; top: 18px; left: 0; width: 20px; height: 20px; border: 2px solid #102d29; border-radius: 50%; background: #8af2b8; box-shadow: 0 0 18px #8af2b8; }
-.easing-stage.is-running .easing-ball { animation-duration: var(--easing-duration); animation-iteration-count: infinite; animation-direction: alternate; animation-fill-mode: both; }
-.easing-spring.is-running .easing-ball { animation-name: micro-easing-spring; }.easing-ease.is-running .easing-ball { animation-name: micro-easing-ease; }.easing-steps.is-running .easing-ball { animation-name: micro-easing-steps; }
-.easing-label { position: absolute; top: 16px; left: 18px; color: #bdebd0; font: 10px var(--mono); text-transform: uppercase; }
-.easing-stage:not(.is-running) .easing-ball { left: 0; }
-.motion-controls, .sketch-controls { display: flex; align-items: center; gap: 7px; }
-.motion-controls button, .sketch-controls button { padding: 8px 10px; border: 1px solid #416456; border-radius: 6px; color: #bdebd0; background: #163b34; font: 10px var(--mono); cursor: pointer; }
-.motion-controls button.is-active, .motion-controls button:hover { border-color: #8af2b8; color: #102d29; background: #8af2b8; }
-.motion-controls .motion-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 72px; height: 32px; padding: 8px 10px; font-size: 10px; line-height: 1; }
-.motion-control-icon { display: block; transform: translateX(.5px); }
-.motion-speed { display: flex; align-items: center; gap: 8px; margin-top: 16px; color: #bdebd0; font: 10px var(--mono); text-transform: uppercase; }
-.motion-speed input { min-width: 0; flex: 1; accent-color: #8af2b8; }
-@keyframes micro-easing-spring { 0% { left: 0; } 65% { left: 92%; } 78% { left: 78%; } 88% { left: 94%; } 100% { left: 88%; } }
-@keyframes micro-easing-ease { from { left: 0; } to { left: 92%; } }
-@keyframes micro-easing-steps { from { left: 0; } to { left: 92%; } }
+.micro-app-card--physics { background: #f2f4f1; border-color: #d4d9d2; }
+.micro-app-card--poll { background: #f4f1ff; border-color: #d5ccf5; }
 
 .sketch-canvas { display: block; width: 100%; height: 142px; margin: 20px 0 12px; border: 1px solid #2e7182; border-radius: 9px; background: #082c38; cursor: crosshair; touch-action: none; }
 .sketch-tools { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }.sketch-palette, .brush-sizes { display: flex; align-items: center; gap: 5px; }.sketch-palette span, .brush-sizes span { margin-right: 3px; color: #9bd5e2; font: 10px var(--mono); text-transform: uppercase; }.sketch-palette button { width: 19px; height: 19px; padding: 0; border: 2px solid #3e8391; border-radius: 50%; background: var(--swatch); cursor: pointer; }.sketch-palette button.is-active { border-color: #fff; box-shadow: 0 0 0 2px #75e2f2; }.brush-sizes { grid-column: 1 / -1; }.brush-sizes button, .sketch-tools > button { padding: 6px 8px; border: 1px solid #3e8391; border-radius: 6px; color: #b6e9f1; background: #104653; font: 10px var(--mono); cursor: pointer; }.brush-sizes button.is-active, .brush-sizes button:hover, .sketch-tools > button:hover { border-color: #75e2f2; color: #06212a; background: #75e2f2; }.brush-sizes button.is-active { font-weight: 800; }
 
 .gradient-preview { display: grid; place-items: center; height: 112px; margin: 20px 0 14px; border: 1px solid rgba(21,24,29,.15); border-radius: 10px; color: rgba(21,24,29,.7); font: 10px var(--mono); text-transform: uppercase; }.gradient-preview span { padding: 6px 8px; border-radius: 5px; background: rgba(255,255,255,.62); }.gradient-fields { display: flex; justify-content: space-between; gap: 12px; }.gradient-fields label, .gradient-angle { display: flex; align-items: center; gap: 7px; color: #75652b; font: 10px var(--mono); text-transform: uppercase; }.gradient-fields input { width: 28px; height: 22px; padding: 0; border: 1px solid #c2a94f; border-radius: 5px; background: transparent; cursor: pointer; }.gradient-angle { margin-top: 13px; }.gradient-angle input { min-width: 0; flex: 1; accent-color: #c5a52e; }.gradient-angle output { min-width: 32px; color: #75652b; text-align: right; }.gradient-code { display: block; margin-top: 13px; overflow: hidden; color: #75652b; font: 9px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
 
-.gravity-canvas { display: block; width: 100%; height: 168px; margin: 20px 0 12px; border: 1px solid #3d5c22; border-radius: 9px; background: #0a1410; cursor: crosshair; touch-action: none; }
-.physics-controls, .physics-modes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.physics-modes { margin-top: 8px; }
-.physics-controls button, .physics-modes button { padding: 7px 10px; border: 1px solid #41652a; border-radius: 6px; color: #d7ecb6; background: #1c2b12; font: 10px var(--mono); text-transform: capitalize; cursor: pointer; }
-.physics-controls button.is-active, .physics-controls button:hover, .physics-modes button.is-active, .physics-modes button:hover { border-color: #b8f25a; color: #16220f; background: #b8f25a; }
-.physics-slider { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: #d7ecb6; font: 10px var(--mono); text-transform: uppercase; }
-.physics-slider input { min-width: 0; flex: 1; accent-color: #b8f25a; }
+.gravity-canvas { display: block; width: 100%; height: 168px; margin: 20px 0 12px; border: 1px solid #3a424b; border-radius: 9px; background: #101418; cursor: crosshair; touch-action: none; }
+.physics-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.physics-controls button { padding: 7px 10px; border: 1px solid #3a424b; border-radius: 6px; color: #d9dee2; background: #252b33; font: 10px var(--mono); cursor: pointer; }
+.physics-controls button.is-active, .physics-controls button:hover { border-color: #8e989f; color: #f3f5f7; background: #2a313a; }
+.physics-slider { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: #9aa4ae; font: 10px var(--mono); text-transform: uppercase; }
+.physics-slider input { min-width: 0; flex: 1; accent-color: #9aa4ae; }
 .physics-slider output { min-width: 44px; text-align: right; }
-.physics-demo .micro-demo-kicker { color: #b8f25a; }
+.physics-demo .micro-demo-kicker { color: #9aa4ae; }
+
+.poll-question { margin: 18px 0 4px; font-size: 15px; letter-spacing: -.02em; }
+.poll-list { display: grid; gap: 10px; margin: 14px 0 0; padding: 0; list-style: none; }
+.poll-row { display: flex; align-items: center; gap: 9px; font-size: 12px; }
+.poll-rank { display: grid; place-items: center; width: 20px; height: 20px; flex: 0 0 auto; border-radius: 6px; color: #1d2229; background: #8d7bff; font: 10px var(--mono); font-weight: 800; }
+.poll-label { min-width: 0; flex: 1; overflow: hidden; color: #e4e8eb; text-overflow: ellipsis; white-space: nowrap; }
+.poll-pct { color: #9aa4ae; font: 10px var(--mono); }
+.poll-row button { padding: 5px 9px; border: 1px solid #3a424b; border-radius: 6px; color: #d9dee2; background: #252b33; font: 10px var(--mono); cursor: pointer; }
+.poll-row button:hover { border-color: #8d7bff; color: #fff; background: #2a313a; }
+.poll-track { height: 7px; margin-top: 6px; overflow: hidden; border-radius: 4px; background: #2a313a; }
+.poll-fill { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #8d7bff, #c9bcff); transition: width .4s ease; }
+.poll-demo .micro-demo-kicker { color: #8d7bff; }
+.kanban-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+.kanban-col { min-width: 0; padding: 10px; border: 1px solid #303740; border-radius: 9px; background: #20262e; }
+.kanban-col-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; color: #e4e8eb; font: 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+.kanban-col-head em { color: #9aa4ae; font-style: normal; }
+.kanban-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.kanban-list li { padding: 8px 9px; border: 1px solid #303740; border-radius: 8px; background: #252b33; font-size: 12px; }
+.kanban-list li > span:first-child { display: block; color: #e4e8eb; line-height: 1.45; }
+.kanban-moves { display: flex; gap: 4px; margin-top: 7px; }
+.kanban-moves button { padding: 3px 8px; border: 1px solid #3a424b; border-radius: 5px; color: #9aa4ae; background: transparent; font-size: 12px; line-height: 1; cursor: pointer; }
+.kanban-moves button:hover:not(:disabled) { border-color: #f4839b; color: #fff; }
+.kanban-moves button:disabled { opacity: .3; cursor: default; }
+.kanban-empty { color: #8e989f !important; font: 11px var(--mono); }
+.kanban-demo .micro-demo-kicker { color: #f4839b; }
+.kanban-demo .micro-demo-form button { color: #2b0f18; background: #f4839b; }
+.kanban-demo .micro-demo-form input:focus { border-color: #f4839b; box-shadow: 0 0 0 3px rgba(244,131,155,.14); }
 
 /* The official docs theme toggles its semantic tokens; map the marketing layer to them too. */
 :root[data-theme="dark"] .section--muted { background: #0b1220; }
@@ -258,12 +244,11 @@ x-micro-ui-build-queue, x-micro-ui-focus-timer, x-micro-ui-motion-lab, x-micro-u
 :root[data-theme="dark"] .button--primary { color: #020617; background: #e2e8f0; }
 :root[data-theme="dark"] .button--quiet, :root[data-theme="dark"] .code-chip { border-color: #1e293b; background: rgba(15, 23, 42, .9); }
 :root[data-theme="dark"] .code-chip { color: #ffb784; }
-:root[data-theme="dark"] .micro-app-card--queue { background: #1b1512; border-color: #5e3022; }
-:root[data-theme="dark"] .micro-app-card--timer { background: #17152b; border-color: #393164; }
-:root[data-theme="dark"] .micro-app-card--motion { background: #10211d; border-color: #235440; }
+:root[data-theme="dark"] .micro-app-card--kanban { background: #241318; border-color: #5e2a3a; }
 :root[data-theme="dark"] .micro-app-card--canvas { background: #0d2229; border-color: #225968; }
 :root[data-theme="dark"] .micro-app-card--gradient { background: #292515; border-color: #6b5d27; }
-:root[data-theme="dark"] .micro-app-card--physics { background: #16220f; border-color: #3d5c22; }
+:root[data-theme="dark"] .micro-app-card--physics { background: #16191c; border-color: #3a424b; }
+:root[data-theme="dark"] .micro-app-card--poll { background: #191530; border-color: #3a3263; }
 
 /* Documentation */
 .docs-content { min-width: 0; }.docs-content > h1 { max-width: 680px; margin: 18px 0 19px; font-size: clamp(44px, 6vw, 67px); }.docs-lede { max-width: 640px; margin-bottom: 24px; color: var(--muted); font-size: 17px; line-height: 1.7; }.docs-meta-row { display: flex; flex-wrap: wrap; gap: 8px; color: var(--muted); font: 10px var(--mono); }.docs-meta-row span { padding: 6px 9px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); }
