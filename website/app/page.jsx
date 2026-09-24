@@ -64,7 +64,7 @@ export default function HomePage() {
       <section className="section wrap" id="demo">
         <div className="section-heading">
           <div>
-            <div className="eyebrow">Five small apps</div>
+            <div className="eyebrow">Six small apps</div>
             <h2>One library. Many useful shapes.</h2>
           </div>
           <p>These are real Micro-UI custom elements living inside this OTF Web site. Try each one to see how a small runtime can handle very different product surfaces.</p>

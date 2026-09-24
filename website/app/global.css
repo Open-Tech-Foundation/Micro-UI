@@ -183,8 +183,20 @@ h1 em, h2 em { color: var(--orange); font-style: normal; }
 .micro-apps-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .micro-app-card { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
 .micro-app-card--wide { grid-column: 1 / -1; }
-x-micro-ui-build-queue, x-micro-ui-focus-timer, x-micro-ui-motion-lab, x-micro-ui-canvas-pad, x-micro-ui-gradient-mixer { display: block; }
+x-micro-ui-build-queue, x-micro-ui-focus-timer, x-micro-ui-motion-lab, x-micro-ui-canvas-pad, x-micro-ui-gradient-mixer, x-micro-ui-gravity-lab { display: block; }
 .micro-app-card .micro-demo-card { height: 100%; box-shadow: none; }
+
+/* Each gallery app sits in an OS-style window: traffic lights and a title bar
+   drawn by the site, the Micro-UI element as the window body. */
+.os-window { overflow: hidden; border: 1px solid #303740; border-radius: 12px; background: #1d2229; box-shadow: 0 25px 45px rgba(21,24,29,.15); }
+.os-window-bar { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid #303740; background: #252b33; }
+.os-window-lights { display: flex; gap: 6px; }
+.os-window-lights i { width: 10px; height: 10px; border-radius: 50%; }
+.os-window-lights i:nth-child(1) { background: #ff5f57; }
+.os-window-lights i:nth-child(2) { background: #febc2e; }
+.os-window-lights i:nth-child(3) { background: #28c840; }
+.os-window-title { color: #8e989f; font: 10px var(--mono); letter-spacing: .04em; }
+.os-window-body .micro-demo-card { border: 0; border-radius: 0; }
 .micro-app-caption { display: flex; align-items: baseline; justify-content: space-between; gap: 15px; padding: 17px 7px 4px; }
 .micro-app-caption strong { font-size: 12px; letter-spacing: -.02em; }
 .micro-app-caption span { color: var(--muted); font: 10px var(--mono); text-align: right; }
@@ -200,6 +212,7 @@ x-micro-ui-build-queue, x-micro-ui-focus-timer, x-micro-ui-motion-lab, x-micro-u
 .micro-app-card--motion { background: #effbf5; border-color: #c8efd9; }
 .micro-app-card--canvas { background: #eefaff; border-color: #c5ebf5; }
 .micro-app-card--gradient { background: #fff9e8; border-color: #f0df9e; }
+.micro-app-card--physics { background: #f2f9e4; border-color: #cdeaa4; }
 .micro-app-card--timer .micro-demo-card { border-color: #363257; background: #1d1a36; }
 .micro-app-card--timer .micro-demo-kicker, .micro-app-card--timer .timer-primary { color: #c9bcff; }
 .micro-app-card--timer .timer-primary { border-color: #8d7bff; background: #8d7bff; }
@@ -229,6 +242,16 @@ x-micro-ui-build-queue, x-micro-ui-focus-timer, x-micro-ui-motion-lab, x-micro-u
 
 .gradient-preview { display: grid; place-items: center; height: 112px; margin: 20px 0 14px; border: 1px solid rgba(21,24,29,.15); border-radius: 10px; color: rgba(21,24,29,.7); font: 10px var(--mono); text-transform: uppercase; }.gradient-preview span { padding: 6px 8px; border-radius: 5px; background: rgba(255,255,255,.62); }.gradient-fields { display: flex; justify-content: space-between; gap: 12px; }.gradient-fields label, .gradient-angle { display: flex; align-items: center; gap: 7px; color: #75652b; font: 10px var(--mono); text-transform: uppercase; }.gradient-fields input { width: 28px; height: 22px; padding: 0; border: 1px solid #c2a94f; border-radius: 5px; background: transparent; cursor: pointer; }.gradient-angle { margin-top: 13px; }.gradient-angle input { min-width: 0; flex: 1; accent-color: #c5a52e; }.gradient-angle output { min-width: 32px; color: #75652b; text-align: right; }.gradient-code { display: block; margin-top: 13px; overflow: hidden; color: #75652b; font: 9px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
 
+.gravity-canvas { display: block; width: 100%; height: 168px; margin: 20px 0 12px; border: 1px solid #3d5c22; border-radius: 9px; background: #0a1410; cursor: crosshair; touch-action: none; }
+.physics-controls, .physics-modes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.physics-modes { margin-top: 8px; }
+.physics-controls button, .physics-modes button { padding: 7px 10px; border: 1px solid #41652a; border-radius: 6px; color: #d7ecb6; background: #1c2b12; font: 10px var(--mono); text-transform: capitalize; cursor: pointer; }
+.physics-controls button.is-active, .physics-controls button:hover, .physics-modes button.is-active, .physics-modes button:hover { border-color: #b8f25a; color: #16220f; background: #b8f25a; }
+.physics-slider { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: #d7ecb6; font: 10px var(--mono); text-transform: uppercase; }
+.physics-slider input { min-width: 0; flex: 1; accent-color: #b8f25a; }
+.physics-slider output { min-width: 44px; text-align: right; }
+.physics-demo .micro-demo-kicker { color: #b8f25a; }
+
 /* The official docs theme toggles its semantic tokens; map the marketing layer to them too. */
 :root[data-theme="dark"] .section--muted { background: #0b1220; }
 :root[data-theme="dark"] .feature-card { border-color: #1e293b; background: rgba(15, 23, 42, .72); }
@@ -240,6 +263,7 @@ x-micro-ui-build-queue, x-micro-ui-focus-timer, x-micro-ui-motion-lab, x-micro-u
 :root[data-theme="dark"] .micro-app-card--motion { background: #10211d; border-color: #235440; }
 :root[data-theme="dark"] .micro-app-card--canvas { background: #0d2229; border-color: #225968; }
 :root[data-theme="dark"] .micro-app-card--gradient { background: #292515; border-color: #6b5d27; }
+:root[data-theme="dark"] .micro-app-card--physics { background: #16220f; border-color: #3d5c22; }
 
 /* Documentation */
 .docs-content { min-width: 0; }.docs-content > h1 { max-width: 680px; margin: 18px 0 19px; font-size: clamp(44px, 6vw, 67px); }.docs-lede { max-width: 640px; margin-bottom: 24px; color: var(--muted); font-size: 17px; line-height: 1.7; }.docs-meta-row { display: flex; flex-wrap: wrap; gap: 8px; color: var(--muted); font: 10px var(--mono); }.docs-meta-row span { padding: 6px 9px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); }

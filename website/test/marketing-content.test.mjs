@@ -21,6 +21,7 @@ test("the marketing homepage presents Micro-UI and the live app", async () => {
   expect(showcase).toContain("x-micro-ui-motion-lab");
   expect(showcase).toContain("x-micro-ui-canvas-pad");
   expect(showcase).toContain("x-micro-ui-gradient-mixer");
+  expect(showcase).toContain("x-micro-ui-gravity-lab");
   expect(showcase).toContain("x-micro-ui-hero-preview");
   expect(showcase).toContain("hero-mini-app");
   expect(showcase).toContain("Build queue");
@@ -34,6 +35,15 @@ test("the marketing homepage presents Micro-UI and the live app", async () => {
   expect(showcase).toContain("Gradient mixer");
   expect(showcase).toContain("brushSize");
   expect(showcase).toContain("key=${item.id}");
+  expect(showcase).toContain("Gravity lab");
+  expect(showcase).toContain("gravity-canvas");
+  expect(showcase).toContain("stepWorld");
+  expect(showcase).toContain("os-window");
+  expect(showcase).toContain("os-window-title");
+  expect(showcase).toContain("06 / Gravity lab");
+  expect(page).toContain("Six small apps");
+  expect(styles).toContain(".os-window-bar");
+  expect(styles).toContain(".micro-app-card--physics");
 });
 
 test("the homepage links to dedicated docs and does not show the old source CTA", async () => {
