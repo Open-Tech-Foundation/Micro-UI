@@ -34,6 +34,8 @@ test("the marketing homepage presents Micro-UI and the live app", async () => {
   expect(showcase).toContain("toggleTask");
   expect(showcase).toContain("Sketchpad");
   expect(showcase).toContain("Gradient mixer");
+  expect(showcase).toContain("navigator.clipboard");
+  expect(showcase).toContain("gradient-copyrow");
   expect(showcase).toContain("brushSize");
   expect(showcase).toContain("key=${card.id}");
   expect(showcase).toContain("Gravity lab");

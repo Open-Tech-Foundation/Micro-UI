@@ -203,6 +203,27 @@ async function registerMicroUiDemos() {
       let start = "#ff6b35";
       let end = "#536dfe";
       let angle = 135;
+      let copied = false;
+
+      const css = () => `linear-gradient(${angle}deg, ${start}, ${end})`;
+      const copyCss = async () => {
+        try {
+          await navigator.clipboard.writeText(css());
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = css();
+          el.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+        }
+        copied = true;
+        update(el);
+        setTimeout(() => {
+          copied = false;
+          update(el);
+        }, 1200);
+      };
 
       return () => html`
           <section class="micro-demo-card gradient-demo" aria-label="Gradient mixer micro-app">
@@ -216,7 +237,10 @@ async function registerMicroUiDemos() {
               <label>End <input type="color" value=${end} aria-label="Gradient end color" oninput=${(event) => { end = event.currentTarget.value; update(el); }} /></label>
             </div>
             <label class="gradient-angle">Angle <input type="range" min="0" max="360" value=${angle} oninput=${(event) => { angle = Number(event.currentTarget.value); update(el); }} /><output>${angle}°</output></label>
-            <code class="gradient-code">linear-gradient(${angle}deg, ${start}, ${end})</code>
+            <div class="gradient-copyrow">
+              <code class="gradient-code">linear-gradient(${angle}deg, ${start}, ${end})</code>
+              <button type="button" onclick=${copyCss}>${copied ? "Copied" : "Copy"}</button>
+            </div>
             <p class="micro-demo-caption">Two native color inputs and one range derive the preview and CSS string.</p>
           </section>
         `;
