@@ -58,22 +58,6 @@ async function registerMicroUiDemos() {
         draft = "";
         update(el);
       };
-      const moveCard = (id, dir) => {
-        const at = columns.findIndex((c) => c.cards.some((k) => k.id === id));
-        const to = at + dir;
-        if (at === -1 || to < 0 || to >= columns.length) return;
-        const card = columns[at].cards.find((k) => k.id === id);
-        columns = columns.map((c, i) => {
-          if (i === at) return { ...c, cards: c.cards.filter((k) => k.id !== id) };
-          if (i === to) return { ...c, cards: [...c.cards, card] };
-          return c;
-        });
-        update(el);
-      };
-      const removeCard = (id) => {
-        columns = columns.map((c) => ({ ...c, cards: c.cards.filter((k) => k.id !== id) }));
-        update(el);
-      };
       const dropCard = (colId) => {
         if (dragging === null) return;
         const id = dragging;
@@ -104,7 +88,7 @@ async function registerMicroUiDemos() {
             <button type="submit">Add</button>
           </form>
           <div class="kanban-cols">
-            ${columns.map((col, ci) => html`
+            ${columns.map((col) => html`
               <div class=${`kanban-col ${dropCol === col.id ? "is-drop" : ""}`} key=${col.id}
                 ondragover=${(event) => { event.preventDefault(); if (dropCol !== col.id) { dropCol = col.id; update(el); } }}
                 ondrop=${(event) => { event.preventDefault(); dropCard(col.id); }}>
@@ -116,11 +100,6 @@ async function registerMicroUiDemos() {
                           ondragstart=${(event) => { dragging = card.id; event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", String(card.id)); }}
                           ondragend=${() => { dragging = null; dropCol = null; update(el); }}>
                           <span>${card.label}</span>
-                          <span class="kanban-moves">
-                            <button type="button" aria-label=${`Move ${card.label} left`} disabled=${ci === 0} onclick=${() => moveCard(card.id, -1)}>‹</button>
-                            <button type="button" aria-label=${`Move ${card.label} right`} disabled=${ci === columns.length - 1} onclick=${() => moveCard(card.id, 1)}>›</button>
-                            <button type="button" aria-label=${`Remove ${card.label}`} onclick=${() => removeCard(card.id)}>×</button>
-                          </span>
                         </li>
                       `)
                     : html`<li class="kanban-empty">Empty.</li>`}
@@ -128,7 +107,7 @@ async function registerMicroUiDemos() {
               </div>
             `)}
           </div>
-          <p class="micro-demo-caption">Drag cards between columns — or nudge them with ‹ ›.</p>
+          <p class="micro-demo-caption">Drag cards between columns.</p>
         </section>
       `;
     });

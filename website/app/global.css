@@ -223,17 +223,16 @@ x-micro-ui-kanban, x-micro-ui-canvas-pad, x-micro-ui-gradient-mixer, x-micro-ui-
 .poll-fill { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #8d7bff, #c9bcff); transition: width .4s ease; }
 .poll-demo .micro-demo-kicker { color: #8d7bff; }
 .kanban-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
-.kanban-col { min-width: 0; padding: 10px; border: 1px solid #303740; border-radius: 9px; background: #20262e; }
+.kanban-col { min-width: 0; padding: 10px; border: 1px solid #303740; border-radius: 9px; background: #20262e; transition: border-color .15s ease, background .15s ease; }
+.kanban-col.is-drop { border-color: #f4839b; background: #2a222b; }
 .kanban-col-head { display: flex; align-items: baseline; gap: 7px; margin-bottom: 8px; color: #e4e8eb; font: 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; }
 .kanban-col-head em { margin-left: auto; color: #9aa4ae; font-style: normal; }
 .kanban-col-icon { font-size: 11px; }
 .kanban-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
-.kanban-list li { padding: 8px 9px; border: 1px solid #303740; border-radius: 8px; background: #252b33; font-size: 12px; }
+.kanban-list li { display: grid; align-content: center; min-height: 56px; padding: 8px 9px; border: 1px solid #303740; border-radius: 8px; background: #252b33; font-size: 12px; cursor: grab; }
+.kanban-list li:active { cursor: grabbing; }
+.kanban-list li.is-dragging { opacity: .45; cursor: grabbing; }
 .kanban-list li > span:first-child { display: block; color: #e4e8eb; line-height: 1.45; }
-.kanban-moves { display: flex; gap: 4px; margin-top: 7px; }
-.kanban-moves button { padding: 3px 8px; border: 1px solid #3a424b; border-radius: 5px; color: #9aa4ae; background: transparent; font-size: 12px; line-height: 1; cursor: pointer; }
-.kanban-moves button:hover:not(:disabled) { border-color: #f4839b; color: #fff; }
-.kanban-moves button:disabled { opacity: .3; cursor: default; }
 .kanban-empty { color: #8e989f !important; font: 11px var(--mono); }
 .kanban-demo .micro-demo-kicker { color: #f4839b; }
 .kanban-demo .micro-demo-form button { color: #2b0f18; background: #f4839b; }
