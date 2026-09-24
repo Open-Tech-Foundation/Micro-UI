@@ -22,10 +22,14 @@ async function registerMicroUiDemos() {
       // show. New cards land in Now.
       let draft = "";
       let nextId = 6;
+      let dragging = null;
+      let dropCol = null;
       let columns = [
         {
           id: "now",
           title: "Now",
+          icon: "●",
+          tone: "#f4839b",
           cards: [
             { id: 1, label: "Ship a focused interaction" },
             { id: 2, label: "Keep the bundle easy to understand" },
@@ -34,12 +38,14 @@ async function registerMicroUiDemos() {
         {
           id: "next",
           title: "Next",
+          icon: "○",
+          tone: "#9aa4ae",
           cards: [
             { id: 3, label: "Let the browser do the work" },
             { id: 4, label: "Write the release notes" },
           ],
         },
-        { id: "done", title: "Done", cards: [{ id: 5, label: "Define the API" }] },
+        { id: "done", title: "Done", icon: "✓", tone: "#8af2b8", cards: [{ id: 5, label: "Define the API" }] },
       ];
 
       const count = () => columns.reduce((n, c) => n + c.cards.length, 0);
@@ -68,6 +74,21 @@ async function registerMicroUiDemos() {
         columns = columns.map((c) => ({ ...c, cards: c.cards.filter((k) => k.id !== id) }));
         update(el);
       };
+      const dropCard = (colId) => {
+        if (dragging === null) return;
+        const id = dragging;
+        const at = columns.findIndex((c) => c.cards.some((k) => k.id === id));
+        if (at === -1) return;
+        const card = columns[at].cards.find((k) => k.id === id);
+        columns = columns.map((c) => {
+          if (c.id === columns[at].id) return { ...c, cards: c.cards.filter((k) => k.id !== id) };
+          if (c.id === colId) return { ...c, cards: [...c.cards, card] };
+          return c;
+        });
+        dragging = null;
+        dropCol = null;
+        update(el);
+      };
 
       return () => html`
         <section class="micro-demo-card kanban-demo" aria-label="Kanban micro-app">
@@ -84,12 +105,16 @@ async function registerMicroUiDemos() {
           </form>
           <div class="kanban-cols">
             ${columns.map((col, ci) => html`
-              <div class="kanban-col" key=${col.id}>
-                <div class="kanban-col-head"><span>${col.title}</span><em>${col.cards.length}</em></div>
+              <div class=${`kanban-col ${dropCol === col.id ? "is-drop" : ""}`} key=${col.id}
+                ondragover=${(event) => { event.preventDefault(); if (dropCol !== col.id) { dropCol = col.id; update(el); } }}
+                ondrop=${(event) => { event.preventDefault(); dropCard(col.id); }}>
+                <div class="kanban-col-head"><span class="kanban-col-icon" style=${`color:${col.tone}`} aria-hidden="true">${col.icon}</span><span>${col.title}</span><em>${col.cards.length}</em></div>
                 <ul class="kanban-list">
                   ${col.cards.length
                     ? col.cards.map((card) => html`
-                        <li key=${card.id}>
+                        <li key=${card.id} draggable="true" class=${dragging === card.id ? "is-dragging" : ""}
+                          ondragstart=${(event) => { dragging = card.id; event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", String(card.id)); }}
+                          ondragend=${() => { dragging = null; dropCol = null; update(el); }}>
                           <span>${card.label}</span>
                           <span class="kanban-moves">
                             <button type="button" aria-label=${`Move ${card.label} left`} disabled=${ci === 0} onclick=${() => moveCard(card.id, -1)}>‹</button>
@@ -103,6 +128,7 @@ async function registerMicroUiDemos() {
               </div>
             `)}
           </div>
+          <p class="micro-demo-caption">Drag cards between columns — or nudge them with ‹ ›.</p>
         </section>
       `;
     });

@@ -224,8 +224,9 @@ x-micro-ui-kanban, x-micro-ui-canvas-pad, x-micro-ui-gradient-mixer, x-micro-ui-
 .poll-demo .micro-demo-kicker { color: #8d7bff; }
 .kanban-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
 .kanban-col { min-width: 0; padding: 10px; border: 1px solid #303740; border-radius: 9px; background: #20262e; }
-.kanban-col-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; color: #e4e8eb; font: 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; }
-.kanban-col-head em { color: #9aa4ae; font-style: normal; }
+.kanban-col-head { display: flex; align-items: baseline; gap: 7px; margin-bottom: 8px; color: #e4e8eb; font: 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+.kanban-col-head em { margin-left: auto; color: #9aa4ae; font-style: normal; }
+.kanban-col-icon { font-size: 11px; }
 .kanban-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
 .kanban-list li { padding: 8px 9px; border: 1px solid #303740; border-radius: 8px; background: #252b33; font-size: 12px; }
 .kanban-list li > span:first-child { display: block; color: #e4e8eb; line-height: 1.45; }
